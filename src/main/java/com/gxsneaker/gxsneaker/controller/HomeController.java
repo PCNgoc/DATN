@@ -10,4 +10,9 @@ public class HomeController {
     public String home() {
         return "home";
     }
+
+    @GetMapping("/bao-hanh")
+    public String warranty() {
+        return "warranty";
+    }
 }
