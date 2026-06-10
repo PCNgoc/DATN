@@ -1,6 +1,7 @@
 package com.gxsneaker.gxsneaker.repository;
 
-import com.gxsneaker.gxsneaker.entity.OtpXacThuc;
+import com.gxsneaker.gxsneaker.entity
+        .OtpXacThuc;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

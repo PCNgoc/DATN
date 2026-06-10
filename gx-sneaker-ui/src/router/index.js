@@ -1,12 +1,24 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import HomeView from '../views/HomeView.vue'
+
+// Auth
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ForgotPasswordView from '@/views/ForgotPasswordView.vue'
 import ResetPasswordView from '@/views/ResetPasswordView.vue'
 import ChangePasswordView from '@/views/ChangePasswordView.vue'
+
+// Danh mục sản phẩm
+import ThuongHieuView from '../views/ThuongHieuView.vue'
+import DanhMucView from '@/views/DanhMucView.vue'
+import XuatXuView from '@/views/XuatXuView.vue'
+import ChatLieuView from '@/views/ChatLieuView.vue'
+import CoGiayView from '@/views/CoGiayView.vue'
+import DeGiayView from '@/views/DeGiayView.vue'
+import KichThuocView from '@/views/KichThuocView.vue'
+import MauSacView from '@/views/MauSacView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +28,8 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
+
+    // Auth
     {
       path: '/login',
       name: 'login',
@@ -47,7 +61,49 @@ const router = createRouter({
       component: ChangePasswordView,
     },
 
-    // Tạm thời tạo trước
+    // Danh mục
+    {
+      path: '/thuong-hieu',
+      name: 'thuong-hieu',
+      component: ThuongHieuView,
+    },
+    {
+      path: '/danh-muc',
+      name: 'danh-muc',
+      component: DanhMucView,
+    },
+    {
+      path: '/xuat-xu',
+      name: 'xuat-xu',
+      component: XuatXuView,
+    },
+    {
+      path: '/chat-lieu',
+      name: 'chat-lieu',
+      component: ChatLieuView,
+    },
+    {
+      path: '/co-giay',
+      name: 'co-giay',
+      component: CoGiayView,
+    },
+    {
+      path: '/de-giay',
+      name: 'de-giay',
+      component: DeGiayView,
+    },
+    {
+      path: '/mau-sac',
+      name: 'mau-sac',
+      component: MauSacView,
+    },
+    {
+      path: '/kich-thuoc',
+      name: 'kich-thuoc',
+      component: KichThuocView,
+    },
+
+    // Role pages
     {
       path: '/admin',
       name: 'admin',
@@ -65,15 +121,18 @@ router.beforeEach((to, from, next) => {
   const user = JSON.parse(localStorage.getItem('user'))
   const token = localStorage.getItem('token')
 
-  // Chưa login
-  const protectedRoutes = ['/profile', '/change-password', '/cart', '/checkout']
+  const protectedRoutes = [
+    '/profile',
+    '/change-password',
+    '/cart',
+    '/checkout'
+  ]
 
   if (protectedRoutes.includes(to.path) && !token) {
     next('/login')
     return
   }
 
-  // Admin
   if (to.path.startsWith('/admin')) {
     if (!user || user.role !== 'ADMIN') {
       next('/')
@@ -81,7 +140,6 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // Staff
   if (to.path.startsWith('/staff')) {
     if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) {
       next('/')

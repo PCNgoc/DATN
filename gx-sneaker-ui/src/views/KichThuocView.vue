@@ -1,35 +1,31 @@
+```vue
 <script setup>
-import { ref, onMounted,computed  } from "vue"
+import { ref, onMounted, computed } from "vue"
 import axios from "axios"
 
-const API = "http://localhost:8080/api/thuong-hieu"
+const API = "http://localhost:8080/api/kich-thuoc"
 
 const list = ref([])
-// ================= PAGINATION =================
+
+// PAGINATION
 const page = ref(1)
 const pageSize = 10
 
-// ===== FORM =====
+// FORM
 const form = ref({
   id: null,
   ma: "",
-  ten: "",
-  logo: "",
-  website: "",
-  moTa: "",
-  quocGia: "",
+  size: "",
   trangThai: true
 })
 
-// ===== ERROR =====
+// ERROR
 const errors = ref({
   ma: "",
-  ten: "",
-  website: "",
-  quocGia: ""
+  size: ""
 })
 
-// ===== TOAST =====
+// TOAST
 const toast = ref("")
 const toastType = ref("success")
 
@@ -42,21 +38,19 @@ const showToast = (msg, type = "success") => {
   }, 2000)
 }
 
-// ===== LOAD =====
+// LOAD
 const load = async () => {
   const res = await axios.get(API)
   list.value = res.data
 }
 
-// ===== VALIDATE =====
+// VALIDATE
 const validate = () => {
   let ok = true
 
   errors.value = {
     ma: "",
-    ten: "",
-    website: "",
-    quocGia: ""
+    size: ""
   }
 
   if (!form.value.ma.trim()) {
@@ -64,28 +58,21 @@ const validate = () => {
     ok = false
   }
 
-  if (!form.value.ten.trim()) {
-    errors.value.ten = "⚠ Tên không được để trống"
+  if (!form.value.size) {
+    errors.value.size = "⚠ Size không được để trống"
     ok = false
-  }
-
-  if (!form.value.quocGia.trim()) {
-    errors.value.quocGia = "⚠ Quốc gia không được để trống"
-    ok = false
-  }
-
-  if (form.value.website && !form.value.website.includes(".")) {
-    errors.value.website = "⚠ Website không hợp lệ"
+  } else if (form.value.size < 35 || form.value.size > 46) {
+    errors.value.size = "⚠ Size phải từ 35 đến 46"
     ok = false
   }
 
   return ok
 }
 
-// ===== SAVE =====
+// SAVE
 const save = async () => {
   if (!validate()) {
-    showToast("Vui lòng kiểm tra lại dữ liệu", "error")
+    showToast("Vui lòng kiểm tra dữ liệu", "error")
     return
   }
 
@@ -101,46 +88,43 @@ const save = async () => {
     reset()
     load()
 
-  } catch (err) {
+  } catch (e) {
+    console.log(e)
     showToast("Có lỗi xảy ra", "error")
   }
 }
 
-// ===== DELETE =====
+// DELETE
 const del = async (id) => {
   if (!confirm("Bạn có chắc muốn xóa?")) return
 
   await axios.delete(`${API}/${id}`)
+
   showToast("Xóa thành công")
   load()
 }
 
-// ===== EDIT =====
+// EDIT
 const edit = (item) => {
   form.value = { ...item }
 }
 
-// ===== RESET =====
+// RESET
 const reset = () => {
   form.value = {
     id: null,
     ma: "",
-    ten: "",
-    logo: "",
-    website: "",
-    moTa: "",
-    quocGia: "",
+    size: "",
     trangThai: true
   }
 
   errors.value = {
     ma: "",
-    ten: "",
-    website: "",
-    quocGia: ""
+    size: ""
   }
 }
-// ================= PAGINATION =================
+
+// PAGINATION
 const totalPages = computed(() =>
   Math.ceil(list.value.length / pageSize)
 )
@@ -160,7 +144,7 @@ onMounted(load)
 <template>
   <div class="container">
 
-    <h2>🏷️ QUẢN LÝ THƯƠNG HIỆU</h2>
+    <h2>📏 QUẢN LÝ KÍCH THƯỚC</h2>
 
     <!-- TOAST -->
     <div v-if="toast" :class="['toast', toastType]">
@@ -173,75 +157,115 @@ onMounted(load)
       <div class="grid">
 
         <div>
-          <input v-model="form.ma" placeholder="Mã thương hiệu" />
-          <small class="error">{{ errors.ma }}</small>
+          <input
+            v-model="form.ma"
+            placeholder="Mã kích thước"
+          />
+          <small class="error-text">
+            {{ errors.ma }}
+          </small>
         </div>
 
         <div>
-          <input v-model="form.ten" placeholder="Tên thương hiệu" />
-          <small class="error">{{ errors.ten }}</small>
+          <input
+            type="number"
+            v-model="form.size"
+            placeholder="Size (35 - 46)"
+          />
+          <small class="error-text">
+            {{ errors.size }}
+          </small>
         </div>
-
-        <div>
-          <input v-model="form.website" placeholder="Website" />
-          <small class="error">{{ errors.website }}</small>
-        </div>
-
-        <div>
-          <input v-model="form.quocGia" placeholder="Quốc gia" />
-          <small class="error">{{ errors.quocGia }}</small>
-        </div>
-
-        <input v-model="form.logo" placeholder="Logo URL" />
 
       </div>
 
-      <textarea v-model="form.moTa" placeholder="Mô tả"></textarea>
+      <div class="status-box">
+        <label>
+          <input
+            type="radio"
+            :value="true"
+            v-model="form.trangThai"
+          />
+          Hoạt động
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            :value="false"
+            v-model="form.trangThai"
+          />
+          Ngừng hoạt động
+        </label>
+      </div>
 
       <div class="actions">
         <button class="save" @click="save">
           {{ form.id ? "Cập nhật" : "Thêm mới" }}
         </button>
 
-        <button class="reset" @click="reset">Reset</button>
+        <button class="reset" @click="reset">
+          Reset
+        </button>
       </div>
 
     </div>
 
     <!-- TABLE -->
     <div class="card">
+
       <table>
+
         <thead>
         <tr>
           <th>Mã</th>
-          <th>Tên</th>
-          <th>Quốc gia</th>
-          <th>Website</th>
+          <th>Size</th>
+          <th>Trạng thái</th>
           <th>Hành động</th>
         </tr>
         </thead>
 
         <tbody>
-        <tr v-for="i in paginatedList" :key="i.id">
+
+        <tr
+          v-for="i in paginatedList"
+          :key="i.id"
+        >
           <td>{{ i.ma }}</td>
-          <td>{{ i.ten }}</td>
-          <td>{{ i.quocGia }}</td>
-          <td>{{ i.website }}</td>
+
+          <td>{{ i.size }}</td>
 
           <td>
-            <button @click="edit(i)">✏️</button>
-            <button @click="del(i.id)">🗑</button>
+            <span
+              :class="i.trangThai ? 'active-status' : 'inactive-status'"
+            >
+              {{ i.trangThai ? "Hoạt động" : "Ngừng hoạt động" }}
+            </span>
+          </td>
+
+          <td>
+            <button @click="edit(i)">
+              ✏️
+            </button>
+
+            <button @click="del(i.id)">
+              🗑️
+            </button>
           </td>
         </tr>
+
         </tbody>
 
       </table>
+
+      <!-- PAGINATION -->
       <div class="pagination">
 
         <button
           @click="page--"
           :disabled="page === 1"
         >
+          ◀
         </button>
 
         <button
@@ -257,9 +281,11 @@ onMounted(load)
           @click="page++"
           :disabled="page === totalPages"
         >
+          ▶
         </button>
 
       </div>
+
     </div>
 
   </div>
@@ -280,34 +306,35 @@ onMounted(load)
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-/* GRID FORM */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-input, textarea {
+input {
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 6px;
   width: 100%;
 }
 
-textarea {
-  grid-column: span 2;
+.status-box {
+  margin-top: 15px;
+  display: flex;
+  gap: 20px;
 }
 
 .actions {
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
-/* BUTTON */
 .save {
   background: green;
   color: white;
   padding: 8px 12px;
   border: none;
+  border-radius: 6px;
 }
 
 .reset {
@@ -315,27 +342,37 @@ textarea {
   color: white;
   padding: 8px 12px;
   border: none;
+  border-radius: 6px;
+  margin-left: 10px;
 }
 
-/* ERROR */
-.error {
+.error-text {
   color: red;
   font-size: 12px;
 }
 
-/* TABLE */
 table {
   width: 100%;
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   padding: 10px;
   border-bottom: 1px solid #eee;
   text-align: center;
 }
 
-/* TOAST */
+.active-status {
+  color: green;
+  font-weight: bold;
+}
+
+.inactive-status {
+  color: red;
+  font-weight: bold;
+}
+
 .toast {
   position: fixed;
   top: 20px;
@@ -353,7 +390,7 @@ th, td {
 .error {
   background: #dc3545;
 }
-/* PAGINATION */
+
 .pagination {
   margin-top: 15px;
   display: flex;
@@ -378,3 +415,4 @@ th, td {
   color: white;
 }
 </style>
+```

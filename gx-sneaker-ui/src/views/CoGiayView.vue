@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from "vue"
 import axios from "axios"
 
-const API = "http://localhost:8080/api/xuat-xu"
+const API = "http://localhost:8080/api/co-giay"
 
 // ================= DATA =================
 const list = ref([])
@@ -13,7 +13,7 @@ const filterStatus = ref("all")
 
 // ================= PAGINATION =================
 const page = ref(1)
-const pageSize = 6
+const pageSize = 5
 
 // ================= FORM =================
 const form = ref({
@@ -154,7 +154,7 @@ onMounted(load)
 <template>
   <div class="container">
 
-    <h2>🌍 QUẢN LÝ XUẤT XỨ</h2>
+    <h2> QUẢN LÝ CỔ GIÀY</h2>
 
     <!-- TOAST -->
     <div v-if="toast" :class="['toast', toastType]">
@@ -179,12 +179,12 @@ onMounted(load)
       <div class="grid">
 
         <div>
-          <input v-model="form.ma" placeholder="Mã xuất xứ" />
+          <input v-model="form.ma" placeholder="Mã cổ giày" />
           <small class="error-text">{{ errors.ma }}</small>
         </div>
 
         <div>
-          <input v-model="form.ten" placeholder="Tên xuất xứ" />
+          <input v-model="form.ten" placeholder="Tên cổ giày" />
           <small class="error-text">{{ errors.ten }}</small>
         </div>
 
@@ -193,7 +193,7 @@ onMounted(load)
       <!-- Mô tả -->
       <textarea
         v-model="form.moTa"
-        placeholder="Mô tả Xuất xứ">
+        placeholder="Mô tả cổ giày">
   </textarea>
 
       <!-- Trạng thái -->

@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from "vue"
 import axios from "axios"
 
-const API = "http://localhost:8080/api/xuat-xu"
+const API = "http://localhost:8080/api/chat-lieu"
 
 // ================= DATA =================
 const list = ref([])
@@ -13,7 +13,7 @@ const filterStatus = ref("all")
 
 // ================= PAGINATION =================
 const page = ref(1)
-const pageSize = 6
+const pageSize = 10
 
 // ================= FORM =================
 const form = ref({
@@ -154,7 +154,7 @@ onMounted(load)
 <template>
   <div class="container">
 
-    <h2>🌍 QUẢN LÝ XUẤT XỨ</h2>
+    <h2>🌍 QUẢN LÝ CHẤT LIỆU</h2>
 
     <!-- TOAST -->
     <div v-if="toast" :class="['toast', toastType]">
@@ -172,19 +172,21 @@ onMounted(load)
       </select>
     </div>
 
-
+    <!-- FORM -->
     <!-- FORM -->
     <div class="card form">
 
       <div class="grid">
 
+        <!-- Mã chất liệu -->
         <div>
-          <input v-model="form.ma" placeholder="Mã xuất xứ" />
+          <input v-model="form.ma" placeholder="Mã chất liệu" />
           <small class="error-text">{{ errors.ma }}</small>
         </div>
 
+        <!-- Tên chất liệu -->
         <div>
-          <input v-model="form.ten" placeholder="Tên xuất xứ" />
+          <input v-model="form.ten" placeholder="Tên chất liệu" />
           <small class="error-text">{{ errors.ten }}</small>
         </div>
 
@@ -193,7 +195,7 @@ onMounted(load)
       <!-- Mô tả -->
       <textarea
         v-model="form.moTa"
-        placeholder="Mô tả Xuất xứ">
+        placeholder="Mô tả chất liệu">
   </textarea>
 
       <!-- Trạng thái -->
@@ -245,9 +247,9 @@ onMounted(load)
           <td>{{ i.moTa }}</td>
 
           <td>
-                <span :class="i.trangThai ? 'active' : 'inactive'">
-                  {{ i.trangThai ? "Hoạt động" : "Ngừng hoạt động" }}
-                </span>
+             <span :class="i.trangThai ? 'active' : 'inactive'">
+              {{ i.trangThai ? "Hoạt động" : "Ngừng hoạt động" }}
+             </span>
           </td>
 
           <td>
@@ -316,6 +318,11 @@ textarea {
   margin-top: 10px;
 }
 
+/* ERROR */
+.error {
+  color: #00ff80;
+  font-size: 12px;
+}
 
 /* BUTTON */
 .actions {
