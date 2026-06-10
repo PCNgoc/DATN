@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted,computed } from "vue"
 import { getAll, create, update, remove } from "@/services/danhMucService"
 
 const list = ref([])
 const detail = ref(null)
 const loading = ref(false)
-
+const page = ref(1)
+const pageSize = 10
 const form = ref({
   id: null,
   ma: "",
@@ -79,6 +80,19 @@ const del = async (id) => {
 const viewDetail = (item) => {
   detail.value = item
 }
+// ================= PAGINATION =================
+const totalPages = computed(() =>
+  Math.ceil(list.value.length / pageSize)
+)
+
+const paginatedList = computed(() => {
+  const start = (page.value - 1) * pageSize
+  return list.value.slice(start, start + pageSize)
+})
+
+const changePage = (p) => {
+  page.value = p
+}
 </script>
 
 <template>
@@ -131,32 +145,53 @@ const viewDetail = (item) => {
         </thead>
 
         <tbody>
-        <tr v-for="item in list" :key="item.id">
+        <tr v-for="i in paginatedList" :key="i.id">
 
-          <td>{{ item.ma }}</td>
-          <td>{{ item.ten }}</td>
-          <td>{{ item.moTa }}</td>
-          <td>{{ item.thuTuHienThi }}</td>
+          <td>{{ i.ma }}</td>
+          <td>{{ i.ten }}</td>
+          <td>{{ i.moTa }}</td>
+          <td>{{ i.thuTuHienThi }}</td>
 
           <td>
-              <span :class="item.trangThai ? 'active' : 'hidden'">
-                {{ item.trangThai ? "Active" : "Hidden" }}
-              </span>
+    <span :class="i.trangThai ? 'active' : 'hidden'">
+      {{ i.trangThai ? "Active" : "Hidden" }}
+    </span>
           </td>
 
-          <td>{{ formatDate(item.ngayTao) }}</td>
+          <td>{{ formatDate(i.ngayTao) }}</td>
 
           <td class="btn-group">
-            <button @click="viewDetail(item)">👁</button>
-            <button @click="edit(item)">✏️</button>
-            <button @click="del(item.id)">🗑</button>
+            <button @click="viewDetail(i)">👁</button>
+            <button @click="edit(i)">✏️</button>
+            <button @click="del(i.id)">🗑</button>
           </td>
 
         </tr>
         </tbody>
       </table>
+      <div class="pagination">
 
-      <p v-else>Không có dữ liệu</p>
+        <button
+          @click="page--"
+          :disabled="page === 1"
+        >
+        </button>
+
+        <button
+          v-for="p in totalPages"
+          :key="p"
+          @click="changePage(p)"
+          :class="{ activePage: p === page }"
+        >
+          {{ p }}
+        </button>
+
+        <button
+          @click="page++"
+          :disabled="page === totalPages"
+        >
+        </button>
+
     </div>
 
     <!-- MODAL DETAIL -->
@@ -178,6 +213,7 @@ const viewDetail = (item) => {
       </div>
     </div>
 
+  </div>
   </div>
 </template>
 
@@ -278,6 +314,30 @@ th, td {
 .btn-close {
   margin-top: 10px;
   background: red;
+  color: white;
+}
+/* PAGINATION */
+.pagination {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: #e9ecef;
+}
+
+.pagination button:hover {
+  background: #d6d8db;
+}
+
+.activePage {
+  background: #0d6efd !important;
   color: white;
 }
 </style>
