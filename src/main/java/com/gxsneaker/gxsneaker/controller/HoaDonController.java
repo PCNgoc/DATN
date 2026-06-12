@@ -10,12 +10,15 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 
 import java.util.Date;
 import java.util.List;
+import com.gxsneaker.gxsneaker.dto.ThongKeDashboardResponse;
 
 @RestController
 @RequestMapping("/api/hoa-don")
@@ -221,5 +224,152 @@ public class HoaDonController {
                 .findByIdHoaDonOrderByThoiGianAsc(id);
     }
 
+
+    // =====================================================
+// THỐNG KÊ TỔNG DOANH THU
+// =====================================================
+    @GetMapping("/thong-ke/tong-doanh-thu")
+    public ResponseEntity<BigDecimal> getTongDoanhThu() {
+
+        return ResponseEntity.ok(
+                repository.getTongDoanhThu()
+        );
+    }
+
+    // =====================================================
+// THỐNG KÊ DOANH THU THEO THÁNG
+// =====================================================
+    @GetMapping("/thong-ke/doanh-thu-thang")
+    public ResponseEntity<BigDecimal> getDoanhThuTheoThang(
+            @RequestParam int month,
+            @RequestParam int year) {
+
+        return ResponseEntity.ok(
+                repository.getDoanhThuTheoThang(month, year)
+        );
+    }
+
+    // =====================================================
+// THỐNG KÊ DOANH THU THEO NĂM
+// =====================================================
+    @GetMapping("/thong-ke/doanh-thu-nam")
+    public ResponseEntity<BigDecimal> getDoanhThuTheoNam(
+            @RequestParam int year) {
+
+        return ResponseEntity.ok(
+                repository.getDoanhThuTheoNam(year)
+        );
+    }
+
+    // =====================================================
+// THỐNG KÊ DOANH THU THEO NGÀY
+// =====================================================
+    @GetMapping("/thong-ke/doanh-thu-ngay")
+    public ResponseEntity<BigDecimal> getDoanhThuTheoNgay(
+            @RequestParam
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date ngay) {
+
+        return ResponseEntity.ok(
+                repository.getDoanhThuTheoNgay(ngay)
+        );
+    }
+
+    // =====================================================
+// THỐNG KÊ TỔNG SỐ ĐƠN HÀNG
+// =====================================================
+    @GetMapping("/thong-ke/tong-so-don")
+    public ResponseEntity<Long> getTongSoDon() {
+
+        return ResponseEntity.ok(
+                repository.getTongSoDon()
+        );
+    }
+
+    // =====================================================
+// THỐNG KÊ SỐ ĐƠN THEO TRẠNG THÁI
+// =====================================================
+    @GetMapping("/thong-ke/so-don-theo-trang-thai")
+    public ResponseEntity<Long> getSoDonTheoTrangThai(
+            @RequestParam String trangThai) {
+
+        return ResponseEntity.ok(
+                repository.getSoDonTheoTrangThai(trangThai)
+        );
+    }
+
+
+    // =====================================================
+// DASHBOARD THỐNG KÊ TỔNG QUAN
+// =====================================================
+    @GetMapping("/thong-ke/dashboard")
+    public ResponseEntity<ThongKeDashboardResponse> getDashboard() {
+
+        ThongKeDashboardResponse response =
+                new ThongKeDashboardResponse();
+
+        response.setTongSoDon(
+                repository.getTongSoDon()
+        );
+
+        response.setTongDoanhThu(
+                repository.getTongDoanhThu()
+        );
+
+        response.setSoDonChoXacNhan(
+                repository.getSoDonTheoTrangThai(
+                        "CHO_XAC_NHAN"
+                )
+        );
+
+        response.setSoDonDaXacNhan(
+                repository.getSoDonTheoTrangThai(
+                        "DA_XAC_NHAN"
+                )
+        );
+
+        response.setSoDonDangGiao(
+                repository.getSoDonTheoTrangThai(
+                        "DANG_GIAO"
+                )
+        );
+
+        response.setSoDonHoanThanh(
+                repository.getSoDonTheoTrangThai(
+                        "HOAN_THANH"
+                )
+        );
+
+        response.setSoDonDaHuy(
+                repository.getSoDonTheoTrangThai(
+                        "DA_HUY"
+                )
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    // =====================================================
+// THỐNG KÊ DOANH THU THEO KHOẢNG THỜI GIAN
+// =====================================================
+    @GetMapping("/thong-ke/doanh-thu-khoang-thoi-gian")
+    public ResponseEntity<BigDecimal> getDoanhThuTheoKhoangThoiGian(
+
+            @RequestParam
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date tuNgay,
+
+            @RequestParam
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date denNgay
+    ) {
+
+        return ResponseEntity.ok(
+                repository.getDoanhThuTheoKhoangThoiGian(
+                        tuNgay,
+                        denNgay
+                )
+        );
+    }
 
 }

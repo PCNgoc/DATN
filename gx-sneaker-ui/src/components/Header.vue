@@ -17,6 +17,12 @@ const { user, logout } = useAuth()
       <router-link to="/nu">Nữ</router-link>
       <router-link to="/bo-suu-tap">Bộ sưu tập</router-link>
       <router-link to="/sale">Sale</router-link>
+      <router-link to="/dashboard">
+        Thống kê
+      </router-link>
+      <router-link to="/hoa-don" class="nav-link">
+        Hóa đơn
+      </router-link>
 
       <div class="dropdown">
         <span class="drop-title">Danh mục ▾</span>

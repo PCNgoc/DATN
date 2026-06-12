@@ -9,6 +9,7 @@ import ProfileView from '@/views/ProfileView.vue'
 import ForgotPasswordView from '@/views/ForgotPasswordView.vue'
 import ResetPasswordView from '@/views/ResetPasswordView.vue'
 import ChangePasswordView from '@/views/ChangePasswordView.vue'
+import Dashboard from '@/views/Dashboard.vue'
 
 // Danh mục sản phẩm
 import ThuongHieuView from '../views/ThuongHieuView.vue'
@@ -19,6 +20,10 @@ import CoGiayView from '@/views/CoGiayView.vue'
 import DeGiayView from '@/views/DeGiayView.vue'
 import KichThuocView from '@/views/KichThuocView.vue'
 import MauSacView from '@/views/MauSacView.vue'
+// Thống kê
+//import HoaDonView from '@/views/HoaDonView.vue'
+//Hóa đơn
+import HoaDonView from '@/views/HoaDonView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -114,6 +119,21 @@ const router = createRouter({
       name: 'staff',
       component: HomeView,
     },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: Dashboard
+    },
+    // {
+    //   path: '/hoa-don',
+    //   component: HoaDonView
+    // }
+    {
+      path: '/hoa-don',
+      component: HoaDonView
+    }
+
+
   ],
 })
 
