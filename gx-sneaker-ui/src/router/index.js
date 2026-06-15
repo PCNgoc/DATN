@@ -3,12 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 
 // Auth
-import LoginView from '@/views/LoginView.vue'
-import RegisterView from '@/views/RegisterView.vue'
-import ProfileView from '@/views/ProfileView.vue'
-import ForgotPasswordView from '@/views/ForgotPasswordView.vue'
-import ResetPasswordView from '@/views/ResetPasswordView.vue'
-import ChangePasswordView from '@/views/ChangePasswordView.vue'
+
 
 // Danh mục sản phẩm
 import ThuongHieuView from '../views/ThuongHieuView.vue'
@@ -19,6 +14,7 @@ import CoGiayView from '@/views/CoGiayView.vue'
 import DeGiayView from '@/views/DeGiayView.vue'
 import KichThuocView from '@/views/KichThuocView.vue'
 import MauSacView from '@/views/MauSacView.vue'
+import SanPhamView from '@/views/SanPhamView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -28,39 +24,14 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
+    {
+      path: '/san-pham',
+      name: 'san-pham',
+      component: SanPhamView,
+    },
+
 
     // Auth
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginView,
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: RegisterView,
-    },
-    {
-      path: '/profile',
-      name: 'profile',
-      component: ProfileView,
-    },
-    {
-      path: '/forgot-password',
-      name: 'forgot-password',
-      component: ForgotPasswordView,
-    },
-    {
-      path: '/reset-password',
-      name: 'reset-password',
-      component: ResetPasswordView,
-    },
-    {
-      path: '/change-password',
-      name: 'change-password',
-      component: ChangePasswordView,
-    },
-
     // Danh mục
     {
       path: '/thuong-hieu',
@@ -101,53 +72,8 @@ const router = createRouter({
       path: '/kich-thuoc',
       name: 'kich-thuoc',
       component: KichThuocView,
-    },
-
-    // Role pages
-    {
-      path: '/admin',
-      name: 'admin',
-      component: HomeView,
-    },
-    {
-      path: '/staff',
-      name: 'staff',
-      component: HomeView,
-    },
-  ],
-})
-
-router.beforeEach((to, from, next) => {
-  const user = JSON.parse(localStorage.getItem('user'))
-  const token = localStorage.getItem('token')
-
-  const protectedRoutes = [
-    '/profile',
-    '/change-password',
-    '/cart',
-    '/checkout'
-  ]
-
-  if (protectedRoutes.includes(to.path) && !token) {
-    next('/login')
-    return
-  }
-
-  if (to.path.startsWith('/admin')) {
-    if (!user || user.role !== 'ADMIN') {
-      next('/')
-      return
     }
-  }
-
-  if (to.path.startsWith('/staff')) {
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) {
-      next('/')
-      return
-    }
-  }
-
-  next()
+    ]
 })
 
 export default router

@@ -1,15 +1,15 @@
+```vue
 <script setup>
-import { ref, onMounted,computed  } from "vue"
+import { ref, computed, onMounted } from "vue"
 import axios from "axios"
 
 const API = "http://localhost:8080/api/thuong-hieu"
 
+// ================= DATA =================
 const list = ref([])
-// ================= PAGINATION =================
 const page = ref(1)
 const pageSize = 10
 
-// ===== FORM =====
 const form = ref({
   id: null,
   ma: "",
@@ -18,109 +18,121 @@ const form = ref({
   website: "",
   moTa: "",
   quocGia: "",
-  trangThai: true
+  trangThai: true,
+  ngayTao: null,
+  ngayCapNhat: null
 })
 
-// ===== ERROR =====
 const errors = ref({
   ma: "",
-  ten: "",
-  website: "",
-  quocGia: ""
+  ten: ""
 })
 
-// ===== TOAST =====
 const toast = ref("")
 const toastType = ref("success")
 
+// ================= TOAST =================
 const showToast = (msg, type = "success") => {
   toast.value = msg
   toastType.value = type
 
   setTimeout(() => {
     toast.value = ""
-  }, 2000)
+  }, 2500)
 }
 
-// ===== LOAD =====
+// ================= LOAD =================
 const load = async () => {
-  const res = await axios.get(API)
-  list.value = res.data
+  try {
+    const res = await axios.get(API)
+    list.value = res.data
+  } catch (error) {
+    console.error(error)
+    showToast("Không tải được dữ liệu", "error")
+  }
 }
 
-// ===== VALIDATE =====
+// ================= VALIDATE =================
 const validate = () => {
-  let ok = true
-
   errors.value = {
     ma: "",
-    ten: "",
-    website: "",
-    quocGia: ""
+    ten: ""
   }
 
+  let ok = true
+
   if (!form.value.ma.trim()) {
-    errors.value.ma = "⚠ Mã không được để trống"
+    errors.value.ma = "Mã thương hiệu không được để trống"
     ok = false
   }
 
   if (!form.value.ten.trim()) {
-    errors.value.ten = "⚠ Tên không được để trống"
-    ok = false
-  }
-
-  if (!form.value.quocGia.trim()) {
-    errors.value.quocGia = "⚠ Quốc gia không được để trống"
-    ok = false
-  }
-
-  if (form.value.website && !form.value.website.includes(".")) {
-    errors.value.website = "⚠ Website không hợp lệ"
+    errors.value.ten = "Tên thương hiệu không được để trống"
     ok = false
   }
 
   return ok
 }
 
-// ===== SAVE =====
+// ================= SAVE =================
 const save = async () => {
   if (!validate()) {
-    showToast("Vui lòng kiểm tra lại dữ liệu", "error")
+    showToast("Vui lòng kiểm tra dữ liệu", "error")
     return
   }
 
   try {
+    const payload = {
+      ma: form.value.ma,
+      ten: form.value.ten,
+      logo: form.value.logo,
+      website: form.value.website,
+      moTa: form.value.moTa,
+      quocGia: form.value.quocGia,
+      trangThai: form.value.trangThai
+    }
+
     if (form.value.id) {
-      await axios.put(`${API}/${form.value.id}`, form.value)
+      await axios.put(`${API}/${form.value.id}`, payload)
       showToast("Cập nhật thành công")
     } else {
-      await axios.post(API, form.value)
+      await axios.post(API, payload)
       showToast("Thêm mới thành công")
     }
 
     reset()
     load()
-
-  } catch (err) {
+  } catch (error) {
+    console.error(error)
     showToast("Có lỗi xảy ra", "error")
   }
 }
 
-// ===== DELETE =====
+// ================= DELETE =================
 const del = async (id) => {
   if (!confirm("Bạn có chắc muốn xóa?")) return
 
-  await axios.delete(`${API}/${id}`)
-  showToast("Xóa thành công")
-  load()
+  try {
+    await axios.delete(`${API}/${id}`)
+    showToast("Xóa thành công")
+    load()
+  } catch (error) {
+    console.error(error)
+    showToast("Xóa thất bại", "error")
+  }
 }
 
-// ===== EDIT =====
+// ================= EDIT =================
 const edit = (item) => {
   form.value = { ...item }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  })
 }
 
-// ===== RESET =====
+// ================= RESET =================
 const reset = () => {
   form.value = {
     id: null,
@@ -130,16 +142,24 @@ const reset = () => {
     website: "",
     moTa: "",
     quocGia: "",
-    trangThai: true
+    trangThai: true,
+    ngayTao: null,
+    ngayCapNhat: null
   }
 
   errors.value = {
     ma: "",
-    ten: "",
-    website: "",
-    quocGia: ""
+    ten: ""
   }
 }
+
+// ================= FORMAT DATE =================
+const formatDate = (date) => {
+  if (!date) return "---"
+
+  return new Date(date).toLocaleString("vi-VN")
+}
+
 // ================= PAGINATION =================
 const totalPages = computed(() =>
   Math.ceil(list.value.length / pageSize)
@@ -162,93 +182,212 @@ onMounted(load)
 
     <h2>🏷️ QUẢN LÝ THƯƠNG HIỆU</h2>
 
-    <!-- TOAST -->
-    <div v-if="toast" :class="['toast', toastType]">
+    <div
+      v-if="toast"
+      :class="['toast', toastType]"
+    >
       {{ toast }}
     </div>
 
     <!-- FORM -->
-    <div class="card form">
+    <div class="card">
 
       <div class="grid">
 
         <div>
-          <input v-model="form.ma" placeholder="Mã thương hiệu" />
+          <label>Mã thương hiệu *</label>
+          <input v-model="form.ma">
           <small class="error">{{ errors.ma }}</small>
         </div>
 
         <div>
-          <input v-model="form.ten" placeholder="Tên thương hiệu" />
+          <label>Tên thương hiệu *</label>
+          <input v-model="form.ten">
           <small class="error">{{ errors.ten }}</small>
         </div>
 
         <div>
-          <input v-model="form.website" placeholder="Website" />
-          <small class="error">{{ errors.website }}</small>
+          <label>Logo URL</label>
+          <input v-model="form.logo">
         </div>
 
         <div>
-          <input v-model="form.quocGia" placeholder="Quốc gia" />
-          <small class="error">{{ errors.quocGia }}</small>
+          <label>Website</label>
+          <input v-model="form.website">
         </div>
 
-        <input v-model="form.logo" placeholder="Logo URL" />
+        <div>
+          <label>Quốc gia</label>
+          <input v-model="form.quocGia">
+        </div>
 
       </div>
 
-      <textarea v-model="form.moTa" placeholder="Mô tả"></textarea>
+      <div class="mt">
+        <label>Mô tả</label>
+        <textarea
+          rows="4"
+          v-model="form.moTa"
+        ></textarea>
+      </div>
+
+      <div class="status-box">
+
+        <label>
+          <input
+            type="radio"
+            :value="true"
+            v-model="form.trangThai"
+          >
+          Hoạt động
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            :value="false"
+            v-model="form.trangThai"
+          >
+          Ngừng hoạt động
+        </label>
+
+      </div>
 
       <div class="actions">
-        <button class="save" @click="save">
+        <button
+          class="btn-save"
+          @click="save"
+        >
           {{ form.id ? "Cập nhật" : "Thêm mới" }}
         </button>
 
-        <button class="reset" @click="reset">Reset</button>
+        <button
+          class="btn-reset"
+          @click="reset"
+        >
+          Reset
+        </button>
+      </div>
+
+      <div
+        v-if="form.id"
+        class="audit-box"
+      >
+        <h4>Thông tin hệ thống</h4>
+
+        <div class="audit-grid">
+          <div>
+            <b>Ngày tạo:</b>
+            {{ formatDate(form.ngayTao) }}
+          </div>
+
+          <div>
+            <b>Ngày cập nhật:</b>
+            {{ formatDate(form.ngayCapNhat) }}
+          </div>
+        </div>
       </div>
 
     </div>
 
     <!-- TABLE -->
     <div class="card">
+
       <table>
+
         <thead>
         <tr>
+          <th>Logo</th>
           <th>Mã</th>
-          <th>Tên</th>
+          <th>Tên thương hiệu</th>
           <th>Quốc gia</th>
           <th>Website</th>
+          <th>Trạng thái</th>
           <th>Hành động</th>
         </tr>
         </thead>
 
         <tbody>
-        <tr v-for="i in paginatedList" :key="i.id">
-          <td>{{ i.ma }}</td>
-          <td>{{ i.ten }}</td>
-          <td>{{ i.quocGia }}</td>
-          <td>{{ i.website }}</td>
+
+        <tr
+          v-for="item in paginatedList"
+          :key="item.id"
+        >
 
           <td>
-            <button @click="edit(i)">✏️</button>
-            <button @click="del(i.id)">🗑</button>
+            <img
+              :src="item.logo || 'https://via.placeholder.com/50'"
+              class="logo"
+            >
           </td>
+
+          <td>{{ item.ma }}</td>
+
+          <td>{{ item.ten }}</td>
+
+          <td>{{ item.quocGia }}</td>
+
+          <td>
+            <a
+              :href="item.website"
+              target="_blank"
+            >
+              Website
+            </a>
+          </td>
+
+          <td>
+              <span
+                :class="
+                  item.trangThai
+                    ? 'active-status'
+                    : 'inactive-status'
+                "
+              >
+                {{
+                  item.trangThai
+                    ? 'Hoạt động'
+                    : 'Ngừng hoạt động'
+                }}
+              </span>
+          </td>
+
+          <td>
+            <button
+              class="btn-edit"
+              @click="edit(item)"
+            >
+              ✏️
+            </button>
+
+            <button
+              class="btn-delete"
+              @click="del(item.id)"
+            >
+              🗑️
+            </button>
+          </td>
+
         </tr>
+
         </tbody>
 
       </table>
+
       <div class="pagination">
 
         <button
           @click="page--"
           :disabled="page === 1"
         >
+          ◀
         </button>
 
         <button
           v-for="p in totalPages"
           :key="p"
           @click="changePage(p)"
-          :class="{ activePage: p === page }"
+          :class="{ activePage: page === p }"
         >
           {{ p }}
         </button>
@@ -257,124 +396,167 @@ onMounted(load)
           @click="page++"
           :disabled="page === totalPages"
         >
+          ▶
         </button>
 
       </div>
+
     </div>
 
   </div>
 </template>
 
 <style scoped>
-.container {
-  padding: 20px;
-  font-family: Arial;
-  background: #f6f7fb;
+.container{
+  padding:20px;
+  background:#f5f6fa;
+  min-height:100vh;
 }
 
-.card {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:20px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
 
-/* GRID FORM */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:15px;
 }
 
-input, textarea {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  width: 100%;
+input,
+textarea{
+  width:100%;
+  padding:10px;
+  border:1px solid #ddd;
+  border-radius:8px;
 }
 
-textarea {
-  grid-column: span 2;
+.mt{
+  margin-top:15px;
 }
 
-.actions {
-  margin-top: 10px;
+.status-box{
+  margin-top:15px;
+  display:flex;
+  gap:20px;
 }
 
-/* BUTTON */
-.save {
-  background: green;
-  color: white;
-  padding: 8px 12px;
-  border: none;
+.actions{
+  margin-top:20px;
 }
 
-.reset {
-  background: gray;
-  color: white;
-  padding: 8px 12px;
-  border: none;
+.btn-save{
+  background:#198754;
+  color:white;
+  border:none;
+  padding:10px 16px;
+  border-radius:8px;
 }
 
-/* ERROR */
-.error {
-  color: red;
-  font-size: 12px;
+.btn-reset{
+  background:#6c757d;
+  color:white;
+  border:none;
+  padding:10px 16px;
+  border-radius:8px;
+  margin-left:10px;
 }
 
-/* TABLE */
-table {
-  width: 100%;
-  border-collapse: collapse;
+.logo{
+  width:50px;
+  height:50px;
+  object-fit:contain;
 }
 
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  text-align: center;
+table{
+  width:100%;
+  border-collapse:collapse;
 }
 
-/* TOAST */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 10px 15px;
-  border-radius: 6px;
-  color: white;
-  z-index: 999;
+th,td{
+  padding:12px;
+  border-bottom:1px solid #eee;
+  text-align:center;
 }
 
-.success {
-  background: #28a745;
+.active-status{
+  color:#198754;
+  font-weight:bold;
 }
 
-.error {
-  background: #dc3545;
-}
-/* PAGINATION */
-.pagination {
-  margin-top: 15px;
-  display: flex;
-  justify-content: center;
-  gap: 5px;
+.inactive-status{
+  color:#dc3545;
+  font-weight:bold;
 }
 
-.pagination button {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background: #e9ecef;
+.btn-edit{
+  background:#ffc107;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
 }
 
-.pagination button:hover {
-  background: #d6d8db;
+.btn-delete{
+  background:#dc3545;
+  color:white;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  margin-left:5px;
 }
 
-.activePage {
-  background: #0d6efd !important;
-  color: white;
+.pagination{
+  margin-top:15px;
+  display:flex;
+  justify-content:center;
+  gap:5px;
+}
+
+.pagination button{
+  padding:6px 12px;
+}
+
+.activePage{
+  background:#0d6efd;
+  color:white;
+}
+
+.error{
+  color:red;
+}
+
+.toast{
+  position:fixed;
+  top:20px;
+  right:20px;
+  padding:12px 18px;
+  color:white;
+  border-radius:8px;
+  z-index:999;
+}
+
+.success{
+  background:#198754;
+}
+
+.error{
+  background:#dc3545;
+}
+
+.audit-box{
+  margin-top:20px;
+  padding:15px;
+  background:#f8f9fa;
+  border-radius:8px;
+}
+
+.audit-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
 }
 </style>
+```

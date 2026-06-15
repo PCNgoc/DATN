@@ -171,6 +171,8 @@ onMounted(load)
             type="number"
             v-model="form.size"
             placeholder="Size (35 - 46)"
+            min="35"
+            max="46"
           />
           <small class="error-text">
             {{ errors.size }}
