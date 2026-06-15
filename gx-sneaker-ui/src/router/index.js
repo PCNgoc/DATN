@@ -4,6 +4,13 @@ import HomeView from '../views/HomeView.vue'
 
 // Auth
 
+import LoginView from '@/views/LoginView.vue'
+import RegisterView from '@/views/RegisterView.vue'
+import ProfileView from '@/views/ProfileView.vue'
+import ForgotPasswordView from '@/views/ForgotPasswordView.vue'
+import ResetPasswordView from '@/views/ResetPasswordView.vue'
+import ChangePasswordView from '@/views/ChangePasswordView.vue'
+import Dashboard from '@/views/Dashboard.vue'
 
 // Danh mục sản phẩm
 import ThuongHieuView from '../views/ThuongHieuView.vue'
@@ -15,6 +22,11 @@ import DeGiayView from '@/views/DeGiayView.vue'
 import KichThuocView from '@/views/KichThuocView.vue'
 import MauSacView from '@/views/MauSacView.vue'
 import SanPhamView from '@/views/SanPhamView.vue'
+// Thống kê
+//import HoaDonView from '@/views/HoaDonView.vue'
+//Hóa đơn
+import HoaDonView from '@/views/HoaDonView.vue'
+
 
 const router = createRouter({
   history: createWebHistory(),
@@ -72,8 +84,62 @@ const router = createRouter({
       path: '/kich-thuoc',
       name: 'kich-thuoc',
       component: KichThuocView,
+
+    },
+
+    // Role pages
+    {
+      path: '/admin',
+      name: 'admin',
+      component: HomeView,
+    },
+    {
+      path: '/staff',
+      name: 'staff',
+      component: HomeView,
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: Dashboard
+    },
+    // {
+    //   path: '/hoa-don',
+    //   component: HoaDonView
+    // }
+    {
+      path: '/hoa-don',
+      component: HoaDonView
     }
-    ]
+
+
+  ],
+})
+
+router.beforeEach((to, from, next) => {
+  const user = JSON.parse(localStorage.getItem('user'))
+  const token = localStorage.getItem('token')
+
+  const protectedRoutes = [
+    '/profile',
+    '/change-password',
+    '/cart',
+    '/checkout'
+  ]
+
+  if (protectedRoutes.includes(to.path) && !token) {
+    next('/login')
+    return
+  }
+
+  if (to.path.startsWith('/admin')) {
+    if (!user || user.role !== 'ADMIN') {
+      next('/')
+      return
+    }
+  }
+
+  next()
 })
 
 export default router

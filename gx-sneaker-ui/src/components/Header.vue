@@ -1,28 +1,32 @@
 <script setup>
+import { useAuth } from '@/composables/useAuth'
+
+const { user, logout } = useAuth()
 </script>
 
 <template>
   <header class="navbar">
-
-    <!-- Logo -->
     <div class="logo">
       <span class="gx">GX</span>
       <span class="sneaker">SNEAKER</span>
     </div>
 
-    <!-- Menu -->
     <nav class="menu">
-
       <router-link to="/">Trang chủ</router-link>
       <router-link to="/nam">Nam</router-link>
       <router-link to="/nu">Nữ</router-link>
       <router-link to="/bo-suu-tap">Bộ sưu tập</router-link>
       <router-link to="/san-pham">Sản phẩm</router-link>
+      <router-link to="/sale">Sale</router-link>
+      <router-link to="/dashboard">
+        Thống kê
+      </router-link>
+      <router-link to="/hoa-don" class="nav-link">
+        Hóa đơn
+      </router-link>
 
-      <!-- Dropdown -->
       <div class="dropdown">
         <span class="drop-title">Danh mục ▾</span>
-
         <div class="dropdown-menu">
           <router-link to="/thuong-hieu">Thương hiệu</router-link>
           <router-link to="/danh-muc">Danh mục</router-link>
@@ -34,24 +38,26 @@
           <router-link to="/kich-thuoc">Kích thước</router-link>
         </div>
       </div>
-
     </nav>
 
-    <!-- Search -->
     <div class="search-box">
-      <input type="text" placeholder="Tìm kiếm sản phẩm...">
+      <input type="text" placeholder="Tìm kiếm sản phẩm..." />
       <button>
         <i class="fas fa-search"></i>
       </button>
     </div>
 
-    <!-- Actions -->
     <div class="actions">
+      <div v-if="user" class="action-item user-box">
+        <i class="far fa-user"></i>
+        <router-link to="/profile">Xin chào {{ user.hoTen }}</router-link>
+        <button class="logout-btn" @click="logout">Đăng xuất</button>
+      </div>
 
-      <div class="action-item">
+      <router-link v-else to="/login" class="action-item">
         <i class="far fa-user"></i>
         <span>Đăng nhập</span>
-      </div>
+      </router-link>
 
       <div class="action-item">
         <div class="icon-wrap">
@@ -60,21 +66,37 @@
         <span>Yêu thích</span>
       </div>
 
-      <div class="action-item">
+      <router-link to="/cart" class="action-item">
         <div class="icon-wrap">
           <i class="fas fa-cart-shopping"></i>
         </div>
         <span>Giỏ hàng</span>
-      </div>
-
+      </router-link>
     </div>
-
   </header>
 </template>
 
 <style scoped>
+.action-item {
+  text-decoration: none;
+  color: inherit;
+}
 
-/* ⭐⭐⭐ THÊM MỚI: DROPDOWN SHOPEE STYLE ⭐⭐⭐ */
+.user-box {
+  gap: 8px;
+}
+
+.user-box a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.logout-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: red;
+}
 
 .dropdown {
   position: relative;
@@ -92,9 +114,9 @@
   position: absolute;
   top: 100%;
   left: 0;
-  background: #ffffff;
+  background: white;
   min-width: 180px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   border-radius: 6px;
   z-index: 999;
 }
@@ -110,11 +132,7 @@
   background: #f5f5f5;
 }
 
-/* hover để xổ menu */
 .dropdown:hover .dropdown-menu {
   display: block;
 }
-
-/* ⭐⭐⭐ KẾT THÚC PHẦN THÊM ⭐⭐⭐ */
-
 </style>
