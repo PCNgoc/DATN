@@ -2,33 +2,36 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <div class="container-fluid custom-layout bg-light min-vh-100">
-    <div class="card hoa-don-card shadow border-0 w-100" style="max-width: 1300px;">
+    <div class="card hoa-don-card shadow border-0 w-100" style="max-width: 1500px;">
 
       <div class="card-header bg-white border-0 pt-5 pb-3 px-4">
         <div class="text-center">
-          <h1 class="main-invoice-title fw-bold text-dark mb-4">
+          <h1 class="main-invoice-title">
             DANH SÁCH HÓA ĐƠN ({{ hoaDons.length }})
           </h1>
 
           <div class="search-box-container mx-auto my-4">
-            <div class="row g-2 align-items-center m-0">
-              <div class="col-md-5 px-1">
-                <div class="input-group search-input">
-                  <span class="input-group-text bg-white border-end-0 text-muted">
-                    <i class="bi bi-search"></i>
-                  </span>
+            <div class="search-toolbar">
+
+              <div class="search-item search-input-box">
+                <div class="search-input-wrapper">
+                  <i class="bi bi-search search-icon"></i>
+
                   <input
                     v-model="searchMaHD"
                     type="text"
-                    class="form-control border-start-0"
+                    class="form-control search-input-modern"
                     placeholder="Nhập mã hóa đơn..."
                     @keyup.enter="handleSearch"
                   />
                 </div>
               </div>
 
-              <div class="col-md-4 px-1">
-                <select v-model="searchStatus" class="form-select search-select" @change="handleSearch">
+              <div class="search-item status-box">
+                <select
+                  v-model="searchStatus"
+                  class="form-select search-select"
+                >
                   <option value="">-- Tất cả trạng thái --</option>
                   <option value="CHO_XAC_NHAN">CHỜ XÁC NHẬN</option>
                   <option value="DA_XAC_NHAN">ĐÃ XÁC NHẬN</option>
@@ -38,20 +41,30 @@
                 </select>
               </div>
 
-              <div class="col-md-3 px-1 d-flex gap-2">
-                <button @click="handleSearch" class="btn btn-filter d-flex align-items-center gap-2 text-nowrap w-100 justify-content-center">
-                  <i class="bi bi-funnel-fill"></i> Lọc
+              <div class="search-item button-box">
+                <button
+                  @click="handleSearch"
+                  class="btn btn-filter"
+                >
+                  <i class="bi bi-funnel-fill me-2"></i>
+                  Lọc
                 </button>
-                <button @click="handleReset" class="btn btn-outline-secondary btn-reset d-flex align-items-center justify-content-center" title="Xóa bộ lọc">
+
+                <button
+                  @click="handleReset"
+                  class="btn btn-outline-secondary btn-reset"
+                >
                   <i class="bi bi-arrow-counterclockwise"></i>
                 </button>
               </div>
+
             </div>
           </div>
 
-          <div class="text-start px-2 mb-2">
+          <div class="invoice-action">
             <button class="btn btn-export-lg d-inline-flex align-items-center gap-2">
-              <i class="bi bi-download"></i> Xuất Excel
+              <i class="bi bi-download"></i>
+              In hóa đơn
             </button>
           </div>
         </div>
@@ -69,7 +82,7 @@
               <th>Tổng thanh toán</th>
               <th>Trạng thái</th>
               <th>Ngày đặt</th>
-              <th class="text-center" style="width: 220px;">Thao tác</th>
+              <th class="text-center" style="width: 320px;">Thao tác</th>
             </tr>
             </thead>
             <tbody>
@@ -92,12 +105,48 @@
                 </div>
               </td>
               <td>
-                <div class="d-flex gap-4 justify-content-center">
-                  <button @click="openDetailModal(hd)" class="btn-action btn-view" title="Chi tiết">
+                <div class="action-buttons">
+
+                  <button
+                    @click="openDetailModal(hd)"
+                    class="btn-action btn-view"
+                    title="Chi tiết"
+                  >
                     <i class="bi bi-eye"></i>
                   </button>
-                  <button class="btn-action btn-edit" title="Sửa"><i class="bi bi-pencil-square"></i></button>
-                  <button class="btn-action btn-delete" title="Xóa"><i class="bi bi-trash"></i></button>
+
+                  <button
+                    v-if="hd.trangThai === 'CHO_XAC_NHAN'"
+                    class="btn btn-success btn-sm"
+                    @click="updateStatus(hd.id, 'DA_XAC_NHAN')"
+                  >
+                    Xác nhận
+                  </button>
+
+                  <button
+                    v-if="hd.trangThai === 'CHO_XAC_NHAN'"
+                    class="btn btn-danger btn-sm"
+                    @click="updateStatus(hd.id, 'DA_HUY')"
+                  >
+                    Hủy
+                  </button>
+
+                  <button
+                    v-if="hd.trangThai === 'DA_XAC_NHAN'"
+                    class="btn btn-primary btn-sm"
+                    @click="updateStatus(hd.id, 'DANG_GIAO')"
+                  >
+                    Giao hàng
+                  </button>
+
+                  <button
+                    v-if="hd.trangThai === 'DANG_GIAO'"
+                    class="btn btn-warning btn-sm text-white"
+                    @click="updateStatus(hd.id, 'HOAN_THANH')"
+                  >
+                    Hoàn thành
+                  </button>
+
                 </div>
               </td>
             </tr>
@@ -186,6 +235,45 @@
               </tbody>
             </table>
           </div>
+
+
+          <div class="history-section mt-4">
+            <h5 class="fw-bold mb-3">
+              Lịch sử trạng thái
+            </h5>
+
+            <table class="table table-bordered table-striped">
+              <thead>
+              <tr>
+                <th>Thời gian</th>
+                <th>Từ</th>
+                <th>Sang</th>
+                <th>Người thực hiện</th>
+                <th>Ghi chú</th>
+              </tr>
+              </thead>
+
+              <tbody>
+              <tr
+                v-for="item in lichSuList"
+                :key="item.id"
+              >
+                <td>{{ formatDateTime(item.thoiGian) }}</td>
+                <td>{{ item.trangThaiCu || '-' }}</td>
+                <td>{{ item.trangThaiMoi }}</td>
+                <td>{{ item.nguoiThucHien }}</td>
+                <td>{{ item.ghiChu || '-' }}</td>
+              </tr>
+
+              <tr v-if="lichSuList.length === 0">
+                <td colspan="5" class="text-center">
+                  Chưa có lịch sử
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
         </div>
 
         <div class="modal-footer-pro">
@@ -224,6 +312,30 @@ const loadHoaDon = async (maHD = '', status = '') => {
   }
 }
 
+const updateStatus = async (id, trangThaiMoi) => {
+  try {
+    await axios.put(
+      `http://localhost:8080/api/hoa-don/${id}/status`,
+      {
+        trangThaiMoi,
+        nguoiThucHien: "Admin",
+        ghiChu: ""
+      }
+    )
+
+    await loadHoaDon(
+      searchMaHD.value,
+      searchStatus.value
+    )
+
+    alert("Cập nhật trạng thái thành công!")
+  } catch (error) {
+    console.error(error)
+    alert("Cập nhật trạng thái thất bại!")
+  }
+}
+
+
 const openDetailModal = async (hd) => {
   selectedHoaDon.value = hd
   showModal.value = true
@@ -234,12 +346,45 @@ const openDetailModal = async (hd) => {
   } catch (error) {
     console.error('Lỗi khi tải chi tiết hóa đơn:', error)
   }
+
+  try {
+    const historyResponse = await axios.get(
+      `http://localhost:8080/api/hoa-don/${hd.id}/history`
+    )
+
+    lichSuList.value = historyResponse.data
+  } catch (error) {
+    console.error("Lỗi tải lịch sử:", error)
+  }
+  const openDetailModal = async (hd) => {
+    selectedHoaDon.value = hd
+
+    try {
+      const detailResponse = await axios.get(
+        `http://localhost:8080/api/hoa-don/${hd.id}`
+      )
+
+      chiTietList.value = detailResponse.data
+
+      const historyResponse = await axios.get(
+        `http://localhost:8080/api/hoa-don/${hd.id}/history`
+      )
+
+      lichSuList.value = historyResponse.data
+
+      showModal.value = true
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
 }
 
 const closeModal = () => {
   showModal.value = false
   selectedHoaDon.value = null
   chiTietList.value = []
+  lichSuList.value = []
 }
 
 const handleSearch = () => { loadHoaDon(searchMaHD.value, searchStatus.value) }
@@ -274,6 +419,14 @@ const getStatusIcon = (s) => {
   }
 }
 
+const lichSuList = ref([])
+
+const formatDateTime = (date) => {
+  if (!date) return '-'
+
+  return new Date(date).toLocaleString('vi-VN')
+}
+
 onMounted(() => { loadHoaDon() })
 </script>
 
@@ -286,7 +439,8 @@ onMounted(() => { loadHoaDon() })
   padding: 60px 70px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+
 }
 
 .hoa-don-card {
@@ -296,14 +450,24 @@ onMounted(() => { loadHoaDon() })
   background-color: #ffffff;
 }
 
-.main-invoice-title { font-size: 38px; letter-spacing: -0.5px; }
+.main-invoice-title {
+  text-align: center;
+  font-size: 42px;
+  font-weight: 800;
+
+  color: #111827;
+  letter-spacing: 1px;
+
+  margin-top: 10px;
+  margin-bottom: 45px;
+}
 
 .search-box-container {
   background: #f8f9fa;
-  padding: 16px 20px;
-  border-radius: 12px;
+  padding: 24px;
+  border-radius: 14px;
   border: 1px solid #eef2f5;
-  max-width: 850px !important;
+  max-width: 1100px;
   width: 100%;
 }
 
@@ -411,8 +575,163 @@ onMounted(() => { loadHoaDon() })
   to { transform: translateY(0); opacity: 1; }
 }
 
+
+.search-toolbar {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  width: 100%;
+}
+
+.search-input-box {
+  flex: 2;
+}
+
+.status-box {
+  flex: 1;
+}
+
+.button-box {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-filter {
+  min-width: 120px;
+}
+
+.btn-reset {
+  width: 50px;
+}
+
+.search-input,
+.search-select {
+  width: 100%;
+}
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 10px; /* chỉnh 14px, 18px, 20px tùy ý */
+}
+
+
+.history-section {
+  margin-top: 30px;
+}
+
+.history-item {
+  display: flex;
+  gap: 20px;
+  padding: 14px 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.history-time {
+  width: 170px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.history-content {
+  flex: 1;
+}
+
 /* ==================== ĐỊNH DẠNG TABLE & BUTTON DANH SÁCH ==================== */
-.search-input .form-control, .search-select, .btn-filter, .btn-reset { height: 46px !important; }
+.search-input .form-control,
+.search-input .input-group-text,
+.search-select,
+.btn-filter,
+.btn-reset {
+  height: 50px !important;
+}
+
+.search-input .form-control,
+.search-select {
+  height: 50px;
+  border: none;
+  border-radius: 14px;
+  background: #f8fafc;
+  box-shadow: inset 0 0 0 1px #dbe2ea;
+}
+
+.search-input .input-group-text {
+  background: #f8fafc;
+  border: none;
+  box-shadow: inset 1px 0 0 #dbe2ea,
+  inset 0 1px 0 #dbe2ea,
+  inset 0 -1px 0 #dbe2ea;
+}
+
+.search-input .form-control:focus,
+.search-select:focus {
+  background: white;
+  box-shadow:
+    inset 0 0 0 2px #3b82f6,
+    0 0 0 4px rgba(59,130,246,.15);
+}
+
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 15px;
+  z-index: 2;
+}
+
+.search-input-modern {
+  height: 48px;
+  padding-left: 42px !important;
+  border-radius: 12px;
+  border: 1px solid #dbe2ea;
+}
+
+.search-input-modern:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59,130,246,.15);
+}
+
+.invoice-action {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding-left: 15px;
+}
+
+.btn-export-lg {
+  padding: 10px 22px;
+  border-radius: 12px;
+}
+
+.btn-sm {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 6px 12px;
+}
+
+.btn-success,
+.btn-danger,
+.btn-primary,
+.btn-warning {
+  transition: all 0.25s ease;
+}
+
+.btn-success:hover,
+.btn-danger:hover,
+.btn-primary:hover,
+.btn-warning:hover {
+  transform: translateY(-2px);
+}
+
 .search-input .input-group-text { border-radius: 8px 0 0 8px !important; border: 1px solid #ced4da; background-color: #ffffff; }
 .search-input .form-control { border-radius: 0 8px 8px 0 !important; border: 1px solid #ced4da; }
 .search-select { border-radius: 8px !important; border: 1px solid #ced4da; }

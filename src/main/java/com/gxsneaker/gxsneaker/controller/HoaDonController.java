@@ -5,6 +5,7 @@ import com.gxsneaker.gxsneaker.entity.HoaDon;
 import com.gxsneaker.gxsneaker.entity.LichSuTrangThaiHoaDon;
 import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.LichSuTrangThaiHoaDonRepository;
+import com.gxsneaker.gxsneaker.service.HoaDonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,8 @@ public class HoaDonController {
     private HoaDonRepository repository;
     @Autowired
     private LichSuTrangThaiHoaDonRepository lichSuRepository;
+    @Autowired
+    private HoaDonService hoaDonService;
 
     @GetMapping
     public List<HoaDon> getAll() {
@@ -371,5 +374,42 @@ public class HoaDonController {
                 )
         );
     }
+
+
+    // =====================================================
+// THỐNG KÊ BIỂU Ò THEO THÁNG
+// =====================================================
+    @GetMapping("/thong-ke/bieu-do-doanh-thu-thang")
+    public ResponseEntity<?> getDoanhThuTheoThang(
+            @RequestParam int year) {
+
+        return ResponseEntity.ok(
+                hoaDonService.getDoanhThuTheoThang(year)
+        );
+    }
+
+    // =====================================================
+// BIỂU ĐỒ DOANH THU THEO THÁNG
+// =====================================================
+//    @GetMapping("/thong-ke/bieu-do-doanh-thu-thang")
+//    public ResponseEntity<?> getBieuDoDoanhThuTheoThang(
+//            @RequestParam int year
+//    ) {
+//
+//        return ResponseEntity.ok(
+//                hoaDonService.getDoanhThuTheoThang(year)
+//        );
+//    }
+
+    @GetMapping("/thong-ke/trang-thai-don-hang")
+    public ResponseEntity<?> getThongKeTrangThaiDonHang(
+            @RequestParam int year
+    ) {
+
+        return ResponseEntity.ok(
+                hoaDonService.getThongKeTrangThaiDonHang(year)
+        );
+    }
+
 
 }
