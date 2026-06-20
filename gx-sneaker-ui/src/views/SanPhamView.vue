@@ -1,803 +1,965 @@
 <script setup>
+
 import { ref, computed, onMounted } from "vue"
 import axios from "axios"
 
-const API_SAN_PHAM = "http://localhost:8080/api/san-pham"
-const API_THUONG_HIEU = "http://localhost:8080/api/thuong-hieu"
-const API_XUAT_XU = "http://localhost:8080/api/xuat-xu"
-const API_CHAT_LIEU = "http://localhost:8080/api/chat-lieu"
-const API_CO_GIAY = "http://localhost:8080/api/co-giay"
-const API_DE_GIAY = "http://localhost:8080/api/de-giay"
-const API_DANH_MUC = "http://localhost:8080/api/danh-muc"
+import {
+  getAll,
+  create,
+  update,
+  remove
+} from "@/services/sanPhamService"
 
-// ====================== DATA ======================
+import { useRouter } from "vue-router"
 
-const list = ref([])
+const router = useRouter()
 
-const thuongHieuList = ref([])
-const xuatXuList = ref([])
-const chatLieuList = ref([])
-const coGiayList = ref([])
-const deGiayList = ref([])
-const danhMucList = ref([])
+const goToDetail = (id) => {
+  router.push(`/san-pham/${id}/chi-tiet`)
+}
+
+// CATEGORY SERVICE
+
+import {
+  getAllThuongHieu
+} from "@/services/thuongHieuService"
+
+import {
+  getAll as getAllChatLieu
+} from "@/services/chatLieuService"
+
+
+import {
+  getAll as getAllCoGiay
+} from "@/services/coGiayService"
+
+
+import {
+  getAll as getAllDeGiay
+} from "@/services/deGiayService"
+
+
+import {
+  getAll as getAllDanhMuc
+} from "@/services/danhMucService"
+
+
+import {
+  getAll as getAllXuatXu
+} from "@/services/xuatXuService"
+
+
+// ================= API =================
+
+const UPLOAD_API =
+  "http://localhost:8080/api/upload"
+
+
+
+// ================= DATA =================
+
+const products = ref([])
 
 const loading = ref(false)
 
-// ====================== SEARCH ======================
+const search = ref("")
 
-const keyword = ref("")
 
-// ====================== PAGINATION ======================
+const showModal = ref(false)
 
-const page = ref(1)
-const pageSize = 10
+const isEdit = ref(false)
 
-// ====================== FORM ======================
+
+const imageFile = ref(null)
+
+
+
+// ================= CATEGORY =================
+
+const thuongHieuList = ref([])
+
+const xuatXuList = ref([])
+
+const chatLieuList = ref([])
+
+const coGiayList = ref([])
+
+const deGiayList = ref([])
+
+const danhMucList = ref([])
+
+
+
+
+// ================= FORM DTO =================
+
 
 const form = ref({
-  id: null,
 
-  idThuongHieu: "",
-  idXuatXu: "",
-  idChatLieu: "",
-  idCoGiay: "",
-  idDeGiay: "",
-  idDanhMuc: "",
+  id:null,
 
-  maSanPham: "",
-  tenSanPham: "",
+  idThuongHieu:null,
 
-  gioiTinh: "Unisex",
+  idXuatXu:null,
 
-  moTaNgan: "",
-  moTaChiTiet: "",
+  idChatLieu:null,
 
-  trangThai: true,
+  idCoGiay:null,
 
-  nguoiTao: "Admin",
-  nguoiCapNhat: ""
+  idDeGiay:null,
+
+  idDanhMuc:null,
+
+
+  maSanPham:"",
+
+  tenSanPham:"",
+
+
+  gioiTinh:"Unisex",
+
+
+  moTaNgan:"",
+
+  moTaChiTiet:"",
+
+
+  anhDaiDien:"",
+
+  preview:"",
+  trangThai:true,
+
+
+  nguoiTao:"ADMIN",
+
+  nguoiCapNhat:"ADMIN"
+
 })
 
-// ====================== ERROR ======================
 
-const errors = ref({})
 
-// ====================== TOAST ======================
 
-const toast = ref("")
-const toastType = ref("success")
 
-const showToast = (msg, type = "success") => {
-  toast.value = msg
-  toastType.value = type
+// ================= LOAD PRODUCT =================
 
-  setTimeout(() => {
-    toast.value = ""
-  }, 2500)
+
+const loadData = async()=>{
+
+
+  try{
+
+
+    loading.value=true
+
+
+    const res = await getAll()
+
+
+    products.value = res.data
+
+
+
+  }catch(e){
+
+
+    console.log(e)
+
+
+  }finally{
+
+
+    loading.value=false
+
+
+  }
+
+
 }
 
-// ====================== LOAD ======================
 
-const load = async () => {
-  try {
 
-    loading.value = true
+
+
+
+// ================= LOAD CATEGORY =================
+
+
+const loadCategoryData = async()=>{
+
+
+  try{
+
 
     const [
-      sp,
+
       th,
+
       xx,
+
       cl,
+
       cg,
+
       dg,
+
       dm
+
     ] = await Promise.all([
-      axios.get(API_SAN_PHAM),
-      axios.get(API_THUONG_HIEU),
-      axios.get(API_XUAT_XU),
-      axios.get(API_CHAT_LIEU),
-      axios.get(API_CO_GIAY),
-      axios.get(API_DE_GIAY),
-      axios.get(API_DANH_MUC)
+
+
+      getAllThuongHieu(),
+
+
+      getAllXuatXu(),
+
+
+      getAllChatLieu(),
+
+
+      getAllCoGiay(),
+
+
+      getAllDeGiay(),
+
+
+      getAllDanhMuc()
+
+
     ])
 
-    list.value = sp.data
+
+
 
     thuongHieuList.value = th.data
+
     xuatXuList.value = xx.data
+
     chatLieuList.value = cl.data
+
     coGiayList.value = cg.data
+
     deGiayList.value = dg.data
+
     danhMucList.value = dm.data
 
-  } catch (e) {
+
+
+  }catch(e){
+
+
     console.log(e)
-    showToast("Lỗi tải dữ liệu", "error")
-  } finally {
-    loading.value = false
+
+
   }
+
+
 }
 
-// ====================== VALIDATE ======================
 
-const validate = () => {
 
-  errors.value = {}
 
-  if (!form.value.maSanPham?.trim()) {
-    errors.value.maSanPham =
-      "Mã sản phẩm không được để trống"
+
+
+
+onMounted(()=>{
+
+
+  loadData()
+
+
+  loadCategoryData()
+
+
+})
+// ================= SEARCH =================
+
+
+const filteredProducts = computed(()=>{
+  if(!search.value.trim())
+
+    return products.value
+  const key =
+    search.value
+      .toLowerCase()
+
+  return products.value.filter(item=>
+    item.tenSanPham
+      ?.toLowerCase()
+      .includes(key)
+
+
+
+    ||
+
+
+
+    item.maSanPham
+      ?.toLowerCase()
+      .includes(key)
+  )
+})
+// ================= IMAGE =================
+
+const previewImage = computed(()=>{
+
+
+  if(form.value.preview){
+
+    return form.value.preview
+
   }
 
-  if (!form.value.tenSanPham?.trim()) {
-    errors.value.tenSanPham =
-      "Tên sản phẩm không được để trống"
+
+  if(form.value.anhDaiDien){
+
+    return `/images/${form.value.anhDaiDien}`
+
   }
 
-  if (!form.value.idThuongHieu) {
-    errors.value.idThuongHieu =
-      "Vui lòng chọn thương hiệu"
-  }
 
-  if (!form.value.idDanhMuc) {
-    errors.value.idDanhMuc =
-      "Vui lòng chọn danh mục"
-  }
+  return "/images/no-image.png"
 
-  if (!form.value.idXuatXu) {
-    errors.value.idXuatXu =
-      "Vui lòng chọn xuất xứ"
-  }
 
-  if (!form.value.idChatLieu) {
-    errors.value.idChatLieu =
-      "Vui lòng chọn chất liệu"
-  }
+})
 
-  if (!form.value.idCoGiay) {
-    errors.value.idCoGiay =
-      "Vui lòng chọn cổ giày"
-  }
+const handleImageUpload=(event)=>{
+  const file = event.target.files[0]
 
-  if (!form.value.idDeGiay) {
-    errors.value.idDeGiay =
-      "Vui lòng chọn đế giày"
-  }
+  if(file){
+    imageFile.value = file
 
-  return Object.keys(errors.value).length === 0
+    form.value.preview =
+      URL.createObjectURL(file)
+
+    form.value.anhDaiDien =
+      file.name
+  }
 }
+// ================= UPLOAD =================
 
-// ====================== SAVE ======================
 
-const save = async () => {
+const uploadImage = async()=>{
 
-  if (!validate()) {
-    showToast(
-      "Vui lòng kiểm tra dữ liệu",
-      "error"
-    )
+
+  if(!imageFile.value){
+
+
+    alert("Chưa chọn ảnh")
+
+
     return
+
+  }
+  try{
+
+
+    const formData =
+      new FormData()
+    formData.append(
+
+      "file",
+
+      imageFile.value
+
+    )
+    const res =
+      await axios.post(
+
+        UPLOAD_API,
+
+        formData,
+
+        {
+
+          headers:{
+
+            "Content-Type":
+              "multipart/form-data"
+
+          }
+
+        }
+
+      )
+    form.value.anhDaiDien = imageFile.value.name
+
+    console.log("Tên ảnh trả về:", res.data)
+
+    form.value.preview = ""
+    alert(
+      "Upload ảnh thành công"
+    )
+
+  }catch(e){
+
+
+    console.log(e)
+
+
+    alert(
+      "Upload ảnh thất bại"
+    )
+
+
   }
 
-  try {
 
-    if (form.value.id) {
+}
 
-      form.value.nguoiCapNhat = "Admin"
+// ================= RESET FORM =================
 
-      await axios.put(
-        `${API_SAN_PHAM}/${form.value.id}`,
+
+const resetForm = ()=>{
+
+
+  form.value = {
+
+
+    id:null,
+
+
+    idThuongHieu:null,
+
+    idXuatXu:null,
+
+    idChatLieu:null,
+
+    idCoGiay:null,
+
+    idDeGiay:null,
+
+    idDanhMuc:null,
+
+
+    maSanPham:"",
+
+    tenSanPham:"",
+
+
+    gioiTinh:"Unisex",
+
+
+    moTaNgan:"",
+
+    moTaChiTiet:"",
+
+
+    anhDaiDien:"",
+
+
+    trangThai:true,
+
+
+    nguoiTao:"ADMIN",
+
+    nguoiCapNhat:"ADMIN"
+
+
+  }
+
+  imageFile.value=null
+
+
+}
+// ================= CREATE =================
+
+
+const openCreate=()=>{
+
+
+  isEdit.value=false
+
+
+  resetForm()
+
+
+  showModal.value=true
+
+
+}
+// ================= EDIT =================
+
+
+const editProduct=(item)=>{
+
+
+  isEdit.value=true
+
+
+  form.value={
+
+    ...item
+
+  }
+
+
+  showModal.value=true
+
+
+}
+// ================= SAVE =================
+
+
+const saveProduct=async()=>{
+
+
+  if(
+
+    !form.value.maSanPham
+
+    ||
+
+    !form.value.tenSanPham
+
+  ){
+
+
+    alert(
+      "Vui lòng nhập mã và tên sản phẩm"
+    )
+
+
+    return
+
+  }
+
+  try{
+
+
+    if(isEdit.value){
+
+
+
+      await update(
+
+        form.value.id,
+
         form.value
+
       )
 
-      showToast("Cập nhật thành công")
 
-    } else {
 
-      await axios.post(
-        API_SAN_PHAM,
+    }else{
+
+
+
+      await create(
+
         form.value
+
       )
 
-      showToast("Thêm mới thành công")
+
+
     }
 
-    reset()
-    load()
+    showModal.value=false
 
-  } catch (e) {
+
+    await loadData()
+
+
+
+  }catch(e){
+
+
     console.log(e)
-    showToast("Có lỗi xảy ra", "error")
-  }
-}
 
-// ====================== DELETE ======================
 
-const del = async (id) => {
-
-  if (
-    !confirm("Bạn chắc chắn muốn xóa?")
-  ) return
-
-  try {
-
-    await axios.delete(
-      `${API_SAN_PHAM}/${id}`
+    alert(
+      "Lỗi lưu sản phẩm"
     )
 
-    showToast("Xóa thành công")
 
-    load()
-
-  } catch (e) {
-
-    showToast(
-      "Không thể xóa",
-      "error"
-    )
-  }
-}
-
-// ====================== EDIT ======================
-
-const edit = (item) => {
-
-  form.value = {
-    ...item
   }
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  })
+
 }
+// ================= DELETE =================
 
-// ====================== RESET ======================
 
-const reset = () => {
+const deleteProduct=async(id)=>{
 
-  form.value = {
 
-    id: null,
+  if(!confirm(
+    "Bạn chắc chắn muốn xóa?"
+  ))
 
-    idThuongHieu: "",
-    idXuatXu: "",
-    idChatLieu: "",
-    idCoGiay: "",
-    idDeGiay: "",
-    idDanhMuc: "",
+    return
 
-    maSanPham: "",
-    tenSanPham: "",
+  try{
 
-    gioiTinh: "Unisex",
 
-    moTaNgan: "",
-    moTaChiTiet: "",
+    await remove(id)
 
-    trangThai: true,
 
-    nguoiTao: "Admin",
-    nguoiCapNhat: ""
+    await loadData()
+
+
+
+  }catch(e){
+
+
+    console.log(e)
+
+
   }
 
-  errors.value = {}
+
 }
 
-// ====================== SEARCH ======================
+// ================= CLOSE =================
 
-const filteredList = computed(() => {
 
-  return list.value.filter(i => {
+const closeModal=()=>{
 
-    const text =
-      `${i.maSanPham} ${i.tenSanPham}`
-        .toLowerCase()
 
-    return text.includes(
-      keyword.value.toLowerCase()
-    )
-  })
-})
+  showModal.value=false
 
-// ====================== PAGINATION ======================
 
-const totalPages = computed(() =>
-  Math.ceil(
-    filteredList.value.length /
-    pageSize
-  )
-)
-
-const paginatedList = computed(() => {
-
-  const start =
-    (page.value - 1) * pageSize
-
-  return filteredList.value.slice(
-    start,
-    start + pageSize
-  )
-})
-
-const changePage = (p) => {
-  page.value = p
 }
-
-// ====================== HELPER ======================
-
-const getThuongHieuName = (id) => {
-  const item = thuongHieuList.value.find(x => x.id == id)
-  return item ? item.ten : ""
-}
-
-const getDanhMucName = (id) => {
-  const item = danhMucList.value.find(x => x.id == id)
-  return item ? item.ten : ""
-}
-
-const getXuatXuName = (id) => {
-  const item = xuatXuList.value.find(x => x.id == id)
-  return item ? item.ten : ""
-}
-
-const getChatLieuName = (id) => {
-  const item = chatLieuList.value.find(x => x.id == id)
-  return item ? item.ten : ""
-}
-
-const getCoGiayName = (id) => {
-  const item = coGiayList.value.find(x => x.id == id)
-  return item ? item.ten : ""
-}
-
-const getDeGiayName = (id) => {
-  const item = deGiayList.value.find(x => x.id == id)
-  return item ? item.ten : ""
-}
-
-// ====================== INIT ======================
-
-onMounted(load)
 
 </script>
 <template>
   <div class="container">
 
-    <h2>👟 QUẢN LÝ SẢN PHẨM</h2>
+    <!-- HEADER -->
+    <div class="header">
+      <h2>👟 QUẢN LÝ SẢN PHẨM</h2>
 
-    <!-- TOAST -->
-    <div
-      v-if="toast"
-      :class="['toast', toastType]"
-    >
-      {{ toast }}
+      <div class="toolbar">
+        <input
+          v-model="search"
+          class="search"
+          placeholder="🔍 Tìm mã hoặc tên sản phẩm..."
+        >
+
+        <button class="btn-add" @click="openCreate">
+          + Thêm sản phẩm
+        </button>
+      </div>
     </div>
 
-    <!-- FORM -->
 
-    <div class="card">
+    <!-- LOADING -->
+    <div v-if="loading" class="loading">
+      Đang tải dữ liệu...
+    </div>
 
-      <h3>
-        {{ form.id ? "CẬP NHẬT SẢN PHẨM" : "THÊM SẢN PHẨM" }}
-      </h3>
 
-      <div class="grid">
+    <!-- GRID -->
+    <div class="grid">
 
-        <!-- Mã -->
+      <div
+        v-for="item in filteredProducts"
+        :key="item.id"
+        class="card"
+        @click="goToDetail(item.id)"
+      >
 
-        <div>
-          <label>Mã sản phẩm</label>
+        <div class="image-box">
 
-          <input
-            v-model="form.maSanPham"
-            placeholder="SP001"
+          <img
+            :src="`/images/${item.anhDaiDien}`"
+            :alt="item.tenSanPham"
+            class="product-image"
+            @error="$event.target.src='/images/no-image.png'"
           />
 
-          <small class="error">
-            {{ errors.maSanPham }}
-          </small>
-        </div>
-
-        <!-- Tên -->
-
-        <div>
-          <label>Tên sản phẩm</label>
-
-          <input
-            v-model="form.tenSanPham"
-            placeholder="Nike Air Force 1"
-          />
-
-          <small class="error">
-            {{ errors.tenSanPham }}
-          </small>
-        </div>
-
-        <!-- THƯƠNG HIỆU -->
-
-        <div>
-          <label>Thương hiệu</label>
-
-          <select
-            v-model="form.idThuongHieu"
+          <span
+            class="status"
+            :class="item.trangThai?'active':'inactive'"
           >
-            <option value="">
-              Chọn thương hiệu
-            </option>
+          {{item.trangThai?'Đang bán':'Ngừng bán'}}
+        </span>
 
-            <option
-              v-for="i in thuongHieuList"
-              :key="i.id"
-              :value="i.id"
-            >
-              {{ i.ten }}
-            </option>
-          </select>
-
-          <small class="error">
-            {{ errors.idThuongHieu }}
-          </small>
         </div>
 
-        <!-- DANH MỤC -->
 
-        <div>
-          <label>Danh mục</label>
+        <div class="content">
 
-          <select
-            v-model="form.idDanhMuc"
-          >
-            <option value="">
-              Chọn danh mục
-            </option>
+          <h3>{{item.tenSanPham}}</h3>
 
-            <option
-              v-for="i in danhMucList"
-              :key="i.id"
-              :value="i.id"
+          <p>
+            <b>Mã:</b> {{item.maSanPham}}
+          </p>
+
+          <p>
+            <b>Giới tính:</b> {{item.gioiTinh}}
+          </p>
+
+          <p class="desc">
+            {{item.moTaNgan}}
+          </p>
+
+
+          <div class="actions">
+
+            <button
+              class="edit"
+              @click.stop="editProduct(item)"
             >
-              {{ i.ten }}
-            </option>
-          </select>
+              ✏ Sửa
+            </button>
 
-          <small class="error">
-            {{ errors.idDanhMuc }}
-          </small>
-        </div>
-
-        <!-- XUẤT XỨ -->
-
-        <div>
-          <label>Xuất xứ</label>
-
-          <select
-            v-model="form.idXuatXu"
-          >
-            <option value="">
-              Chọn xuất xứ
-            </option>
-
-            <option
-              v-for="i in xuatXuList"
-              :key="i.id"
-              :value="i.id"
+            <button
+              class="delete"
+              @click.stop="deleteProduct(item.id)"
             >
-              {{ i.ten }}
-            </option>
-          </select>
+              🗑 Xóa
+            </button>
 
-          <small class="error">
-            {{ errors.idXuatXu }}
-          </small>
-        </div>
+          </div>
 
-        <!-- CHẤT LIỆU -->
-
-        <div>
-          <label>Chất liệu</label>
-
-          <select
-            v-model="form.idChatLieu"
-          >
-            <option value="">
-              Chọn chất liệu
-            </option>
-
-            <option
-              v-for="i in chatLieuList"
-              :key="i.id"
-              :value="i.id"
-            >
-              {{ i.ten }}
-            </option>
-          </select>
-
-          <small class="error">
-            {{ errors.idChatLieu }}
-          </small>
-        </div>
-
-        <!-- CỔ GIÀY -->
-
-        <div>
-          <label>Cổ giày</label>
-
-          <select
-            v-model="form.idCoGiay"
-          >
-            <option value="">
-              Chọn cổ giày
-            </option>
-
-            <option
-              v-for="i in coGiayList"
-              :key="i.id"
-              :value="i.id"
-            >
-              {{ i.ten }}
-            </option>
-          </select>
-
-          <small class="error">
-            {{ errors.idCoGiay }}
-          </small>
-        </div>
-
-        <!-- ĐẾ GIÀY -->
-
-        <div>
-          <label>Đế giày</label>
-
-          <select
-            v-model="form.idDeGiay"
-          >
-            <option value="">
-              Chọn đế giày
-            </option>
-
-            <option
-              v-for="i in deGiayList"
-              :key="i.id"
-              :value="i.id"
-            >
-              {{ i.ten }}
-            </option>
-          </select>
-
-          <small class="error">
-            {{ errors.idDeGiay }}
-          </small>
         </div>
 
       </div>
 
-      <!-- GIỚI TÍNH -->
+    </div>
 
-      <div class="radio-group">
 
-        <label>
+
+
+    <!-- MODAL -->
+    <div v-if="showModal" class="modal">
+
+      <div class="modal-box">
+
+        <h2>
+          {{isEdit?'Cập nhật sản phẩm':'Thêm sản phẩm'}}
+        </h2>
+
+
+        <!-- PREVIEW IMAGE -->
+        <img
+          :src="previewImage"
+          class="preview"
+        >
+
+
+        <!-- UPLOAD -->
+        <div class="upload-area">
+
           <input
-            type="radio"
-            value="Nam"
-            v-model="form.gioiTinh"
-          />
-          Nam
-        </label>
+            type="file"
+            accept="image/*"
+            @change="handleImageUpload"
+          >
 
-        <label>
-          <input
-            type="radio"
-            value="Nữ"
-            v-model="form.gioiTinh"
-          />
-          Nữ
-        </label>
+          <button
+            type="button"
+            class="upload"
+            @click="uploadImage"
+          >
+            📷 Upload ảnh
+          </button>
 
-        <label>
-          <input
-            type="radio"
-            value="Unisex"
-            v-model="form.gioiTinh"
-          />
-          Unisex
-        </label>
+        </div>
 
-      </div>
 
-      <!-- MÔ TẢ NGẮN -->
 
-      <div class="mt-10">
+        <!-- THÔNG TIN -->
+        <input
+          v-model="form.maSanPham"
+          placeholder="Mã sản phẩm"
+        >
 
-        <label>Mô tả ngắn</label>
+        <input
+          v-model="form.tenSanPham"
+          placeholder="Tên sản phẩm"
+        >
+
+
+
+        <!-- THUONG HIEU -->
+        <select v-model="form.idThuongHieu">
+
+          <option disabled value="">
+            -- Chọn thương hiệu --
+          </option>
+
+          <option
+            v-for="item in thuongHieuList"
+            :key="item.id"
+            :value="item.id"
+          >
+            {{item.ten}}
+          </option>
+
+        </select>
+
+
+
+
+        <!-- XUAT XU -->
+        <select v-model="form.idXuatXu">
+
+          <option disabled value="">
+            -- Chọn xuất xứ --
+          </option>
+
+          <option
+            v-for="item in xuatXuList"
+            :key="item.id"
+            :value="item.id"
+          >
+            {{item.ten}}
+          </option>
+
+        </select>
+
+
+
+
+        <!-- CHAT LIEU -->
+        <select v-model="form.idChatLieu">
+
+          <option disabled value="">
+            -- Chọn chất liệu --
+          </option>
+
+          <option
+            v-for="item in chatLieuList"
+            :key="item.id"
+            :value="item.id"
+          >
+            {{item.ten}}
+          </option>
+
+        </select>
+
+
+
+
+        <!-- CO GIAY -->
+        <select v-model="form.idCoGiay">
+
+          <option disabled value="">
+            -- Chọn cổ giày --
+          </option>
+
+          <option
+            v-for="item in coGiayList"
+            :key="item.id"
+            :value="item.id"
+          >
+            {{item.ten}}
+          </option>
+
+        </select>
+
+
+
+
+
+        <!-- DE GIAY -->
+        <select v-model="form.idDeGiay">
+
+          <option disabled value="">
+            -- Chọn đế giày --
+          </option>
+
+          <option
+            v-for="item in deGiayList"
+            :key="item.id"
+            :value="item.id"
+          >
+            {{item.ten}}
+          </option>
+
+        </select>
+
+
+
+
+
+        <!-- DANH MUC -->
+        <select v-model="form.idDanhMuc">
+
+          <option disabled value="">
+            -- Chọn danh mục --
+          </option>
+
+          <option
+            v-for="item in danhMucList"
+            :key="item.id"
+            :value="item.id"
+          >
+            {{item.ten}}
+          </option>
+
+        </select>
+
+
+
+
+
+        <!-- GIOI TINH -->
+        <select v-model="form.gioiTinh">
+
+          <option value="Nam">
+            Nam
+          </option>
+
+          <option value="Nữ">
+            Nữ
+          </option>
+
+          <option value="Unisex">
+            Unisex
+          </option>
+
+        </select>
+
+
+
 
         <textarea
-          rows="3"
           v-model="form.moTaNgan"
+          placeholder="Mô tả ngắn"
         />
-      </div>
 
-      <!-- MÔ TẢ CHI TIẾT -->
-
-      <div class="mt-10">
-
-        <label>Mô tả chi tiết</label>
 
         <textarea
-          rows="5"
           v-model="form.moTaChiTiet"
+          placeholder="Mô tả chi tiết"
         />
-      </div>
 
-      <!-- TRẠNG THÁI -->
 
-      <div class="radio-group">
 
-        <label>
-          <input
-            type="radio"
-            :value="true"
-            v-model="form.trangThai"
-          />
-          Hoạt động
-        </label>
+        <select v-model="form.trangThai">
 
-        <label>
-          <input
-            type="radio"
-            :value="false"
-            v-model="form.trangThai"
-          />
-          Ngừng hoạt động
-        </label>
+          <option :value="true">
+            Đang bán
+          </option>
 
-      </div>
+          <option :value="false">
+            Ngừng bán
+          </option>
 
-      <!-- BUTTON -->
+        </select>
 
-      <div class="action">
 
-        <button
-          class="save-btn"
-          @click="save"
-        >
-          {{ form.id ? "Cập nhật" : "Thêm mới" }}
-        </button>
 
-        <button
-          class="reset-btn"
-          @click="reset"
-        >
-          Làm mới
-        </button>
 
-      </div>
 
-    </div>
+        <!-- BUTTON -->
+        <div class="modal-btn">
 
-    <!-- SEARCH -->
-
-    <div class="card">
-
-      <input
-        v-model="keyword"
-        placeholder="🔍 Tìm theo mã hoặc tên sản phẩm..."
-      />
-
-    </div>
-
-    <!-- TABLE -->
-
-    <div class="card">
-
-      <table>
-
-        <thead>
-
-        <tr>
-          <th>Mã</th>
-          <th>Tên</th>
-          <th>Thương hiệu</th>
-          <th>Danh mục</th>
-          <th>Xuất xứ</th>
-          <th>Chất liệu</th>
-          <th>Cổ giày</th>
-          <th>Đế giày</th>
-          <th>Giới tính</th>
-          <th>Trạng thái</th>
-          <th>Thao tác</th>
-        </tr>
-
-        </thead>
-
-        <tbody>
-
-        <tr
-          v-for="i in paginatedList"
-          :key="i.id"
-        >
-          <td>{{ i.maSanPham }}</td>
-
-          <td>{{ i.tenSanPham }}</td>
-
-          <td>{{ getThuongHieuName(i.idThuongHieu) }}</td>
-
-          <td>{{ getDanhMucName(i.idDanhMuc) }}</td>
-
-          <td>{{ getXuatXuName(i.idXuatXu) }}</td>
-
-          <td>{{ getChatLieuName(i.idChatLieu) }}</td>
-
-          <td>{{ getCoGiayName(i.idCoGiay) }}</td>
-
-          <td>{{ getDeGiayName(i.idDeGiay) }}</td>
-
-          <td>{{ i.gioiTinh }}</td>
-
-          <td>
-    <span
-      :class="
-        i.trangThai
-          ? 'active-status'
-          : 'inactive-status'
-      "
-    >
-      {{
-        i.trangThai
-          ? 'Hoạt động'
-          : 'Ngừng hoạt động'
-      }}
-    </span>
-          </td>
-
-          <td>
-            <button
-              class="edit-btn"
-              @click="edit(i)"
-            >
-              ✏️
-            </button>
-
-            <button
-              class="delete-btn"
-              @click="del(i.id)"
-            >
-              🗑️
-            </button>
-          </td>
-        </tr>
-
-        </tbody>
-
-      </table>
-
-      <!-- PAGINATION -->
-
-      <div class="pagination">
-
-        <button
-          @click="page--"
-          :disabled="page === 1"
-        >
-          ◀
-        </button>
-
-        <button
-          v-for="p in totalPages"
-          :key="p"
-          @click="changePage(p)"
-          :class="{ activePage: p === page }"
-        >
-          {{ p }}
-        </button>
-
-        <button
-          @click="page++"
-          :disabled="page === totalPages"
-        >
-          ▶
-        </button>
-
+          <button
+            class="save"
+            @click="saveProduct"
+          >
+            💾 Lưu
+          </button>
+          <button
+            class="cancel"
+            @click="closeModal"
+          >
+            ❌ Hủy
+          </button>
+        </div>
       </div>
 
     </div>
@@ -806,256 +968,440 @@ onMounted(load)
 </template>
 <style scoped>
 
-.container {
-  padding: 20px;
-  background: #f5f7fa;
-  min-height: 100vh;
-  font-family: Arial, sans-serif;
+.container{
+  padding:30px;
+  background:#f8fafc;
+  min-height:100vh;
 }
 
-h2 {
-  margin-bottom: 20px;
-  color: #2c3e50;
+/* ================= HEADER ================= */
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  margin-bottom:30px;
+
+  background:white;
+
+  padding:20px 25px;
+
+  border-radius:18px;
+
+  box-shadow:
+    0 4px 20px rgba(0,0,0,.05);
 }
 
-h3 {
-  margin-bottom: 15px;
-  color: #34495e;
+.header h2{
+  margin:0;
+  font-size:28px;
+  font-weight:700;
+  color:#0f172a;
 }
 
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.08);
+.toolbar{
+  display:flex;
+  gap:12px;
+  align-items:center;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2,1fr);
-  gap: 15px;
+.search{
+  width:350px;
+
+  padding:14px 18px;
+
+  border:1px solid #e2e8f0;
+
+  border-radius:12px;
+
+  background:white;
+
+  transition:.3s;
 }
 
-label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 600;
+.search:focus{
+  outline:none;
+
+  border-color:#2563eb;
+
+  box-shadow:
+    0 0 0 4px rgba(37,99,235,.1);
 }
 
-input,
-select,
-textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #dcdfe6;
-  border-radius: 8px;
-  outline: none;
-  transition: .2s;
-  box-sizing: border-box;
+.btn-add{
+  border:none;
+
+  background:linear-gradient(
+    135deg,
+    #2563eb,
+    #3b82f6
+  );
+
+  color:white;
+
+  padding:14px 22px;
+
+  border-radius:12px;
+
+  font-weight:600;
+
+  cursor:pointer;
+
+  transition:.3s;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: #409eff;
+.btn-add:hover{
+  transform:translateY(-2px);
+
+  box-shadow:
+    0 10px 20px rgba(37,99,235,.25);
 }
 
-textarea {
-  resize: vertical;
+/* ================= LOADING ================= */
+
+.loading{
+  text-align:center;
+  padding:30px;
+  font-size:18px;
+  color:#64748b;
 }
 
-.error {
-  color: red;
-  font-size: 12px;
-  margin-top: 3px;
-  display: block;
+/* ================= GRID ================= */
+
+.grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(auto-fill,minmax(300px,1fr));
+
+  gap:25px;
 }
 
-.mt-10 {
-  margin-top: 15px;
+/* ================= CARD ================= */
+
+.card{
+  background:white;
+
+  border-radius:20px;
+
+  overflow:hidden;
+
+  cursor:pointer;
+
+  transition:.35s;
+
+  box-shadow:
+    0 8px 25px rgba(0,0,0,.08);
 }
 
-.radio-group {
-  display: flex;
-  gap: 25px;
-  margin-top: 15px;
+.card:hover{
+  transform:translateY(-8px);
+
+  box-shadow:
+    0 15px 35px rgba(37,99,235,.15);
 }
 
-.radio-group label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: normal;
+/* ================= IMAGE ================= */
+
+.image-box{
+  position:relative;
+  overflow:hidden;
 }
 
-.action {
-  margin-top: 20px;
+.product-image{
+  width:100%;
+  height:260px;
+  object-fit:cover;
+
+  transition:.4s;
 }
 
-.save-btn {
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-right: 10px;
+.card:hover .product-image{
+  transform:scale(1.08);
 }
 
-.save-btn:hover {
-  background: #218838;
+/* ================= STATUS ================= */
+
+.status{
+  position:absolute;
+
+  top:12px;
+  right:12px;
+
+  padding:7px 14px;
+
+  border-radius:30px;
+
+  font-size:12px;
+  font-weight:700;
 }
 
-.reset-btn {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
+.active{
+  background:#dcfce7;
+  color:#15803d;
 }
 
-.reset-btn:hover {
-  background: #5a6268;
+.inactive{
+  background:#fee2e2;
+  color:#dc2626;
 }
 
-.edit-btn {
-  background: #ffc107;
-  border: none;
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-right: 5px;
+/* ================= CONTENT ================= */
+
+.content{
+  padding:20px;
 }
 
-.delete-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
+.content h3{
+  margin-bottom:12px;
+
+  font-size:20px;
+  font-weight:700;
+
+  color:#0f172a;
 }
 
-.edit-btn:hover {
-  opacity: .9;
+.content p{
+  margin:8px 0;
+  color:#475569;
 }
 
-.delete-btn:hover {
-  opacity: .9;
+.desc{
+  min-height:50px;
+
+  overflow:hidden;
+
+  color:#64748b;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+/* ================= ACTION ================= */
+
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:18px;
 }
 
-thead {
-  background: #0d6efd;
-  color: white;
+.actions button{
+  flex:1;
+
+  border:none;
+
+  padding:12px;
+
+  border-radius:10px;
+
+  color:white;
+
+  font-weight:600;
+
+  cursor:pointer;
+
+  transition:.3s;
 }
 
-th,
-td {
-  border: 1px solid #e9ecef;
-  padding: 12px;
-  text-align: center;
+.edit{
+  background:#2563eb;
 }
 
-tbody tr:hover {
-  background: #f8f9fa;
+.edit:hover{
+  background:#1d4ed8;
 }
 
-.active-status {
-  color: #28a745;
-  font-weight: bold;
+.delete{
+  background:#ef4444;
 }
 
-.inactive-status {
-  color: #dc3545;
-  font-weight: bold;
+.delete:hover{
+  background:#dc2626;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-  gap: 5px;
+/* ================= MODAL ================= */
+
+.modal{
+  position:fixed;
+  inset:0;
+
+  background:rgba(15,23,42,.55);
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  z-index:999;
 }
 
-.pagination button {
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  background: #e9ecef;
-  cursor: pointer;
+.modal-box{
+  width:700px;
+
+  max-height:90vh;
+
+  overflow-y:auto;
+
+  background:white;
+
+  padding:30px;
+
+  border-radius:20px;
+
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+
+  box-shadow:
+    0 20px 40px rgba(0,0,0,.25);
 }
 
-.pagination button:hover {
-  background: #d6d8db;
+.modal-box h2{
+  text-align:center;
+  margin-bottom:10px;
+  color:#0f172a;
 }
 
-.activePage {
-  background: #0d6efd !important;
-  color: white;
+/* ================= INPUT ================= */
+
+.modal-box input,
+.modal-box select,
+.modal-box textarea{
+
+  width:100%;
+
+  padding:14px;
+
+  border:1px solid #dbe2ea;
+
+  border-radius:12px;
+
+  font-size:15px;
+
+  transition:.3s;
 }
 
-.pagination button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
+.modal-box input:focus,
+.modal-box select:focus,
+.modal-box textarea:focus{
+
+  outline:none;
+
+  border-color:#2563eb;
+
+  box-shadow:
+    0 0 0 4px rgba(37,99,235,.1);
 }
 
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 12px 18px;
-  border-radius: 8px;
-  color: white;
-  z-index: 9999;
-  animation: fadeIn .3s ease;
+.modal-box textarea{
+  resize:none;
+  height:100px;
 }
 
-.success {
-  background: #28a745;
+/* ================= PREVIEW ================= */
+
+.preview{
+  width:220px;
+  height:220px;
+
+  object-fit:cover;
+
+  margin:auto;
+
+  border-radius:16px;
+
+  border:3px solid #e2e8f0;
 }
 
-.error-toast {
-  background: #dc3545;
+/* ================= UPLOAD ================= */
+
+.upload-area{
+  display:flex;
+  gap:10px;
+  align-items:center;
 }
 
-.error {
-  color: red;
+.upload{
+  border:none;
+
+  background:#2563eb;
+
+  color:white;
+
+  padding:12px 18px;
+
+  border-radius:10px;
+
+  cursor:pointer;
 }
 
-@keyframes fadeIn {
-  from {
-    transform: translateY(-10px);
-    opacity: 0;
+.upload:hover{
+  background:#1d4ed8;
+}
+
+/* ================= MODAL BUTTON ================= */
+
+.modal-btn{
+  display:flex;
+  gap:12px;
+  margin-top:10px;
+}
+
+.modal-btn button{
+  flex:1;
+
+  border:none;
+
+  padding:14px;
+
+  border-radius:12px;
+
+  color:white;
+
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.save{
+  background:#16a34a;
+}
+
+.save:hover{
+  background:#15803d;
+}
+
+.cancel{
+  background:#64748b;
+}
+
+.cancel:hover{
+  background:#475569;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:768px){
+
+  .header{
+    flex-direction:column;
+    gap:15px;
   }
 
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@media(max-width: 768px) {
-
-  .grid {
-    grid-template-columns: 1fr;
+  .toolbar{
+    width:100%;
+    flex-direction:column;
   }
 
-  .radio-group {
-    flex-direction: column;
-    gap: 10px;
+  .search{
+    width:100%;
   }
 
-  table {
-    display: block;
-    overflow-x: auto;
+  .btn-add{
+    width:100%;
   }
+
+  .modal-box{
+    width:95%;
+  }
+
 }
 
 </style>

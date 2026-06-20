@@ -61,6 +61,9 @@ public class SanPham {
     @Column(name = "mo_ta_chi_tiet", columnDefinition = "NVARCHAR(MAX)")
     private String moTaChiTiet;
 
+    @Column(name = "anh_dai_dien")
+    private String anhDaiDien;
+
     @Column(name = "trang_thai")
     private Boolean trangThai = true;
 

@@ -90,7 +90,7 @@ public class SanPhamServiceImpl implements SanPhamService {
 
         sp.setMoTaNgan(dto.getMoTaNgan());
         sp.setMoTaChiTiet(dto.getMoTaChiTiet());
-
+        sp.setAnhDaiDien(dto.getAnhDaiDien());
         sp.setTrangThai(dto.getTrangThai());
 
         sp.setNguoiTao(dto.getNguoiTao());
@@ -138,7 +138,7 @@ public class SanPhamServiceImpl implements SanPhamService {
 
         sp.setMoTaNgan(dto.getMoTaNgan());
         sp.setMoTaChiTiet(dto.getMoTaChiTiet());
-
+        sp.setAnhDaiDien(dto.getAnhDaiDien());
         sp.setTrangThai(dto.getTrangThai());
 
         sp.setNguoiCapNhat(dto.getNguoiCapNhat());
@@ -151,5 +151,16 @@ public class SanPhamServiceImpl implements SanPhamService {
     @Override
     public void delete(Long id) {
         sanPhamRepository.deleteById(id);
+    }
+    @Override
+    public List<SanPhamDTO> search(
+            String keyword
+    ) {
+
+        return sanPhamRepository
+                .search(keyword)
+                .stream()
+                .map(SanPhamMapper::toDTO)
+                .toList();
     }
 }

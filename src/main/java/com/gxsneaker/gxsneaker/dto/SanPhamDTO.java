@@ -13,15 +13,20 @@ public class SanPhamDTO {
     private Long idCoGiay;
     private Long idDeGiay;
     private Long idDanhMuc;
-
+    private String tenThuongHieu;
+    private String tenDanhMuc;
+    private String tenChatLieu;
+    private String tenXuatXu;
     private String maSanPham;
     private String tenSanPham;
     private String gioiTinh;
     private String moTaNgan;
     private String moTaChiTiet;
 
+    private String anhDaiDien;
     private Boolean trangThai;
 
     private String nguoiTao;
     private String nguoiCapNhat;
+
 }

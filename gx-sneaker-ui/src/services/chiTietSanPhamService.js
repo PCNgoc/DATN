@@ -1,11 +1,10 @@
 import axios from "axios"
 
-const API = "http://localhost:8080/api/san-pham"
+const API =
+  "http://localhost:8080/api/chi-tiet-san-pham"
 
-export const getAll = () => axios.get(API)
-
-export const getById = (id) =>
-  axios.get(`${API}/${id}`)
+export const getBySanPham = (id) =>
+  axios.get(`${API}/san-pham/${id}`)
 
 export const create = (data) =>
   axios.post(API, data)

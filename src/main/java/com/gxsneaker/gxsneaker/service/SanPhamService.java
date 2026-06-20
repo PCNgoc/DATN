@@ -15,4 +15,5 @@ public interface SanPhamService {
     SanPhamDTO update(Long id, SanPhamDTO dto);
 
     void delete(Long id);
+    List<SanPhamDTO> search(String keyword);
 }

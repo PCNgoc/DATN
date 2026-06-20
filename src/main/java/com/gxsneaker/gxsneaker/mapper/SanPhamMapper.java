@@ -17,7 +17,21 @@ public class SanPhamMapper {
         dto.setIdCoGiay(sp.getCoGiay().getId());
         dto.setIdDeGiay(sp.getDeGiay().getId());
         dto.setIdDanhMuc(sp.getDanhMuc().getId());
+        dto.setTenThuongHieu(
+                sp.getThuongHieu().getTen()
+        );
 
+        dto.setTenDanhMuc(
+                sp.getDanhMuc().getTen()
+        );
+
+        dto.setTenChatLieu(
+                sp.getChatLieu().getTen()
+        );
+
+        dto.setTenXuatXu(
+                sp.getXuatXu().getTen()
+        );
         dto.setMaSanPham(sp.getMaSanPham());
         dto.setTenSanPham(sp.getTenSanPham());
 
@@ -25,7 +39,7 @@ public class SanPhamMapper {
 
         dto.setMoTaNgan(sp.getMoTaNgan());
         dto.setMoTaChiTiet(sp.getMoTaChiTiet());
-
+        dto.setAnhDaiDien(sp.getAnhDaiDien());
         dto.setTrangThai(sp.getTrangThai());
 
         dto.setNguoiTao(sp.getNguoiTao());
