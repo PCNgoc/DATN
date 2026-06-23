@@ -53,6 +53,8 @@ const logout = () => {
         <router-link to="/san-pham"> Sản phẩm </router-link>
 
         <router-link to="/hoa-don"> Hóa đơn </router-link>
+
+        <router-link to="/dashboard"> Thống kê </router-link>
       </aside>
 
       <!-- CONTENT -->

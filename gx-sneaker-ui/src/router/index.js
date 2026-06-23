@@ -29,6 +29,11 @@ import ChiTietSanPhamView from '@/views/ChiTietSanPhamView.vue'
 import ProductListView from '@/views/user/ProductListView.vue'
 import ProductDetailView from '@/views/user/ProductDetailView.vue'
 
+//Hóa đơn
+import HoaDonView from '@/views/admin/HoaDonView.vue'
+import Dashboard from "@/views/admin/Dashboard.vue";
+
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -153,6 +158,17 @@ const router = createRouter({
       path: '/staff/dashboard',
       component: StaffDashboardView,
     },
+
+    {
+      path: '/hoa-don',
+      name: 'hoa-don',
+      component: HoaDonView,
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: Dashboard,
+    },
   ],
 })
 
@@ -179,6 +195,7 @@ router.beforeEach((to) => {
       return '/admin/login'
     }
   }
+
 
   if (to.path.startsWith('/staff')) {
     if (!adminToken || (adminRole !== 'ADMIN' && adminRole !== 'STAFF')) {
