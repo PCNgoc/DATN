@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { computed } from 'vue'
+
 import {
   Chart as ChartJS,
   Title,
@@ -12,12 +12,14 @@ import {
   PointElement,
   CategoryScale,
   LinearScale,
-  ArcElement
+  ArcElement,
+  BarElement
 } from 'chart.js'
 
 import {
   Line,
-  Pie
+  Pie,
+  Bar
 } from 'vue-chartjs'
 
 ChartJS.register(
@@ -28,7 +30,8 @@ ChartJS.register(
   PointElement,
   CategoryScale,
   LinearScale,
-  ArcElement
+  ArcElement,
+  BarElement
 )
 const router = useRouter()
 
@@ -169,10 +172,134 @@ const tongTrangThai = computed(() => {
   ) || 0
 })
 
+const topSanPhamData = ref([])
+
+const loadTopSanPham = async () => {
+  try {
+
+    const res = await axios.get(
+      `http://localhost:8080/api/hoa-don/top-5-san-pham?year=${selectedYear.value}`
+    )
+
+    topSanPhamData.value = res.data
+
+  } catch (error) {
+    console.error("Lỗi tải top sản phẩm:", error)
+  }
+}
+const topSanPhamChartData = computed(() => ({
+  labels: topSanPhamData.value.map(
+    item => item.tenSanPham
+  ),
+
+  datasets: [
+    {
+      label: "Số lượng bán",
+
+      data: topSanPhamData.value.map(
+        item => item.tongSoLuongBan
+      ),
+
+      backgroundColor: [
+        "#ef4444",
+        "#3b82f6",
+        "#f59e0b",
+        "#14b8a6",
+        "#8b5cf6"
+      ],
+
+      borderRadius: 12,
+
+      barThickness: 30,
+      maxBarThickness: 40,
+
+      categoryPercentage: 0.4,
+      barPercentage: 0.7
+    }
+  ]
+}))
+
+const topSanPhamOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+
+  plugins: {
+    legend: {
+      display: false
+    },
+
+    tooltip: {
+      backgroundColor: "#111827",
+      padding: 12,
+      titleColor: "#fff",
+      bodyColor: "#fff",
+
+      callbacks: {
+        label: function (context) {
+          return `Số lượng bán: ${context.raw}`
+        }
+      }
+    }
+  },
+
+  scales: {
+    x: {
+      offset: true,
+
+      grid: {
+        display: false
+      },
+
+      border: {
+        display: false
+      },
+
+      ticks: {
+        color: "#374151",
+
+        font: {
+          size: 13,
+          weight: "600"
+        },
+
+        maxRotation: 0,
+        minRotation: 0
+      }
+    },
+
+    y: {
+      beginAtZero: true,
+
+      ticks: {
+        precision: 0,
+        stepSize: 1,
+        color: "#6B7280"
+      },
+
+      grid: {
+        color: "#f3f4f6"
+      },
+
+      border: {
+        display: false
+      }
+    }
+  },
+
+  layout: {
+    padding: {
+      top: 10,
+      bottom: 10,
+      left: 40,
+      right: 40
+    }
+  }
+}
+
 onMounted(() => {
   loadDashboard()
   loadRevenueChart()
-  loadStatusChart()
+  loadTopSanPham()
 })
 </script>
 
@@ -270,133 +397,165 @@ onMounted(() => {
 
     </div>
 
+    <div class="chart-card top-product mt-4">
+      <h3 class="chart-title">
+        Top 5 sản phẩm bán chạy năm {{ selectedYear }}
+      </h3>
+      <div class="top-product-chart">
+        <Bar
+          :data="topSanPhamChartData"
+          :options="topSanPhamOptions"
+        />
+      </div>
+    </div>
+
+
   </div>
 </template>
-
 <style scoped>
 .dashboard-container {
-  padding: 24px;
-  background-color: #f5f7fa;
+  padding: 30px;
+  background: #f5f7fb;
   min-height: 100vh;
 }
 
 .dashboard-title {
-  margin-bottom: 24px;
-  color: #333;
-  font-size: 32px;
-  font-weight: bold;
+  font-size: 34px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #111827;
 }
+
+/* KPI Cards */
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
   gap: 20px;
 }
 
 .card {
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border-radius: 20px;
   padding: 24px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+  transition: all .3s ease;
+  border: none;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,.12);
 }
 
 .card h3 {
+  font-size: 15px;
+  color: #6b7280;
   margin-bottom: 12px;
-  color: #666;
-  font-size: 16px;
 }
 
 .card p {
-  font-size: 28px;
-  font-weight: bold;
-  color: #111;
+  font-size: 30px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
 }
 
-.chart-card {
-  margin-top: 24px;
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
+/* Filter */
 
 .year-filter {
-  margin-top: 24px;
-  margin-bottom: 24px;
+  margin-top: 30px;
+  margin-bottom: 30px;
 }
 
-.year-filter .form-label {
+.form-label {
   font-weight: 600;
-  color: #333;
   margin-bottom: 8px;
 }
 
 .year-select {
   width: 180px;
-  border-radius: 10px;
-  padding: 8px 12px;
-  border: 1px solid #dcdfe6;
-  transition: all 0.3s ease;
-}
-
-.chart-subtitle {
-  text-align: center;
-  color: #6b7280;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-.year-select:hover {
-  border-color: #0d6efd;
+  border-radius: 12px;
+  border: 1px solid #dbe1ea;
+  padding: 10px 14px;
+  transition: .3s;
 }
 
 .year-select:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.2);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59,130,246,.15);
 }
 
-.chart-card {
-  background: white;
-  margin-top: 24px;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.08);
-}
-
-.chart-card h3 {
-  margin-bottom: 20px;
-}
+/* Chart Layout */
 
 .chart-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 20px;
+  gap: 24px;
 }
 
 .chart-card {
   background: white;
-  padding: 20px;
-  border-radius: 12px;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
 }
+
+.chart-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #111827;
+}
+
+/* Pie Chart */
 
 .pie-chart-container {
-  width: 280px;
-  height: 280px;
-  margin: 0 auto;
-}
-
-
-.no-data {
-  height: 300px;
+  height: 320px;
   display: flex;
   justify-content: center;
   align-items: center;
+}
 
-  color: #999;
-  font-size: 16px;
+.no-data {
+  height: 320px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #9ca3af;
+  font-size: 15px;
   font-weight: 500;
 }
 
+/* Top Product Chart */
+
+.mt-4 {
+  margin-top: 24px;
+}
+
+/* Responsive */
+
+@media (max-width: 992px) {
+
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card.top-product {
+    height: 450px;
+  }
+
+
+
+  .top-product-chart {
+    height: 350px;
+    width: 75%;
+    margin: 0 auto;
+  }
+}
 </style>
+

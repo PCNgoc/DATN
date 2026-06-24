@@ -1,10 +1,10 @@
 package com.gxsneaker.gxsneaker.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import java.math.BigDecimal;
-
 @Entity
 @Table(name = "HOA_DON_CHI_TIET")
 @Getter
@@ -18,9 +18,16 @@ public class HoaDonChiTiet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long idHoaDon;
 
-    private Long idChiTietSanPham;
+    @ManyToOne
+    @JoinColumn(name = "id_hoa_don")
+    @JsonBackReference
+    private HoaDon hoaDon;
+
+    @ManyToOne
+    @JoinColumn(name = "id_chi_tiet_san_pham")
+    @JsonIgnore
+    private ChiTietSanPham chiTietSanPham;
 
     private Integer soLuong;
 

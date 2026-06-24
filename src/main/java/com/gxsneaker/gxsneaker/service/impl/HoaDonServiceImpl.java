@@ -1,12 +1,12 @@
 package com.gxsneaker.gxsneaker.service.impl;
 
 import com.gxsneaker.gxsneaker.dto.DoanhThuTheoThangDTO;
+import com.gxsneaker.gxsneaker.dto.TopSanPhamBanChayDTO;
 import com.gxsneaker.gxsneaker.dto.TrangThaiDonHangDTO;
 import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
 import com.gxsneaker.gxsneaker.service.HoaDonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -38,6 +38,20 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         return data.stream()
                 .map(item -> new TrangThaiDonHangDTO(
+                        (String) item[0],
+                        ((Number) item[1]).longValue()
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<TopSanPhamBanChayDTO> getTop5SanPhamBanChay(Integer year) {
+
+        List<Object[]> data =
+                hoaDonRepository.getTop5SanPhamBanChay(year);
+
+        return data.stream()
+                .map(item -> new TopSanPhamBanChayDTO(
                         (String) item[0],
                         ((Number) item[1]).longValue()
                 ))

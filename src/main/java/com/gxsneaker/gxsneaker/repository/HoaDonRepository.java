@@ -1,15 +1,15 @@
 package com.gxsneaker.gxsneaker.repository;
 
+import com.gxsneaker.gxsneaker.dto.TopSanPhamBanChayDTO;
 import com.gxsneaker.gxsneaker.entity.HoaDon;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.awt.print.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Date;
-import java.util.List;
-
 
 
 public interface HoaDonRepository extends JpaRepository<HoaDon, Long> {
@@ -182,5 +182,26 @@ GROUP BY trang_thai
 """, nativeQuery = true)
     List<Object[]> getThongKeTrangThaiDonHang(
             @Param("year") int year
+    );
+
+
+    @Query(value = """
+SELECT TOP 5
+    sp.ten_san_pham AS tenSanPham,
+    SUM(hdct.so_luong) AS tongSoLuongBan
+FROM HOA_DON_CHI_TIET hdct
+JOIN HOA_DON hd
+    ON hd.id = hdct.id_hoa_don
+JOIN CHI_TIET_SAN_PHAM ctsp
+    ON ctsp.id = hdct.id_chi_tiet_san_pham
+JOIN SAN_PHAM sp
+    ON sp.id = ctsp.id_san_pham
+WHERE hd.trang_thai = 'HOAN_THANH'
+AND YEAR(hd.ngay_hoan_thanh) = :year
+GROUP BY sp.ten_san_pham
+ORDER BY SUM(hdct.so_luong) DESC
+""", nativeQuery = true)
+    List<Object[]> getTop5SanPhamBanChay(
+            @Param("year") Integer year
     );
 }

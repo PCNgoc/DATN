@@ -1,5 +1,6 @@
 package com.gxsneaker.gxsneaker.controller;
 
+import com.gxsneaker.gxsneaker.dto.TopSanPhamBanChayDTO;
 import com.gxsneaker.gxsneaker.dto.UpdateTrangThaiRequest;
 import com.gxsneaker.gxsneaker.entity.HoaDon;
 import com.gxsneaker.gxsneaker.entity.LichSuTrangThaiHoaDon;
@@ -408,6 +409,15 @@ public class HoaDonController {
 
         return ResponseEntity.ok(
                 hoaDonService.getThongKeTrangThaiDonHang(year)
+        );
+    }
+
+    @GetMapping("/top-5-san-pham")
+    public ResponseEntity<List<TopSanPhamBanChayDTO>>
+    getTop5SanPham(@RequestParam Integer year) {
+
+        return ResponseEntity.ok(
+                hoaDonService.getTop5SanPhamBanChay(year)
         );
     }
 

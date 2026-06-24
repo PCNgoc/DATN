@@ -2,9 +2,10 @@ package com.gxsneaker.gxsneaker.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "HOA_DON")
@@ -77,4 +78,10 @@ public class HoaDon {
     private Date ngayCapNhat;
 
     private String nguoiCapNhat;
+
+
+
+    @OneToMany(mappedBy = "hoaDon")
+    @JsonManagedReference
+    private List<HoaDonChiTiet> hoaDonChiTiets;
 }

@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "CHI_TIET_SAN_PHAM")
@@ -32,6 +33,9 @@ public class ChiTietSanPham {
     @ManyToOne
     @JoinColumn(name = "id_kich_thuoc")
     private KichThuoc kichThuoc;
+
+    @OneToMany(mappedBy = "chiTietSanPham")
+    private List<HoaDonChiTiet> hoaDonChiTiets;
 
     // ==================== Thông tin ====================
 
