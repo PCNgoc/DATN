@@ -13,7 +13,7 @@ import ChangePasswordView from '@/views/ChangePasswordView.vue'
 import AdminLoginView from '@/views/admin/AdminLoginView.vue'
 import AdminDashboardView from '@/views/admin/AdminDashboardView.vue'
 import StaffDashboardView from '@/views/admin/StaffDashboardView.vue'
-
+import AdminLayout from '@/layouts/AdminLayout.vue'
 // Danh mục sản phẩm
 import ThuongHieuView from '../views/ThuongHieuView.vue'
 import DanhMucView from '@/views/DanhMucView.vue'
@@ -77,44 +77,54 @@ const router = createRouter({
 
     // Danh mục
     {
-      path: '/thuong-hieu',
-      name: 'thuong-hieu',
-      component: ThuongHieuView,
-    },
-    {
-      path: '/danh-muc',
-      name: 'danh-muc',
-      component: DanhMucView,
-    },
-    {
-      path: '/xuat-xu',
-      name: 'xuat-xu',
-      component: XuatXuView,
-    },
-    {
-      path: '/chat-lieu',
-      name: 'chat-lieu',
-      component: ChatLieuView,
-    },
-    {
-      path: '/co-giay',
-      name: 'co-giay',
-      component: CoGiayView,
-    },
-    {
-      path: '/de-giay',
-      name: 'de-giay',
-      component: DeGiayView,
-    },
-    {
-      path: '/mau-sac',
-      name: 'mau-sac',
-      component: MauSacView,
-    },
-    {
-      path: '/kich-thuoc',
-      name: 'kich-thuoc',
-      component: KichThuocView,
+      path: '/admin',
+      component: AdminLayout,
+      children: [
+        {
+          path: 'dashboard',
+          component: AdminDashboardView,
+        },
+        {
+          path: 'san-pham',
+          component: SanPhamView,
+        },
+        {
+          path: 'danh-muc',
+          component: DanhMucView,
+        },
+        {
+          path: 'thuong-hieu',
+          component: ThuongHieuView,
+        },
+        {
+          path: 'chat-lieu',
+          component: ChatLieuView,
+        },
+        {
+          path: 'co-giay',
+          component: CoGiayView,
+        },
+        {
+          path: 'de-giay',
+          component: DeGiayView,
+        },
+        {
+          path: 'mau-sac',
+          component: MauSacView,
+        },
+        {
+          path: 'kich-thuoc',
+          component: KichThuocView,
+        },
+        {
+          path: 'xuat-xu',
+          component: XuatXuView,
+        },
+        {
+          path: 'hoa-don',
+          component: HoaDonView,
+        }
+      ]
     },
 
     {
@@ -153,16 +163,6 @@ const router = createRouter({
     {
       path: '/admin/dashboard',
       component: AdminDashboardView,
-    },
-    {
-      path: '/staff/dashboard',
-      component: StaffDashboardView,
-    },
-
-    {
-      path: '/hoa-don',
-      name: 'hoa-don',
-      component: HoaDonView,
     },
     {
       path: '/dashboard',

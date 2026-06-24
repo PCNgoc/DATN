@@ -15,3 +15,8 @@ export const update = (id, data) =>
 
 export const remove = (id) =>
   axios.delete(`${API}/${id}`)
+export const getFeaturedProducts = () =>
+  axios.get(`${API}/featured`)
+
+export const getNewProducts = () =>
+  axios.get(`${API}/new`)

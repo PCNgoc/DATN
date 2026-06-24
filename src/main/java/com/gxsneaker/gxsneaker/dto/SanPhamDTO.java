@@ -2,6 +2,8 @@ package com.gxsneaker.gxsneaker.dto;
 
 import lombok.Data;
 
+import java.util.Date;
+
 @Data
 public class SanPhamDTO {
 
@@ -28,5 +30,5 @@ public class SanPhamDTO {
 
     private String nguoiTao;
     private String nguoiCapNhat;
-
+    private Date ngayTao;
 }

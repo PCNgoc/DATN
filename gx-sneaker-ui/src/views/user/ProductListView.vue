@@ -2,17 +2,9 @@
 import { ref, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
 
-import {
-  getProducts
-} from "@/services/productService"
-
-import {
-  getAllThuongHieu
-} from "@/services/thuongHieuService"
-
-import {
-  getAll as getDanhMuc
-} from "@/services/danhMucService"
+import { getProducts } from "@/services/productService"
+import { getAllThuongHieu } from "@/services/thuongHieuService"
+import { getAll as getDanhMuc } from "@/services/danhMucService"
 
 const router = useRouter()
 
@@ -41,10 +33,14 @@ const loadData = async () => {
     brands.value = th.data
     categories.value = dm.data
 
-  } catch (e) {
-    console.error(e)
+  } catch (error) {
+
+    console.error(error)
+
   } finally {
+
     loading.value = false
+
   }
 }
 
@@ -53,6 +49,7 @@ const filteredProducts = computed(() => {
   return products.value.filter(sp => {
 
     const matchKeyword =
+      !keyword.value ||
       sp.tenSanPham
         ?.toLowerCase()
         .includes(keyword.value.toLowerCase())
@@ -70,32 +67,26 @@ const filteredProducts = computed(() => {
       matchBrand &&
       matchCategory
     )
-
   })
-
 })
 
 const detail = (id) => {
   router.push(`/products/${id}`)
 }
 
-onMounted(() => {
-  loadData()
-})
+onMounted(loadData)
 </script>
 <template>
 
   <div class="product-page">
 
-    <!-- HERO -->
-
     <section class="hero">
 
       <div class="hero-content">
 
-      <span class="hero-tag">
-        GX SNEAKER
-      </span>
+        <span class="hero-tag">
+          GX SNEAKER
+        </span>
 
         <h1>
           Premium Sneaker Collection
@@ -110,11 +101,7 @@ onMounted(() => {
 
     </section>
 
-    <!-- CONTENT -->
-
     <div class="container">
-
-      <!-- SIDEBAR -->
 
       <aside class="sidebar">
 
@@ -172,24 +159,17 @@ onMounted(() => {
 
       </aside>
 
-      <!-- PRODUCTS -->
-
       <section class="content">
 
         <div class="content-header">
 
-          <h2>
-            Sản phẩm
-          </h2>
+          <h2>Sản phẩm</h2>
 
           <span>
-          {{ filteredProducts.length }}
-          sản phẩm
-        </span>
+            {{ filteredProducts.length }} sản phẩm
+          </span>
 
         </div>
-
-        <!-- LOADING -->
 
         <div
           v-if="loading"
@@ -204,8 +184,6 @@ onMounted(() => {
 
         </div>
 
-        <!-- EMPTY -->
-
         <div
           v-else-if="filteredProducts.length === 0"
           class="empty-state"
@@ -214,8 +192,6 @@ onMounted(() => {
           Không tìm thấy sản phẩm
 
         </div>
-
-        <!-- DATA -->
 
         <div
           v-else
@@ -226,6 +202,7 @@ onMounted(() => {
             class="product-card"
             v-for="sp in filteredProducts"
             :key="sp.id"
+            @click="detail(sp.id)"
           >
 
             <div class="image-wrapper">
@@ -235,15 +212,17 @@ onMounted(() => {
                 :alt="sp.tenSanPham"
               />
 
+              <div class="image-overlay">
+                Xem sản phẩm →
+              </div>
+
             </div>
 
             <div class="product-info">
 
-            <span class="brand">
-
-              {{ sp.tenThuongHieu }}
-
-            </span>
+              <span class="brand">
+                {{ sp.tenThuongHieu }}
+              </span>
 
               <h4>
                 {{ sp.tenSanPham }}
@@ -253,11 +232,9 @@ onMounted(() => {
                 {{ sp.tenDanhMuc }}
               </p>
 
-              <button
-                @click="detail(sp.id)"
-              >
-                Xem chi tiết
-              </button>
+              <div class="gender-tag">
+                {{ sp.gioiTinh }}
+              </div>
 
             </div>
 
@@ -275,15 +252,24 @@ onMounted(() => {
 <style scoped>
 
 .product-page{
-  background:#f5f5f5;
+  background:#f6f7fb;
   min-height:100vh;
 }
 
 /* HERO */
 
 .hero{
-  height:320px;
-  background:#111;
+  height:350px;
+
+  background:
+    linear-gradient(
+      rgba(0,0,0,.55),
+      rgba(0,0,0,.55)
+    ),
+    url("/images/banner.jpg");
+
+  background-size:cover;
+  background-position:center;
 
   display:flex;
   justify-content:center;
@@ -294,29 +280,38 @@ onMounted(() => {
 
 .hero-content{
   text-align:center;
+  max-width:800px;
 }
 
 .hero-tag{
   display:inline-block;
-  padding:8px 16px;
 
-  border:1px solid #444;
+  padding:8px 18px;
+
+  border:1px solid rgba(255,255,255,.3);
+
   border-radius:30px;
 
   margin-bottom:20px;
 
   font-size:13px;
-  letter-spacing:2px;
+  letter-spacing:3px;
+
+  backdrop-filter:blur(8px);
 }
 
 .hero h1{
-  font-size:56px;
+  font-size:58px;
   font-weight:800;
+
+  margin-bottom:15px;
 }
 
 .hero p{
-  margin-top:15px;
-  color:#bdbdbd;
+  color:#d6d6d6;
+
+  font-size:17px;
+  line-height:1.6;
 }
 
 /* LAYOUT */
@@ -330,7 +325,9 @@ onMounted(() => {
   padding:40px 0;
 
   display:grid;
-  grid-template-columns:280px 1fr;
+
+  grid-template-columns:
+    280px 1fr;
 
   gap:30px;
 }
@@ -342,12 +339,19 @@ onMounted(() => {
 
   padding:25px;
 
-  border-radius:16px;
+  border-radius:20px;
 
   height:fit-content;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.05);
+
+  position:sticky;
+  top:20px;
 }
 
 .sidebar h3{
+  font-size:22px;
   margin-bottom:20px;
 }
 
@@ -355,28 +359,52 @@ onMounted(() => {
 .sidebar select{
   width:100%;
 
-  padding:12px;
+  padding:13px 14px;
 
-  border:1px solid #ddd;
-  border-radius:10px;
+  border:1px solid #e5e7eb;
+
+  border-radius:12px;
+
+  font-size:14px;
+
+  transition:.3s;
 
   margin-bottom:20px;
 }
 
+.search-input:focus,
+.sidebar select:focus{
+  outline:none;
+
+  border-color:#111;
+
+  box-shadow:
+    0 0 0 3px rgba(0,0,0,.08);
+}
+
 .filter-group{
-  margin-bottom:15px;
+  margin-bottom:20px;
 }
 
 .filter-group label{
   display:block;
+
   margin-bottom:8px;
+
   font-weight:600;
+
+  color:#374151;
 }
 
 /* CONTENT */
 
+.content{
+  min-width:0;
+}
+
 .content-header{
   display:flex;
+
   justify-content:space-between;
   align-items:center;
 
@@ -384,7 +412,13 @@ onMounted(() => {
 }
 
 .content-header h2{
-  font-size:28px;
+  font-size:32px;
+  font-weight:800;
+}
+
+.content-header span{
+  color:#6b7280;
+  font-weight:600;
 }
 
 /* GRID */
@@ -393,7 +427,7 @@ onMounted(() => {
   display:grid;
 
   grid-template-columns:
-    repeat(auto-fill,minmax(260px,1fr));
+    repeat(auto-fill,minmax(270px,1fr));
 
   gap:25px;
 }
@@ -403,87 +437,178 @@ onMounted(() => {
 .product-card{
   background:white;
 
-  border-radius:18px;
+  border-radius:22px;
 
   overflow:hidden;
 
-  transition:.3s;
+  cursor:pointer;
 
-  border:1px solid #eee;
+  transition:.35s ease;
+
+  border:1px solid #ececec;
+
+  position:relative;
 }
 
 .product-card:hover{
-  transform:translateY(-6px);
+  transform:
+    translateY(-10px);
 
   box-shadow:
-    0 10px 30px rgba(0,0,0,.08);
+    0 20px 40px rgba(0,0,0,.12);
 }
 
+/* IMAGE */
+
 .image-wrapper{
+  position:relative;
+
   overflow:hidden;
 }
 
 .image-wrapper img{
   width:100%;
-  height:280px;
+  height:290px;
 
   object-fit:cover;
 
-  transition:.4s;
+  transition:.5s;
 }
 
 .product-card:hover img{
-  transform:scale(1.05);
+  transform:scale(1.08);
 }
 
-.product-info{
-  padding:18px;
-}
+/* OVERLAY */
 
-.brand{
-  font-size:13px;
-  color:#777;
-}
+.image-overlay{
+  position:absolute;
 
-.product-info h4{
-  margin:10px 0;
+  inset:0;
+
+  background:
+    rgba(0,0,0,.45);
+
+  color:white;
+
+  display:flex;
+
+  justify-content:center;
+  align-items:center;
 
   font-size:18px;
   font-weight:700;
 
-  color:#111;
+  opacity:0;
+
+  transition:.35s;
+}
+
+.product-card:hover .image-overlay{
+  opacity:1;
+}
+
+/* PRODUCT INFO */
+
+.product-info{
+  padding:20px;
+}
+
+.brand{
+  display:inline-block;
+
+  font-size:12px;
+
+  letter-spacing:1px;
+
+  font-weight:700;
+
+  color:#6b7280;
+
+  text-transform:uppercase;
+}
+
+.product-info h4{
+  margin-top:10px;
+  margin-bottom:10px;
+
+  font-size:20px;
+  font-weight:700;
+
+  color:#111827;
+
+  line-height:1.4;
+
+  min-height:56px;
 }
 
 .product-info p{
-  color:#666;
+  color:#6b7280;
+
   margin-bottom:15px;
+
+  font-size:14px;
 }
 
-.product-info button{
-  width:100%;
+/* GENDER */
 
-  border:none;
+.gender-tag{
+  display:inline-flex;
 
-  background:#111;
+  align-items:center;
+
+  gap:5px;
+
+  padding:7px 14px;
+
+  border-radius:999px;
+
+  background:#f3f4f6;
+
+  color:#374151;
+
+  font-size:12px;
+
+  font-weight:700;
+}
+
+/* BADGE */
+
+.badge{
+  position:absolute;
+
+  top:15px;
+  left:15px;
+
+  background:#111827;
+
   color:white;
 
-  padding:12px;
+  padding:7px 12px;
 
-  border-radius:10px;
+  border-radius:30px;
 
-  cursor:pointer;
+  font-size:11px;
+
+  font-weight:700;
+
+  z-index:2;
 }
 
-.product-info button:hover{
-  background:#222;
+.badge.hot{
+  background:#dc2626;
+}
+
+.badge.new{
+  background:#16a34a;
 }
 
 /* LOADING */
 
 .skeleton-card{
-  height:380px;
+  height:420px;
 
-  border-radius:18px;
+  border-radius:22px;
 
   background:
     linear-gradient(
@@ -507,7 +632,6 @@ onMounted(() => {
   100%{
     background-position:-100% 0;
   }
-
 }
 
 /* EMPTY */
@@ -517,12 +641,38 @@ onMounted(() => {
 
   padding:80px;
 
+  border-radius:20px;
+
   text-align:center;
 
-  border-radius:16px;
+  color:#6b7280;
 
   font-size:18px;
-  color:#666;
+
+  box-shadow:
+    0 10px 25px rgba(0,0,0,.04);
+}
+
+/* SCROLLBAR */
+
+::-webkit-scrollbar{
+  width:8px;
+}
+
+::-webkit-scrollbar-thumb{
+  background:#cbd5e1;
+  border-radius:20px;
+}
+
+/* TABLET */
+
+@media(max-width:1200px){
+
+  .product-grid{
+    grid-template-columns:
+      repeat(auto-fill,minmax(240px,1fr));
+  }
+
 }
 
 /* MOBILE */
@@ -533,8 +683,46 @@ onMounted(() => {
     grid-template-columns:1fr;
   }
 
+  .sidebar{
+    position:static;
+  }
+
+  .hero{
+    height:280px;
+  }
+
   .hero h1{
-    font-size:38px;
+    font-size:40px;
+  }
+
+  .hero p{
+    font-size:15px;
+  }
+
+}
+
+/* SMALL MOBILE */
+
+@media(max-width:576px){
+
+  .hero h1{
+    font-size:30px;
+  }
+
+  .content-header{
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    gap:8px;
+  }
+
+  .product-grid{
+    grid-template-columns:1fr;
+  }
+
+  .image-wrapper img{
+    height:250px;
   }
 
 }

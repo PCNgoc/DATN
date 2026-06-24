@@ -16,4 +16,8 @@ public interface SanPhamService {
 
     void delete(Long id);
     List<SanPhamDTO> search(String keyword);
+    List<SanPhamDTO> getNewProducts();
+
+    List<SanPhamDTO> getFeaturedProducts();
+    List<SanPhamDTO> getNewestProducts();
 }

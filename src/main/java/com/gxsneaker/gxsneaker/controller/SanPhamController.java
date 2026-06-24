@@ -44,4 +44,16 @@ public class SanPhamController {
     public void delete(@PathVariable Long id) {
         sanPhamService.delete(id);
     }
+    @GetMapping("/new")
+    public List<SanPhamDTO> getNewProducts() {
+        return sanPhamService.getNewProducts();
+    }
+    @GetMapping("/featured")
+    public List<SanPhamDTO> getFeaturedProducts() {
+        return sanPhamService.getFeaturedProducts();
+    }
+    @GetMapping("/newest")
+    public List<SanPhamDTO> getNewestProducts() {
+        return sanPhamService.getNewestProducts();
+    }
 }

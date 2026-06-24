@@ -1,50 +1,92 @@
 <script setup>
+import { ref, computed, onMounted, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
 
-import { ref, computed, onMounted } from "vue"
-import { useRoute } from "vue-router"
+import {
+  getById as getProductById
+} from "@/services/SanPhamService"
 
-import { getProductById } from "@/services/productService"
-import { getBySanPham } from "@/services/chiTietSanPhamService"
+import {
+  getBySanPham
+} from "@/services/ChiTietSanPhamService"
 
 const route = useRoute()
+const router = useRouter()
+
+const loading = ref(true)
 
 const product = ref({})
+
 const details = ref([])
+
+const selectedColor = ref(null)
+
+const selectedSize = ref(null)
 
 const quantity = ref(1)
 
-const selectedColor = ref(null)
-const selectedSize = ref(null)
-
 const activeImage = ref("")
 
-// =====================
-// LOAD DATA
-// =====================
+const activeTab = ref("overview")
 
-const loadData = async () => {
+const relatedProducts = ref([])
+
+/* ===========================
+   FORMAT
+=========================== */
+
+const formatMoney = (value) => {
+
+  if (!value) return "0"
+
+  return Number(value).toLocaleString("vi-VN")
+}
+
+/* ===========================
+   LOAD DATA
+=========================== */
+
+const loadProduct = async () => {
 
   try {
+
+    loading.value = true
 
     const id = route.params.id
 
     const productRes = await getProductById(id)
+
     product.value = productRes.data
 
-    activeImage.value = productRes.data.anhDaiDien
+    if (product.value?.anhDaiDien) {
+
+      activeImage.value =
+        `/images/${product.value.anhDaiDien}`
+    }
 
     const detailRes = await getBySanPham(id)
-    details.value = detailRes.data
+
+    details.value = detailRes.data || []
+
+    if (details.value.length) {
+
+      selectedColor.value =
+        details.value[0].idMauSac
+    }
 
   } catch (error) {
-    console.error("Lỗi tải dữ liệu:", error)
-  }
 
+    console.error(error)
+
+  } finally {
+
+    loading.value = false
+  }
 }
 
-// =====================
-// COLORS (có stock + disable hết hàng)
-// =====================
+/* ===========================
+   COLORS
+=========================== */
 
 const colors = computed(() => {
 
@@ -56,468 +98,833 @@ const colors = computed(() => {
 
       map.set(item.idMauSac, {
         id: item.idMauSac,
-        ten: item.tenMauSac,
-        stock: item.soLuongTon
+        name: item.tenMauSac
       })
-
-    } else {
-      map.get(item.idMauSac).stock += item.soLuongTon
     }
-
   })
 
-  return Array.from(map.values())
-
+  return [...map.values()]
 })
 
-// =====================
-// SIZES 35 - 44 (chuẩn shop giày)
-// =====================
+/* ===========================
+   SIZES
+=========================== */
 
-const allSizes = [35,36,37,38,39,40,41,42,43,44]
+/* ===========================
+   ALL SIZE 35 -> 44
+=========================== */
 
-const sizes = computed(() => {
+const allSizes = computed(() => {
 
-  if (!selectedColor.value) return []
+  const result = []
 
-  return allSizes.map(size => {
+  for (let i = 35; i <= 44; i++) {
 
-    const variant = details.value.find(item =>
+    result.push(i)
+
+  }
+
+  return result
+})
+
+const getSizeInfo = (size) => {
+
+  return details.value.find(
+
+    item =>
+
       item.idMauSac === selectedColor.value &&
-      Number(item.size) === size
+
+      Number(item.size) === Number(size)
+
+  )
+}
+
+/* ===========================
+   AUTO SELECT SIZE
+=========================== */
+
+watch(
+  selectedColor,
+  () => {
+
+    quantity.value = 1
+
+    selectedSize.value = null
+
+    const firstAvailable = details.value.find(
+      item =>
+        item.idMauSac === selectedColor.value &&
+        item.soLuongTon > 0
     )
 
-    return {
-      size,
-      idKichThuoc: variant?.idKichThuoc || null,
-      stock: variant?.soLuongTon || 0
+    if (firstAvailable) {
+      selectedSize.value =
+        firstAvailable.idKichThuoc
     }
+  },
+  {
+    immediate: true
+  }
+)
 
-  })
-
-})
-
-// =====================
-// VARIANT SELECTED
-// =====================
+/* ===========================
+   SELECTED VARIANT
+=========================== */
 
 const selectedVariant = computed(() => {
 
-  if (!selectedColor.value || !selectedSize.value) return null
-
-  return details.value.find(item =>
-    item.idMauSac === selectedColor.value &&
-    item.idKichThuoc === selectedSize.value
+  return details.value.find(
+    item =>
+      item.idMauSac === selectedColor.value &&
+      item.idKichThuoc === selectedSize.value
   )
-
 })
 
-// =====================
-// PRICE
-// =====================
+/* ===========================
+   PRICE
+=========================== */
 
 const displayPrice = computed(() => {
 
   if (selectedVariant.value) {
-    return Number(selectedVariant.value.giaBan).toLocaleString("vi-VN")
-  }
 
-  if (details.value.length > 0) {
-    const minPrice = Math.min(
-      ...details.value.map(i => Number(i.giaBan))
+    return formatMoney(
+      selectedVariant.value.giaBan
     )
-    return minPrice.toLocaleString("vi-VN")
   }
 
-  return "0"
+  if (!details.value.length) {
+
+    return "0"
+  }
+
+  return formatMoney(
+    details.value[0].giaBan
+  )
 })
 
-// =====================
-// TOTAL STOCK
-// =====================
+const minPrice = computed(() => {
+
+  if (!details.value.length) {
+
+    return 0
+  }
+
+  return Math.min(
+    ...details.value.map(
+      item => Number(item.giaBan)
+    )
+  )
+})
+
+const maxPrice = computed(() => {
+
+  if (!details.value.length) {
+
+    return 0
+  }
+
+  return Math.max(
+    ...details.value.map(
+      item => Number(item.giaBan)
+    )
+  )
+})
+
+/* ===========================
+   STOCK
+=========================== */
+
+const stock = computed(() => {
+
+  return selectedVariant.value
+    ?.soLuongTon || 0
+})
 
 const totalStock = computed(() => {
-  return details.value.reduce((sum, i) => sum + i.soLuongTon, 0)
+
+  return details.value.reduce(
+    (sum, item) =>
+      sum + (item.soLuongTon || 0),
+    0
+  )
 })
 
-// =====================
-// ACTION SELECT
-// =====================
+/* ===========================
+   QUANTITY
+=========================== */
 
-const chooseColor = (id) => {
-  selectedColor.value = id
-  selectedSize.value = null
+const increaseQuantity = () => {
+
+  if (quantity.value < stock.value) {
+
+    quantity.value++
+  }
 }
 
-const chooseSize = (id) => {
-  if (!id) return
-  selectedSize.value = id
+const decreaseQuantity = () => {
+
+  if (quantity.value > 1) {
+
+    quantity.value--
+  }
 }
 
-// =====================
-// QUANTITY
-// =====================
+watch(stock, () => {
 
-const increaseQty = () => quantity.value++
+  if (quantity.value > stock.value) {
 
-const decreaseQty = () => {
-  if (quantity.value > 1) quantity.value--
-}
+    quantity.value = 1
+  }
+})
 
-// =====================
-// CART
-// =====================
+/* ===========================
+   ADD TO CART
+=========================== */
 
 const addToCart = () => {
 
   if (!selectedVariant.value) {
-    alert("Vui lòng chọn màu và size")
+
+    alert(
+      "Vui lòng chọn màu sắc và kích thước"
+    )
+
     return
   }
 
-  alert("Đã thêm vào giỏ hàng")
+  const cart =
+    JSON.parse(
+      localStorage.getItem("cart")
+    ) || []
+
+  cart.push({
+
+    productId: product.value.id,
+
+    detailId:
+    selectedVariant.value.id,
+
+    productName:
+    product.value.tenSanPham,
+
+    image:
+    product.value.anhDaiDien,
+
+    color:
+    selectedVariant.value.tenMauSac,
+
+    size:
+    selectedVariant.value.size,
+
+    quantity:
+    quantity.value,
+
+    price:
+    selectedVariant.value.giaBan
+  })
+
+  localStorage.setItem(
+    "cart",
+    JSON.stringify(cart)
+  )
+
+  alert(
+    "Đã thêm sản phẩm vào giỏ hàng"
+  )
 }
+
+/* ===========================
+   BUY NOW
+=========================== */
 
 const buyNow = () => {
 
-  if (!selectedVariant.value) {
-    alert("Vui lòng chọn màu và size")
-    return
+  addToCart()
+
+  router.push("/cart")
+}
+
+/* ===========================
+   RELATED PRODUCTS
+=========================== */
+
+const loadRelatedProducts =
+  async () => {
+
+    try {
+
+      relatedProducts.value = []
+
+    } catch (error) {
+
+      console.error(error)
+    }
   }
 
-  alert("Chuyển sang thanh toán")
+/* ===========================
+   IMAGE
+=========================== */
+
+const changeImage = image => {
+
+  activeImage.value = image
 }
 
-// =====================
-// FORMAT
-// =====================
+/* ===========================
+   TABS
+=========================== */
 
-const formatMoney = (v) => {
-  return Number(v).toLocaleString("vi-VN")
+const changeTab = tab => {
+
+  activeTab.value = tab
 }
 
-onMounted(loadData)
+/* ===========================
+   MOUNTED
+=========================== */
 
+onMounted(async () => {
+
+  await loadProduct()
+
+  await loadRelatedProducts()
+})
 </script>
 <template>
-
   <div class="product-detail-page">
 
-    <!-- BREADCRUMB -->
-    <div class="breadcrumb">
-      <router-link to="/">Trang chủ</router-link>
-
-      <span>/</span>
-
-      <router-link to="/products">Cửa hàng</router-link>
-
-      <span>/</span>
-
-      <b>
-        {{ product.tenSanPham || 'Đang tải...' }}
-      </b>
+    <!-- LOADING -->
+    <div v-if="loading" class="loading-container">
+      <div class="loader"></div>
+      <p>Đang tải sản phẩm...</p>
     </div>
 
-    <!-- MAIN -->
-    <div class="detail-container">
+    <template v-else>
 
-      <!-- LEFT -->
-      <div class="gallery-section">
+      <!-- BREADCRUMB -->
+      <div class="breadcrumb">
 
-        <div class="main-image">
-          <img
-            :src="`/images/${product.anhDaiDien}`"
-            :alt="product.tenSanPham"
-            class="product-image"
-          >
-        </div>
+        <span @click="$router.push('/')">
+          Trang chủ
+        </span>
 
-      </div>
+        <span>/</span>
 
-      <!-- RIGHT -->
-      <div class="info-section">
+        <span>
+          {{ product.tenDanhMuc }}
+        </span>
 
-        <div class="brand-name">
-          {{ product.tenThuongHieu }}
-        </div>
+        <span>/</span>
 
-        <h1 class="product-name">
+        <b>
           {{ product.tenSanPham }}
-        </h1>
+        </b>
 
-        <div class="product-sub">
-          {{ product.gioiTinh }} · {{ product.tenDanhMuc }}
-        </div>
+      </div>
 
-        <div class="price">
-          {{ displayPrice }} đ
-        </div>
+      <!-- MAIN -->
+      <div class="detail-container">
 
-        <div
-          v-if="totalStock > 0"
-          class="stock stock-ok"
-        >
-          Còn hàng
-        </div>
+        <!-- LEFT -->
+        <div class="gallery-section">
 
-        <div
-          v-else
-          class="stock stock-out"
-        >
-          Hết hàng
-        </div>
+          <div class="main-image-wrapper">
 
-        <!-- ===================== -->
-        <!-- MÀU SẮC (có stock + hết hàng) -->
-        <!-- ===================== -->
+            <img
+              :src="activeImage"
+              class="main-image"
+              alt=""
+            />
 
-        <div class="option-group">
+            <div class="image-badge">
+              HOT
+            </div>
 
-          <div class="option-title">
-            Màu sắc
           </div>
 
-          <div class="color-list">
+          <div class="thumbnail-list">
 
-            <button
-              v-for="color in colors"
-              :key="color.id"
-              class="color-btn"
-              :class="{
-                active: selectedColor === color.id,
-                disabled: color.stock <= 0
-              }"
-              :disabled="color.stock <= 0"
-              @click="chooseColor(color.id)"
+            <div
+              class="thumbnail active"
             >
-
-              <span>{{ color.ten }}</span>
-
-              <small v-if="color.stock <= 0">
-                Hết hàng
-              </small>
-
-              <small v-else>
-                {{ color.stock }} sp
-              </small>
-
-            </button>
+              <img
+                :src="activeImage"
+                alt=""
+              />
+            </div>
 
           </div>
 
         </div>
 
-        <!-- ===================== -->
-        <!-- SIZE 35 - 44 -->
-        <!-- ===================== -->
+        <!-- RIGHT -->
+        <div class="info-panel">
 
-        <div
-          v-if="selectedColor"
-          class="option-group"
-        >
-
-          <div class="option-title">
-            Kích thước
+          <!-- BRAND -->
+          <div class="brand">
+            {{ product.tenThuongHieu }}
           </div>
 
-          <div class="size-list">
+          <!-- TITLE -->
+          <h1 class="product-title">
+            {{ product.tenSanPham }}
+          </h1>
 
-            <button
-              v-for="size in sizes"
-              :key="size.size"
-              class="size-btn"
-              :class="{
-                active: selectedSize === size.idKichThuoc,
-                disabled: size.stock <= 0
-              }"
-              :disabled="size.stock <= 0"
-              @click="chooseSize(size.idKichThuoc)"
+          <!-- BADGES -->
+          <div class="badges">
+
+            <span class="badge brand-badge">
+              {{ product.tenThuongHieu }}
+            </span>
+
+            <span class="badge stock-badge">
+              {{ totalStock }} sản phẩm
+            </span>
+
+            <span class="badge hot-badge">
+              BÁN CHẠY
+            </span>
+
+          </div>
+
+          <!-- RATING -->
+          <div class="rating">
+
+            <span class="stars">
+              ★★★★★
+            </span>
+
+            <span class="rating-text">
+              4.9 (120 đánh giá)
+            </span>
+
+          </div>
+
+          <!-- PRICE -->
+          <div class="price-box">
+
+            <div class="current-price">
+              {{ displayPrice }} đ
+            </div>
+
+            <div
+              v-if="minPrice !== maxPrice"
+              class="price-range"
             >
-
-              <span>{{ size.size }}</span>
-
-              <small v-if="size.stock <= 0">
-                Hết
-              </small>
-
-              <small v-else>
-                {{ size.stock }}
-              </small>
-
-            </button>
-
-          </div>
-
-        </div>
-
-        <!-- SELECTED -->
-        <div
-          v-if="selectedVariant"
-          class="selected-box"
-        >
-
-          <div class="selected-row">
-            <span>Màu sắc</span>
-            <b>{{ selectedVariant.tenMauSac }}</b>
-          </div>
-
-          <div class="selected-row">
-            <span>Size</span>
-            <b>{{ selectedVariant.size }}</b>
-          </div>
-
-          <div class="selected-row">
-            <span>Tồn kho</span>
-            <b>{{ selectedVariant.soLuongTon }}</b>
-          </div>
-
-        </div>
-
-        <!-- QUANTITY -->
-        <div class="qty-section">
-
-          <div class="option-title">
-            Số lượng
-          </div>
-
-          <div class="qty-box">
-
-            <button
-              class="qty-btn"
-              @click="decreaseQty"
-            >
+              Giá từ
+              {{ formatMoney(minPrice) }}
               -
-            </button>
+              {{ formatMoney(maxPrice) }} đ
+            </div>
 
-            <input
-              v-model="quantity"
-              type="number"
-              min="1"
+          </div>
+
+          <!-- STOCK -->
+          <div class="stock-section">
+
+            <span
+              v-if="stock > 0"
+              class="in-stock"
             >
+              ✔ Còn hàng ({{ stock }})
+            </span>
+
+            <span
+              v-else
+              class="out-stock"
+            >
+              Hết hàng
+            </span>
+
+          </div>
+
+          <!-- COLORS -->
+          <div class="option-group">
+
+            <h4>
+              Màu sắc
+            </h4>
+
+            <div class="color-list">
+
+              <button
+                v-for="color in colors"
+                :key="color.id"
+                class="color-btn"
+                :class="{
+                  active:
+                    selectedColor === color.id
+                }"
+                @click="
+                  selectedColor = color.id
+                "
+              >
+                {{ color.name }}
+              </button>
+
+            </div>
+
+          </div>
+
+          <!-- SIZE -->
+          <div class="option-group">
+
+            <h4>
+              Kích thước
+            </h4>
+
+            <div class="size-list">
+
+              <button
+
+                v-for="size in allSizes"
+
+                :key="size"
+
+                class="size-btn"
+
+                :class="{
+  active:
+    selectedSize === getSizeInfo(size)?.idKichThuoc,
+
+  disabled:
+    !getSizeInfo(size) ||
+    getSizeInfo(size)?.soLuongTon <= 0
+}"
+
+                :disabled="
+      !getSizeInfo(size) ||
+      getSizeInfo(size)?.soLuongTon <= 0
+    "
+
+                @click="
+      selectedSize =
+      getSizeInfo(size)?.idKichThuoc
+    "
+
+              >
+
+                <div class="size-number">
+                  {{ size }}
+                </div>
+
+                <small
+                  v-if="getSizeInfo(size)"
+                >
+                  {{
+                    getSizeInfo(size).soLuongTon > 0
+                      ? `Còn ${getSizeInfo(size).soLuongTon}`
+                      : 'Hết hàng'
+                  }}
+                </small>
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <!-- QUANTITY -->
+          <div class="option-group">
+
+            <h4>
+              Số lượng
+            </h4>
+
+            <div class="quantity-box">
+
+              <button
+                @click="decreaseQuantity"
+              >
+                -
+              </button>
+
+              <input
+                v-model="quantity"
+                type="number"
+              />
+
+              <button
+                @click="increaseQuantity"
+              >
+                +
+              </button>
+
+            </div>
+
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="action-buttons">
 
             <button
-              class="qty-btn"
-              @click="increaseQty"
+              class="btn-cart"
+              @click="addToCart"
             >
-              +
+              🛒 Thêm vào giỏ
+            </button>
+
+            <button
+              class="btn-buy"
+              @click="buyNow"
+            >
+              MUA NGAY
             </button>
 
           </div>
 
         </div>
 
-        <!-- ACTION -->
-        <div class="action-group">
+      </div>
 
-          <button
-            class="btn-cart"
-            @click="addToCart"
+      <!-- TABS -->
+      <div class="tabs">
+
+        <button
+          :class="{
+            active:
+              activeTab === 'overview'
+          }"
+          @click="
+            changeTab('overview')
+          "
+        >
+          Mô tả
+        </button>
+
+        <button
+          :class="{
+            active:
+              activeTab === 'info'
+          }"
+          @click="
+            changeTab('info')
+          "
+        >
+          Thông tin
+        </button>
+
+        <button
+          :class="{
+            active:
+              activeTab === 'variants'
+          }"
+          @click="
+            changeTab('variants')
+          "
+        >
+          Phiên bản
+        </button>
+
+      </div>
+
+      <!-- OVERVIEW -->
+      <div
+        v-if="activeTab === 'overview'"
+        class="content-card"
+      >
+
+        <h2>
+          Mô tả sản phẩm
+        </h2>
+
+        <p>
+          {{ product.moTaChiTiet }}
+        </p>
+
+      </div>
+
+      <!-- INFO -->
+      <div
+        v-if="activeTab === 'info'"
+        class="content-card"
+      >
+
+        <div class="info-grid">
+
+          <div class="info-item">
+
+            <span>
+              Thương hiệu
+            </span>
+
+            <strong>
+              {{ product.tenThuongHieu }}
+            </strong>
+
+          </div>
+
+          <div class="info-item">
+
+            <span>
+              Danh mục
+            </span>
+
+            <strong>
+              {{ product.tenDanhMuc }}
+            </strong>
+
+          </div>
+
+          <div class="info-item">
+
+            <span>
+              Chất liệu
+            </span>
+
+            <strong>
+              {{ product.tenChatLieu }}
+            </strong>
+
+          </div>
+
+          <div class="info-item">
+
+            <span>
+              Xuất xứ
+            </span>
+
+            <strong>
+              {{ product.tenXuatXu }}
+            </strong>
+
+          </div>
+
+          <div class="info-item">
+
+            <span>
+              Giới tính
+            </span>
+
+            <strong>
+              {{ product.gioiTinh }}
+            </strong>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- VARIANTS -->
+      <div
+        v-if="activeTab === 'variants'"
+        class="content-card"
+      >
+
+        <table class="variant-table">
+
+          <thead>
+
+          <tr>
+            <th>Màu</th>
+            <th>Size</th>
+            <th>Giá</th>
+            <th>Tồn</th>
+          </tr>
+
+          </thead>
+
+          <tbody>
+
+          <tr
+            v-for="item in details"
+            :key="item.id"
           >
-            Thêm vào giỏ hàng
-          </button>
 
-          <button
-            class="btn-buy"
-            @click="buyNow"
+            <td>
+              {{ item.tenMauSac }}
+            </td>
+
+            <td>
+              {{ item.size }}
+            </td>
+
+            <td>
+              {{ formatMoney(item.giaBan) }} đ
+            </td>
+
+            <td>
+              {{ item.soLuongTon }}
+            </td>
+
+          </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <!-- RELATED -->
+      <section class="related-section">
+
+        <h2>
+          Có thể bạn sẽ thích
+        </h2>
+
+        <div class="related-grid">
+
+          <div
+            v-for="item in relatedProducts"
+            :key="item.id"
+            class="related-card"
           >
-            Mua ngay
-          </button>
+
+            <img
+              :src="`/images/${item.anhDaiDien}`"
+              alt=""
+            />
+
+            <h4>
+              {{ item.tenSanPham }}
+            </h4>
+
+          </div>
 
         </div>
 
-      </div>
+      </section>
 
-    </div>
-
-    <!-- DESCRIPTION -->
-    <div class="description-section">
-
-      <h2>Mô tả sản phẩm</h2>
-
-      <div class="description-box">
-        {{ product.moTaChiTiet }}
-      </div>
-
-    </div>
-
-    <!-- INFO -->
-    <div class="info-section">
-
-      <h2>Thông tin sản phẩm</h2>
-
-      <div class="info-grid">
-
-        <div class="info-card">
-          <div class="info-label">Thương hiệu</div>
-          <div class="info-value">{{ product.tenThuongHieu }}</div>
-        </div>
-
-        <div class="info-card">
-          <div class="info-label">Danh mục</div>
-          <div class="info-value">{{ product.tenDanhMuc }}</div>
-        </div>
-
-        <div class="info-card">
-          <div class="info-label">Chất liệu</div>
-          <div class="info-value">{{ product.tenChatLieu }}</div>
-        </div>
-
-        <div class="info-card">
-          <div class="info-label">Xuất xứ</div>
-          <div class="info-value">{{ product.tenXuatXu }}</div>
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- TABLE -->
-    <div class="variant-section">
-
-      <h2>Tất cả phiên bản</h2>
-
-      <table class="variant-table">
-
-        <thead>
-        <tr>
-          <th>Màu</th>
-          <th>Size</th>
-          <th>Giá</th>
-          <th>Tồn kho</th>
-        </tr>
-        </thead>
-
-        <tbody>
-
-        <tr v-for="ct in details" :key="ct.id">
-
-          <td>{{ ct.tenMauSac }}</td>
-          <td>{{ ct.size }}</td>
-          <td>{{ formatMoney(ct.giaBan) }} đ</td>
-          <td>{{ ct.soLuongTon }}</td>
-
-        </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
+    </template>
 
   </div>
-
 </template>
 <style scoped>
-
-/* =========================
-   PAGE
-========================= */
-
 .product-detail-page{
   background:#f8fafc;
   min-height:100vh;
-  color:#1e293b;
   padding-bottom:80px;
+}
+
+/* =========================
+   LOADING
+========================= */
+
+.loading-container{
+  min-height:70vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:20px;
+}
+
+.loader{
+  width:50px;
+  height:50px;
+  border:4px solid #e2e8f0;
+  border-top:4px solid #111827;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{
+    transform:rotate(360deg);
+  }
 }
 
 /* =========================
@@ -526,20 +933,22 @@ onMounted(loadData)
 
 .breadcrumb{
   width:90%;
-  max-width:1280px;
-  margin:0 auto 30px;
-
-  font-size:14px;
-  color:#64748b;
-
+  max-width:1400px;
+  margin:auto;
+  padding:30px 0;
   display:flex;
-  gap:8px;
+  gap:10px;
   align-items:center;
+  color:#64748b;
+  font-size:14px;
 }
 
-.breadcrumb b{
-  color:#0f172a;
-  font-weight:600;
+.breadcrumb span{
+  cursor:pointer;
+}
+
+.breadcrumb span:hover{
+  color:#111827;
 }
 
 /* =========================
@@ -548,373 +957,397 @@ onMounted(loadData)
 
 .detail-container{
   width:90%;
-  max-width:1280px;
+  max-width:1400px;
   margin:auto;
 
   display:grid;
-  grid-template-columns:55% 45%;
+  grid-template-columns:1fr 1fr;
   gap:60px;
-  align-items:flex-start;
+
+  animation:fadeUp .5s ease;
+}
+
+@keyframes fadeUp{
+  from{
+    opacity:0;
+    transform:translateY(20px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
 }
 
 /* =========================
-   IMAGE
+   GALLERY
 ========================= */
 
 .gallery-section{
   position:sticky;
   top:20px;
+  align-self:start;
+}
+
+.main-image-wrapper{
+  position:relative;
+  background:white;
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.08);
 }
 
 .main-image{
-  background:white;
-  border-radius:24px;
-  padding:30px;
-  border:1px solid #e2e8f0;
-  box-shadow:0 8px 30px rgba(0,0,0,.04);
-}
-
-.product-image{
   width:100%;
-  height:520px;
-  object-fit:contain;
   display:block;
-  transition:.3s;
+  object-fit:cover;
+  transition:.4s;
 }
 
-.product-image:hover{
+.main-image:hover{
   transform:scale(1.03);
 }
 
+.image-badge{
+  position:absolute;
+  top:20px;
+  left:20px;
+
+  background:#ef4444;
+  color:white;
+
+  padding:8px 16px;
+  border-radius:999px;
+
+  font-size:12px;
+  font-weight:700;
+}
+
+.thumbnail-list{
+  display:flex;
+  gap:15px;
+  margin-top:20px;
+}
+
+.thumbnail{
+  width:90px;
+  height:90px;
+
+  border-radius:16px;
+  overflow:hidden;
+
+  border:2px solid #2563eb;
+}
+
+.thumbnail img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
 /* =========================
-   INFO
+   INFO PANEL
 ========================= */
 
-.info-section{
-  padding-top:10px;
+.info-panel{
+  background:white;
+  border-radius:24px;
+  padding:40px;
+  box-shadow:0 20px 60px rgba(0,0,0,.05);
 }
 
-.brand-name{
-  font-size:13px;
+.brand{
+  color:#2563eb;
   font-weight:700;
-  letter-spacing:2px;
+  letter-spacing:1px;
   text-transform:uppercase;
-  color:#64748b;
 }
 
-.product-name{
-  margin-top:10px;
+.product-title{
   font-size:42px;
-  font-weight:700;
   line-height:1.2;
-  color:#0f172a;
+  margin:15px 0;
+  color:#111827;
 }
 
-.product-sub{
-  margin-top:8px;
-  color:#64748b;
-  font-size:15px;
+/* =========================
+   BADGES
+========================= */
+
+.badges{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:20px;
 }
 
-.price{
-  margin-top:24px;
-  font-size:38px;
-  font-weight:700;
-  color:#ef4444;
-}
-
-.stock{
-  display:inline-flex;
-  align-items:center;
-  margin-top:18px;
+.badge{
   padding:8px 14px;
   border-radius:999px;
-  font-size:13px;
+  font-size:12px;
   font-weight:600;
 }
 
-.stock-ok{
+.brand-badge{
+  background:#dbeafe;
+  color:#1d4ed8;
+}
+
+.stock-badge{
   background:#dcfce7;
   color:#15803d;
 }
 
-.stock-out{
+.hot-badge{
   background:#fee2e2;
   color:#dc2626;
 }
 
 /* =========================
-   OPTION GROUP
+   RATING
+========================= */
+
+.rating{
+  margin-top:25px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.stars{
+  color:#f59e0b;
+  font-size:20px;
+}
+
+.rating-text{
+  color:#64748b;
+}
+
+/* =========================
+   PRICE
+========================= */
+
+.price-box{
+  margin-top:30px;
+}
+
+.current-price{
+  font-size:40px;
+  font-weight:800;
+  color:#111827;
+}
+
+.price-range{
+  margin-top:8px;
+  color:#64748b;
+}
+
+/* =========================
+   STOCK
+========================= */
+
+.stock-section{
+  margin-top:25px;
+}
+
+.in-stock{
+  color:#16a34a;
+  font-weight:600;
+}
+
+.out-stock{
+  color:#dc2626;
+  font-weight:600;
+}
+
+/* =========================
+   OPTIONS
 ========================= */
 
 .option-group{
-  margin-top:28px;
+  margin-top:35px;
 }
 
-.option-title{
-  font-size:16px;
-  font-weight:600;
-  color:#0f172a;
-  margin-bottom:12px;
+.option-group h4{
+  margin-bottom:15px;
+  color:#111827;
 }
 
 .color-list,
 .size-list{
   display:flex;
-  flex-wrap:wrap;
   gap:12px;
+  flex-wrap:wrap;
 }
 
-/* =========================
-   COLOR BUTTON (PRO)
-========================= */
+.color-btn,
+.size-btn{
+  border:none;
+  background:#f1f5f9;
 
-.color-btn{
-  min-width:120px;
-  height:65px;
-
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-
-  border:1px solid #dbe2ea;
-  background:white;
+  padding:12px 18px;
 
   border-radius:14px;
 
   cursor:pointer;
-  transition:.25s;
-}
 
-.color-btn span{
-  font-size:14px;
   font-weight:600;
+
+  transition:.3s;
 }
 
-.color-btn small{
-  font-size:11px;
-  margin-top:4px;
-  color:#64748b;
-}
-
-.color-btn:hover{
-  border-color:#3b82f6;
-  color:#2563eb;
-}
-
-.color-btn.active{
-  background:#2563eb;
-  color:white;
-  border-color:#2563eb;
-}
-
-.color-btn.active small{
-  color:#dbeafe;
-}
-
-.color-btn.disabled{
-  background:#f8fafc;
-  color:#94a3b8;
-  border-color:#e2e8f0;
-  cursor:not-allowed;
-  opacity:.7;
-}
-
-/* =========================
-   SIZE BUTTON (PRO)
-========================= */
-
-.size-btn{
-  width:75px;
-  height:65px;
-
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-
-  border:1px solid #dbe2ea;
-  background:white;
-
-  border-radius:12px;
-
-  cursor:pointer;
-  transition:.25s;
-}
-
-.size-btn span{
-  font-size:15px;
-  font-weight:600;
-}
-
-.size-btn small{
-  margin-top:3px;
-  font-size:11px;
-  color:#64748b;
-}
-
+.color-btn:hover,
 .size-btn:hover{
-  border-color:#3b82f6;
-  color:#2563eb;
+  transform:translateY(-2px);
 }
 
+.color-btn.active,
 .size-btn.active{
-  background:#2563eb;
+  background:#111827;
   color:white;
-  border-color:#2563eb;
-}
-
-.size-btn.active small{
-  color:#dbeafe;
-}
-
-.size-btn.disabled{
-  background:#f8fafc;
-  color:#94a3b8;
-  border-color:#e2e8f0;
-  cursor:not-allowed;
-  opacity:.7;
-}
-
-.size-btn.disabled span{
-  text-decoration:line-through;
-}
-
-.size-btn.disabled small{
-  color:#ef4444;
-}
-
-/* =========================
-   SELECTED BOX
-========================= */
-
-.selected-box{
-  margin-top:24px;
-  background:white;
-  border:1px solid #e2e8f0;
-  border-radius:16px;
-  padding:18px;
-}
-
-.selected-row{
-  display:flex;
-  justify-content:space-between;
-  padding:10px 0;
-  border-bottom:1px solid #f1f5f9;
-}
-
-.selected-row:last-child{
-  border-bottom:none;
 }
 
 /* =========================
    QUANTITY
 ========================= */
 
-.qty-section{
-  margin-top:28px;
-}
-
-.qty-box{
+.quantity-box{
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:10px;
 }
 
-.qty-btn{
-  width:44px;
-  height:44px;
+.quantity-box button{
+  width:45px;
+  height:45px;
   border:none;
-  background:#f1f5f9;
   border-radius:12px;
-  font-size:20px;
-  font-weight:700;
   cursor:pointer;
-  transition:.2s;
+  font-size:18px;
+  font-weight:700;
 }
 
-.qty-btn:hover{
-  background:#e2e8f0;
-}
+.quantity-box input{
+  width:80px;
+  text-align:center;
+  height:45px;
 
-.qty-box input{
-  width:90px;
-  height:44px;
   border:1px solid #cbd5e1;
   border-radius:12px;
-  text-align:center;
-  font-size:15px;
 }
 
 /* =========================
-   ACTION BUTTONS
+   ACTIONS
 ========================= */
 
-.action-group{
+.action-buttons{
   display:flex;
   gap:15px;
-  margin-top:35px;
+  margin-top:40px;
+}
+
+.btn-cart,
+.btn-buy{
+  flex:1;
+
+  height:58px;
+
+  border:none;
+  border-radius:16px;
+
+  cursor:pointer;
+
+  font-weight:700;
+  font-size:15px;
+
+  transition:.3s;
 }
 
 .btn-cart{
-  flex:1;
-  height:54px;
-  border:2px solid #2563eb;
   background:white;
-  color:#2563eb;
-  border-radius:14px;
-  font-size:15px;
-  font-weight:600;
-  cursor:pointer;
-  transition:.25s;
+  border:2px solid #111827;
 }
 
 .btn-cart:hover{
-  background:#2563eb;
+  background:#111827;
   color:white;
 }
 
 .btn-buy{
-  flex:1;
-  height:54px;
-  border:none;
-  background:#2563eb;
   color:white;
-  border-radius:14px;
-  font-size:15px;
-  font-weight:600;
-  cursor:pointer;
-  transition:.25s;
+  background:linear-gradient(
+    135deg,
+    #2563eb,
+    #7c3aed
+  );
 }
 
 .btn-buy:hover{
-  background:#1d4ed8;
+  transform:translateY(-3px);
+  box-shadow:0 20px 40px rgba(37,99,235,.35);
 }
 
 /* =========================
-   DESCRIPTION + INFO
+   TABS
 ========================= */
 
-.description-section,
-.variant-section{
+.tabs{
   width:90%;
-  max-width:1280px;
-  margin:70px auto 0;
+  max-width:1400px;
+
+  margin:80px auto 30px;
+
+  display:flex;
+  gap:12px;
 }
 
-.description-section h2,
-.variant-section h2{
-  font-size:30px;
-  font-weight:700;
+.tabs button{
+  border:none;
+  background:#e2e8f0;
+
+  padding:14px 28px;
+
+  border-radius:14px;
+
+  cursor:pointer;
+
+  font-weight:600;
+
+  transition:.3s;
+}
+
+.tabs button:hover{
+  transform:translateY(-2px);
+}
+
+.tabs button.active{
+  background:#111827;
+  color:white;
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.content-card{
+  width:90%;
+  max-width:1400px;
+
+  margin:auto;
+
+  background:white;
+
+  border-radius:24px;
+
+  padding:40px;
+
+  box-shadow:0 10px 30px rgba(0,0,0,.05);
+}
+
+.content-card h2{
   margin-bottom:20px;
 }
 
-.description-box{
-  background:white;
-  padding:28px;
-  border-radius:20px;
-  border:1px solid #e2e8f0;
+.content-card p{
   line-height:1.8;
   color:#475569;
 }
@@ -929,23 +1362,22 @@ onMounted(loadData)
   gap:20px;
 }
 
-.info-card{
-  background:white;
-  padding:24px;
-  border-radius:18px;
-  border:1px solid #e2e8f0;
+.info-item{
+  background:#f8fafc;
+  padding:20px;
+  border-radius:16px;
+  transition:.3s;
 }
 
-.info-label{
+.info-item:hover{
+  transform:translateY(-5px);
+  box-shadow:0 12px 24px rgba(0,0,0,.08);
+}
+
+.info-item span{
+  display:block;
   color:#64748b;
-  font-size:14px;
-  margin-bottom:10px;
-}
-
-.info-value{
-  font-size:17px;
-  font-weight:600;
-  color:#0f172a;
+  margin-bottom:8px;
 }
 
 /* =========================
@@ -955,24 +1387,18 @@ onMounted(loadData)
 .variant-table{
   width:100%;
   border-collapse:collapse;
-  background:white;
-  border-radius:20px;
-  overflow:hidden;
-  box-shadow:0 6px 20px rgba(0,0,0,.04);
 }
 
 .variant-table th{
-  background:#f1f5f9;
-  color:#334155;
-  font-size:15px;
-  font-weight:600;
-  padding:18px;
+  background:#111827;
+  color:white;
+  padding:15px;
 }
 
 .variant-table td{
-  padding:18px;
+  padding:15px;
   text-align:center;
-  border-top:1px solid #e2e8f0;
+  border-bottom:1px solid #e5e7eb;
 }
 
 .variant-table tr:hover{
@@ -980,10 +1406,58 @@ onMounted(loadData)
 }
 
 /* =========================
+   RELATED
+========================= */
+
+.related-section{
+  width:90%;
+  max-width:1400px;
+  margin:80px auto 0;
+}
+
+.related-section h2{
+  margin-bottom:30px;
+}
+
+.related-grid{
+  display:grid;
+  grid-template-columns:
+    repeat(auto-fit,minmax(250px,1fr));
+
+  gap:25px;
+}
+
+.related-card{
+  background:white;
+  border-radius:20px;
+  overflow:hidden;
+  cursor:pointer;
+
+  transition:.35s;
+
+  box-shadow:0 10px 25px rgba(0,0,0,.05);
+}
+
+.related-card:hover{
+  transform:translateY(-8px);
+}
+
+.related-card img{
+  width:100%;
+  height:250px;
+  object-fit:cover;
+}
+
+.related-card h4{
+  padding:20px;
+}
+
+/* =========================
    RESPONSIVE
 ========================= */
 
-@media(max-width:992px){
+@media (max-width:1024px){
+
   .detail-container{
     grid-template-columns:1fr;
   }
@@ -992,39 +1466,153 @@ onMounted(loadData)
     position:static;
   }
 
-  .product-image{
-    height:380px;
+  .product-title{
+    font-size:32px;
+  }
+}
+
+@media (max-width:768px){
+
+  .product-title{
+    font-size:26px;
   }
 
-  .product-name{
-    font-size:34px;
+  .current-price{
+    font-size:28px;
   }
 
-  .price{
-    font-size:30px;
-  }
-
-  .action-group{
+  .action-buttons{
     flex-direction:column;
+  }
+
+  .tabs{
+    overflow:auto;
   }
 
   .info-grid{
     grid-template-columns:1fr;
   }
-}
 
-@media(max-width:576px){
-  .product-image{
-    height:280px;
-  }
-
-  .product-name{
-    font-size:28px;
-  }
-
-  .price{
-    font-size:26px;
+  .content-card{
+    padding:25px;
   }
 }
 
+@media (max-width:480px){
+
+  .info-panel{
+    padding:25px;
+  }
+
+  .breadcrumb{
+    font-size:12px;
+  }
+
+  .color-btn,
+  .size-btn{
+    width:100%;
+  }
+
+  .quantity-box{
+    width:100%;
+  }
+
+  .quantity-box input{
+    flex:1;
+  }
+}
+/* =========================
+   SIZE LIST (COMPACT)
+========================= */
+
+.size-list{
+  display:grid;
+  grid-template-columns:repeat(5, 58px);
+  gap:10px;
+}
+
+.size-btn{
+
+  width:58px;
+  height:58px;
+
+  padding:4px;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+
+  background:#fff;
+
+  cursor:pointer;
+
+  transition:.25s ease;
+
+}
+
+.size-btn:hover:not(.disabled){
+
+  border-color:#111827;
+
+  transform:translateY(-2px);
+
+}
+
+.size-number{
+
+  font-size:14px;
+  font-weight:700;
+  line-height:1;
+
+}
+
+.size-btn small{
+
+  font-size:9px;
+  margin-top:3px;
+  color:#64748b;
+  line-height:1;
+
+}
+
+.size-btn.active{
+
+  background:#111827;
+  color:#fff;
+  border-color:#111827;
+
+}
+
+.size-btn.active small{
+
+  color:#fff;
+
+}
+
+.size-btn.disabled{
+
+  opacity:.45;
+  cursor:not-allowed;
+  position:relative;
+
+}
+
+.size-btn.disabled::after{
+
+  content:"";
+
+  position:absolute;
+
+  width:70%;
+  height:1px;
+
+  background:#cbd5e1;
+
+  transform:rotate(-20deg);
+
+}
 </style>

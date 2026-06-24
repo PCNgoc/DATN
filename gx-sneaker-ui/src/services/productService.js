@@ -10,3 +10,5 @@ export const searchProducts = (keyword) =>
   axios.get(
     `${API}/search?keyword=${keyword}`
   )
+export const getNewestProducts = () =>
+  axios.get(`${API}/newest`)
