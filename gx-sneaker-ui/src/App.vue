@@ -1,13 +1,15 @@
-<template>
-  <Header />
+<script setup>
+import { useRoute } from 'vue-router'
+import Header from '@/components/Header.vue'
+import Footer from '@/components/Footer.vue'
 
-  <!-- TRANG THAY ĐỔI -->
+const route = useRoute()
+</script>
+
+<template>
+  <Header v-if="!route.path.startsWith('/admin')" />
+
   <router-view />
 
-  <Footer />
+  <Footer v-if="!route.path.startsWith('/admin')" />
 </template>
-
-<script setup>
-import Header from "@/components/Header.vue"
-import Footer from "@/components/Footer.vue"
-</script>

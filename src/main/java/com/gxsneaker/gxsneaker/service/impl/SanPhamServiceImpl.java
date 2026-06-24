@@ -163,4 +163,32 @@ public class SanPhamServiceImpl implements SanPhamService {
                 .map(SanPhamMapper::toDTO)
                 .toList();
     }
+    @Override
+    public List<SanPhamDTO> getNewProducts() {
+
+        return sanPhamRepository
+                .findTop8ByTrangThaiTrueOrderByNgayTaoDesc()
+                .stream()
+                .map(SanPhamMapper::toDTO)
+                .toList();
+    }
+    @Override
+    public List<SanPhamDTO> getFeaturedProducts() {
+
+        return sanPhamRepository
+                .findTop12ByTrangThaiTrue()
+                .stream()
+                .map(SanPhamMapper::toDTO)
+                .toList();
+    }
+    @Override
+    public List<SanPhamDTO> getNewestProducts() {
+
+        return sanPhamRepository
+                .findNewestProducts()
+                .stream()
+                .limit(5)
+                .map(SanPhamMapper::toDTO)
+                .toList();
+    }
 }

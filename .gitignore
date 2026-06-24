@@ -8,7 +8,22 @@ target/
 # Maven Wrapper
 .mvn/wrapper/maven-wrapper.jar
 
-# STS
+# Java compiled
+*.class
+
+# Logs
+*.log
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Spring Tool Suite
 .apt_generated
 .classpath
 .factorypath
@@ -17,7 +32,7 @@ target/
 .springBeans
 .sts4-cache
 
-# IntelliJ
+# IntelliJ IDEA
 .idea/
 *.iws
 *.iml
@@ -33,25 +48,16 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-# VSCode
+# VS Code
 .vscode/
 
-# Java
-*.class
-*.log
+# Vue / Node
+node_modules/
+dist/
 
-# Package Files
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+# Environment
+.env
 
 # Crash Logs
 hs_err_pid*
 replay_pid*
-
-# Node
-node_modules/

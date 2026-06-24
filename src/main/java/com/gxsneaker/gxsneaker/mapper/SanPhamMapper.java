@@ -44,7 +44,14 @@ public class SanPhamMapper {
 
         dto.setNguoiTao(sp.getNguoiTao());
         dto.setNguoiCapNhat(sp.getNguoiCapNhat());
+        dto.setNguoiTao(sp.getNguoiTao());
+        dto.setNguoiCapNhat(sp.getNguoiCapNhat());
+
+        dto.setNgayTao(
+                sp.getNgayTao()
+        );
 
         return dto;
+
     }
 }
