@@ -85,62 +85,56 @@ onMounted(async()=>{
 
 
 .brand-section{
-  padding:60px 40px;
-  background:#fafafa;
+  padding:70px 40px;
+  background:#f8f9fb;
 }
 
 .section-header{
-  margin-bottom:30px;
+  margin-bottom:40px;
 }
 
 .sub-title{
-  color:#888;
+  color:#ff2a3d;
   font-size:11px;
-  font-weight:700;
-  letter-spacing:3px;
+  font-weight:800;
+  letter-spacing:4px;
   text-transform:uppercase;
 }
 
 .section-title{
-  margin-top:6px;
-  font-size:28px;
-  font-weight:800;
+  font-size:38px;
+  font-weight:900;
   color:#111;
 }
 
 .brand-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:20px;
+  gap:24px;
 }
 
 .brand-card{
   background:#fff;
-
-  border:1px solid #eee;
-
-  border-radius:18px;
-
-  padding:25px;
-
+  border:none;
+  border-radius:22px;
+  padding:30px;
   text-align:center;
-
   cursor:pointer;
+  transition:.35s;
 
-  transition:.3s;
+  box-shadow:
+    0 4px 15px rgba(0,0,0,.05);
 }
 
 .brand-card:hover{
-  transform:translateY(-5px);
-
-  border-color:#111;
+  transform:translateY(-8px);
 
   box-shadow:
-    0 12px 25px rgba(0,0,0,.08);
+    0 18px 35px rgba(255,42,61,.12);
 }
 
 .logo-wrapper{
-  height:90px;
+  height:100px;
 
   display:flex;
   align-items:center;
@@ -148,12 +142,10 @@ onMounted(async()=>{
 }
 
 .brand-card img{
-  max-width:100px;
-  max-height:70px;
-
+  max-width:120px;
+  max-height:80px;
   object-fit:contain;
-
-  transition:.3s;
+  transition:.35s;
 }
 
 .brand-card:hover img{
@@ -162,45 +154,35 @@ onMounted(async()=>{
 
 .brand-card h4{
   margin-top:18px;
-
-  font-size:15px;
-  font-weight:700;
-
+  font-size:16px;
+  font-weight:800;
   color:#111;
 }
 
 @media(max-width:1200px){
-
   .brand-grid{
     grid-template-columns:repeat(3,1fr);
   }
-
 }
 
 @media(max-width:768px){
-
   .brand-section{
-    padding:40px 20px;
+    padding:50px 20px;
+  }
+
+  .section-title{
+    font-size:30px;
   }
 
   .brand-grid{
     grid-template-columns:repeat(2,1fr);
   }
-
-  .section-title{
-    font-size:24px;
-  }
-
 }
 
 @media(max-width:576px){
-
   .brand-grid{
     grid-template-columns:1fr;
   }
-
 }
-
-
 
 </style>
