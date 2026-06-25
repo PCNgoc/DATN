@@ -88,6 +88,9 @@ const logout = () => {
         <router-link to="/admin/hoa-don">
           🧾 Hóa đơn
         </router-link>
+        <router-link to="/admin/thong-ke">
+          📊 Thống kê
+        </router-link>
 
       </div>
 

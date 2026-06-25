@@ -123,6 +123,10 @@ const router = createRouter({
         {
           path: 'hoa-don',
           component: HoaDonView,
+        },
+        {
+          path: 'thong-ke',
+          component: Dashboard,
         }
       ]
     },
@@ -164,11 +168,7 @@ const router = createRouter({
       path: '/admin/dashboard',
       component: AdminDashboardView,
     },
-    {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: Dashboard,
-    },
+
   ],
 })
 
