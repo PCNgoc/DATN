@@ -34,4 +34,8 @@ public class ProductController {
     ){
         return sanPhamService.search(keyword);
     }
+    @GetMapping("/newest")
+    public List<SanPhamDTO> getNewestProducts() {
+        return sanPhamService.getNewestProducts();
+    }
 }

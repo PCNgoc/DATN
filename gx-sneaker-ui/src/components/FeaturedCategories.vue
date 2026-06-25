@@ -13,43 +13,134 @@ onMounted(async()=>{
 })
 </script>
 
+```vue
 <template>
-  <section class="section">
+  <section class="category-section">
 
-    <h2>Danh mục nổi bật</h2>
+    <div class="section-header">
 
-    <div class="grid">
+      <div>
+        <span class="sub-title">
+          GX SNEAKER
+        </span>
+
+        <h2 class="section-title">
+          Danh mục nổi bật
+        </h2>
+      </div>
+
+    </div>
+
+    <div class="category-grid">
 
       <div
         v-for="item in categories"
         :key="item.id"
-        class="card"
+        class="category-card"
       >
-        {{ item.ten }}
+
+        <div class="category-icon">
+          👟
+        </div>
+
+        <div class="category-name">
+          {{ item.ten }}
+        </div>
+
       </div>
 
     </div>
 
   </section>
 </template>
-
+```css
 <style scoped>
-.section{
-  padding:80px;
+
+.category-section{
+  padding:70px 40px;
+  background:#ffffff;
 }
 
-.grid{
+.section-header{
+  margin-bottom:40px;
+}
+
+.sub-title{
+  color:#ff2a3d;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+
+.section-title{
+  font-size:38px;
+  font-weight:900;
+  color:#111;
+}
+
+.category-grid{
   display:grid;
   grid-template-columns:repeat(6,1fr);
-  gap:20px;
+  gap:22px;
 }
 
-.card{
-  background:white;
-  border-radius:16px;
-  padding:30px;
+.category-card{
+  background:#fff;
+  border:none;
+  border-radius:22px;
+  padding:30px 15px;
   text-align:center;
-  font-weight:700;
-  box-shadow:0 5px 15px rgba(0,0,0,.08);
+  cursor:pointer;
+  transition:.35s;
+
+  box-shadow:
+    0 4px 15px rgba(0,0,0,.05);
 }
+
+.category-card:hover{
+  transform:translateY(-8px);
+
+  box-shadow:
+    0 15px 35px rgba(255,42,61,.15);
+}
+
+.category-icon{
+  font-size:38px;
+  margin-bottom:15px;
+}
+
+.category-name{
+  font-size:15px;
+  font-weight:800;
+  color:#111;
+}
+
+@media(max-width:1200px){
+  .category-grid{
+    grid-template-columns:repeat(4,1fr);
+  }
+}
+
+@media(max-width:768px){
+  .category-section{
+    padding:50px 20px;
+  }
+
+  .section-title{
+    font-size:30px;
+  }
+
+  .category-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+@media(max-width:576px){
+  .category-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
 </style>
+

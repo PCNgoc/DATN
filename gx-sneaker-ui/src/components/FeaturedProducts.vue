@@ -15,7 +15,7 @@ const loadProducts = async () => {
 
     products.value = res.data
       .filter(item => item.trangThai === true)
-      .slice(0, 5)
+      .slice(0, 8)
 
   } catch (error) {
     console.error("Lỗi tải sản phẩm:", error)
@@ -31,6 +31,7 @@ const goDetail = (id) => {
 onMounted(loadProducts)
 </script>
 
+```vue
 <template>
   <section class="featured">
 
@@ -41,7 +42,7 @@ onMounted(loadProducts)
           GX SNEAKER
         </span>
 
-        <h2>
+        <h2 class="section-title">
           Sản phẩm nổi bật
         </h2>
       </div>
@@ -76,10 +77,14 @@ onMounted(loadProducts)
 
         <div class="image-wrapper">
 
+          <span class="product-badge">
+            HOT
+          </span>
+
           <img
             :src="`/images/${sp.anhDaiDien}`"
             :alt="sp.tenSanPham"
-          >
+          />
 
         </div>
 
@@ -89,16 +94,20 @@ onMounted(loadProducts)
             {{ sp.tenThuongHieu }}
           </span>
 
-          <h3>
+          <h3 class="product-name">
             {{ sp.tenSanPham }}
           </h3>
 
-          <p>
+          <div class="category-tag">
             {{ sp.tenDanhMuc }}
-          </p>
+          </div>
 
-          <div class="btn-detail">
-            Xem chi tiết →
+          <div class="product-footer">
+
+            <div class="btn-detail">
+              Xem chi tiết →
+            </div>
+
           </div>
 
         </div>
@@ -113,71 +122,100 @@ onMounted(loadProducts)
 <style scoped>
 
 .featured{
-  padding:80px 60px;
-  background:#fafafa;
+  padding:60px 40px;
+  background:#f8f9fb;
 }
 
 .section-header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:40px;
+  margin-bottom:35px;
 }
 
 .sub-title{
-  color:#888;
-  font-size:13px;
-  letter-spacing:2px;
+  display:block;
+  color:#ff2a3d;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:4px;
   text-transform:uppercase;
+  margin-bottom:8px;
 }
 
-.section-header h2{
-  font-size:40px;
-  font-weight:800;
-  margin-top:8px;
+.section-title{
+  font-size:36px;
+  font-weight:900;
+  color:#111;
+  line-height:1.2;
 }
 
 .view-all{
   text-decoration:none;
   color:#111;
+  font-size:15px;
   font-weight:700;
+  transition:.3s;
+}
+
+.view-all:hover{
+  color:#ff2a3d;
 }
 
 .product-grid{
   display:grid;
-  grid-template-columns:repeat(5,1fr);
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:24px;
 }
 
 .product-card{
-  background:white;
+  background:#fff;
   border-radius:20px;
   overflow:hidden;
   cursor:pointer;
-  border:1px solid #ececec;
-  transition:.35s;
+  transition:all .3s ease;
+  box-shadow:0 5px 20px rgba(0,0,0,.06);
 }
 
 .product-card:hover{
-  transform:translateY(-10px);
-
-  box-shadow:
-    0 20px 40px rgba(0,0,0,.1);
+  transform:translateY(-8px);
+  box-shadow:0 18px 35px rgba(0,0,0,.12);
 }
 
 .image-wrapper{
+  position:relative;
+  height:240px;
   overflow:hidden;
 }
 
 .image-wrapper img{
   width:100%;
-  height:260px;
+  height:100%;
   object-fit:cover;
-  transition:.5s;
+  display:block;
+  transition:.4s;
 }
 
 .product-card:hover img{
   transform:scale(1.08);
+}
+
+.product-badge{
+  position:absolute;
+  top:12px;
+  left:12px;
+
+  background:#ff2a3d;
+  color:#fff;
+
+  padding:6px 12px;
+
+  border-radius:999px;
+
+  font-size:10px;
+  font-weight:800;
+
+  z-index:2;
 }
 
 .product-info{
@@ -185,42 +223,71 @@ onMounted(loadProducts)
 }
 
 .brand{
-  font-size:12px;
-  color:#888;
+  display:block;
+
+  color:#999;
+
+  font-size:10px;
   font-weight:700;
+
+  letter-spacing:2px;
+
   text-transform:uppercase;
 }
 
-.product-info h3{
+.product-name{
   margin-top:10px;
+
   font-size:17px;
-  min-height:48px;
+  font-weight:800;
+
+  color:#111;
+
+  line-height:1.5;
+
+  min-height:52px;
+
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+
+  overflow:hidden;
 }
 
-.product-info p{
-  color:#666;
-  margin-top:8px;
+.category-tag{
+  display:inline-block;
+
+  margin-top:10px;
+
+  padding:6px 12px;
+
+  border-radius:999px;
+
+  background:#fff1f2;
+
+  color:#ff2a3d;
+
+  font-size:11px;
+  font-weight:700;
+}
+
+.product-footer{
+  margin-top:14px;
 }
 
 .btn-detail{
-  margin-top:15px;
+  color:#ff2a3d;
+  font-size:13px;
   font-weight:700;
 }
 
 .loading{
   text-align:center;
   padding:50px;
+  color:#666;
 }
 
-@media(max-width:1400px){
-
-  .product-grid{
-    grid-template-columns:repeat(4,1fr);
-  }
-
-}
-
-@media(max-width:1100px){
+@media(max-width:1200px){
 
   .product-grid{
     grid-template-columns:repeat(3,1fr);
@@ -231,7 +298,11 @@ onMounted(loadProducts)
 @media(max-width:768px){
 
   .featured{
-    padding:40px 20px;
+    padding:50px 20px;
+  }
+
+  .section-title{
+    font-size:30px;
   }
 
   .product-grid{
@@ -247,4 +318,7 @@ onMounted(loadProducts)
   }
 
 }
+
 </style>
+
+

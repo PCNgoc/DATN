@@ -7,18 +7,21 @@ const { user, logout } = useAuth()
 
 <template>
 
-  <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="top-item">
-      🚚 Miễn phí vận chuyển toàn quốc
-    </div>
+    <div class="marquee">
 
-    <div class="top-item">
-      🔥 Giảm đến 50% sản phẩm mới
-    </div>
+      <span>👟 GX Sneaker - Nâng tầm phong cách của bạn</span>
 
-    <div class="top-item">
-      📞 Hotline: 0376000683
+      <span>🔥 Bộ sưu tập Sneaker 2026 mới nhất đã cập bến</span>
+
+      <span>🚚 Miễn phí giao hàng toàn quốc</span>
+
+      <span>💎 Chất lượng tạo nên đẳng cấp</span>
+
+      <span>⭐ Hơn 10.000 khách hàng đã lựa chọn GX Sneaker</span>
+
+      <span>🎁 Ưu đãi độc quyền dành cho thành viên GX Club</span>
+
     </div>
   </div>
 
@@ -178,18 +181,37 @@ const { user, logout } = useAuth()
 .top-bar{
   height:40px;
   background:#111;
-
-  color:white;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  gap:60px;
-
-  font-size:13px;
+  color:#fff;
+  overflow:hidden;
+  position:relative;
 }
 
+.marquee{
+  display:flex;
+  align-items:center;
+  gap:80px;
+
+  width:max-content;
+  height:100%;
+
+  animation: scroll-left 20s linear infinite;
+}
+
+.marquee span{
+  white-space:nowrap;
+  font-size:13px;
+  font-weight:500;
+}
+
+@keyframes scroll-left{
+  from{
+    transform:translateX(0);
+  }
+
+  to{
+    transform:translateX(-50%);
+  }
+}
 .navbar{
   height:90px;
 

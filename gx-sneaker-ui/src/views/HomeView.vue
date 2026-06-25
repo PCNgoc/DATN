@@ -1,18 +1,22 @@
 <template>
-  <div>
-
+  <div class="home-page">
     <Banner />
 
-    <FeaturedCategories />
+    <section class="section-gap">
+      <FeaturedCategories />
+    </section>
 
-    <FeaturedProducts />
+    <section class="section-gap">
+      <FeaturedProducts />
+    </section>
 
-    <NewProducts />
+    <section class="section-gap">
+      <FeaturedBrands />
+    </section>
 
-    <FeaturedBrands />
-
-    <CustomerFeedback />
-
+    <section class="section-gap">
+      <NewProducts />
+    </section>
   </div>
 </template>
 
@@ -22,5 +26,39 @@ import FeaturedCategories from "@/components/FeaturedCategories.vue"
 import FeaturedProducts from "@/components/FeaturedProducts.vue"
 import NewProducts from "@/components/NewProducts.vue"
 import FeaturedBrands from "@/components/FeaturedBrands.vue"
-import CustomerFeedback from "@/components/CustomerFeedback.vue"
 </script>
+
+<style scoped>
+.home-page{
+  background:#f8f9fb;
+  min-height:100vh;
+}
+
+.section-gap{
+  position:relative;
+  padding:10px 0 30px;
+}
+
+.section-gap::before{
+  content:"";
+  display:block;
+
+  width:120px;
+  height:3px;
+
+  margin:0 auto 50px;
+
+  border-radius:999px;
+
+  background:linear-gradient(
+    90deg,
+    transparent,
+    #ff2a3d,
+    transparent
+  );
+}
+
+.section-gap:first-of-type::before{
+  display:none;
+}
+</style>
