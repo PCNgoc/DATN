@@ -89,6 +89,11 @@ const router = createRouter({
           component: SanPhamView,
         },
         {
+          path: 'san-pham/:id/chi-tiet',
+          name: 'chi-tiet-san-pham',
+          component: ChiTietSanPhamView,
+        },
+        {
           path: 'danh-muc',
           component: DanhMucView,
         },
@@ -123,15 +128,10 @@ const router = createRouter({
         {
           path: 'hoa-don',
           component: HoaDonView,
-        }
-      ]
+        },
+      ],
     },
 
-    {
-      path: '/san-pham/:id/chi-tiet',
-      name: 'chi-tiet-san-pham',
-      component: ChiTietSanPhamView,
-    },
 
     {
       path: '/products',
@@ -163,6 +163,10 @@ const router = createRouter({
     {
       path: '/admin/dashboard',
       component: AdminDashboardView,
+    },
+    {
+      path: '/staff/dashboard',
+      component: StaffDashboardView,
     },
     {
       path: '/dashboard',

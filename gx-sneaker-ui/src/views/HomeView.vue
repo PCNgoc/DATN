@@ -1,20 +1,32 @@
 <template>
-  <div>
+  <div class="home-page">
 
     <Banner />
 
-    <FeaturedCategories />
+    <section class="section-gap">
+      <FeaturedCategories />
+    </section>
 
-    <FeaturedProducts />
+    <section class="section-gap">
+      <FeaturedProducts />
+    </section>
 
-    <NewProducts />
+    <section class="section-gap">
+      <FeaturedBrands />
+    </section>
 
-    <FeaturedBrands />
-
-    <CustomerFeedback />
+    <section class="section-gap">
+      <NewProducts />
+    </section>
 
   </div>
 </template>
+
+<style scoped>
+.section-gap{
+  margin-top:20px;
+}
+</style>
 
 <script setup>
 import Banner from "@/components/Banner.vue"
@@ -22,5 +34,22 @@ import FeaturedCategories from "@/components/FeaturedCategories.vue"
 import FeaturedProducts from "@/components/FeaturedProducts.vue"
 import NewProducts from "@/components/NewProducts.vue"
 import FeaturedBrands from "@/components/FeaturedBrands.vue"
-import CustomerFeedback from "@/components/CustomerFeedback.vue"
 </script>
+<style scoped>
+.section-gap{
+  position:relative;
+}
+
+.section-gap::before{
+  content:"";
+
+  display:block;
+
+  width:100px;
+  height:1px;
+
+  background:#e5e5e5;
+
+  margin:0 auto 50px;
+}
+</style>

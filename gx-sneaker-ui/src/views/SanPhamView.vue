@@ -15,7 +15,7 @@ import { useRouter } from "vue-router"
 const router = useRouter()
 
 const goToDetail = (id) => {
-  router.push(`/san-pham/${id}/chi-tiet`)
+  router.push(`/admin/san-pham/${id}/chi-tiet`)
 }
 
 // CATEGORY SERVICE

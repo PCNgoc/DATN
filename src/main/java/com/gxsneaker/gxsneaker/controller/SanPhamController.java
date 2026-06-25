@@ -52,8 +52,5 @@ public class SanPhamController {
     public List<SanPhamDTO> getFeaturedProducts() {
         return sanPhamService.getFeaturedProducts();
     }
-    @GetMapping("/newest")
-    public List<SanPhamDTO> getNewestProducts() {
-        return sanPhamService.getNewestProducts();
-    }
+
 }

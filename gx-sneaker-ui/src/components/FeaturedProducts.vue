@@ -15,7 +15,7 @@ const loadProducts = async () => {
 
     products.value = res.data
       .filter(item => item.trangThai === true)
-      .slice(0, 5)
+      .slice(0, 8)
 
   } catch (error) {
     console.error("Lỗi tải sản phẩm:", error)
@@ -31,6 +31,7 @@ const goDetail = (id) => {
 onMounted(loadProducts)
 </script>
 
+```vue
 <template>
   <section class="featured">
 
@@ -41,7 +42,7 @@ onMounted(loadProducts)
           GX SNEAKER
         </span>
 
-        <h2>
+        <h2 class="section-title">
           Sản phẩm nổi bật
         </h2>
       </div>
@@ -76,10 +77,14 @@ onMounted(loadProducts)
 
         <div class="image-wrapper">
 
+          <span class="product-badge">
+            HOT
+          </span>
+
           <img
             :src="`/images/${sp.anhDaiDien}`"
             :alt="sp.tenSanPham"
-          >
+          />
 
         </div>
 
@@ -89,16 +94,20 @@ onMounted(loadProducts)
             {{ sp.tenThuongHieu }}
           </span>
 
-          <h3>
+          <h3 class="product-name">
             {{ sp.tenSanPham }}
           </h3>
 
-          <p>
+          <div class="category-tag">
             {{ sp.tenDanhMuc }}
-          </p>
+          </div>
 
-          <div class="btn-detail">
-            Xem chi tiết →
+          <div class="product-footer">
+
+            <div class="btn-detail">
+              Xem chi tiết →
+            </div>
+
           </div>
 
         </div>
@@ -113,7 +122,7 @@ onMounted(loadProducts)
 <style scoped>
 
 .featured{
-  padding:80px 60px;
+  padding:50px 40px;
   background:#fafafa;
 }
 
@@ -121,117 +130,167 @@ onMounted(loadProducts)
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:40px;
+  margin-bottom:30px;
 }
 
 .sub-title{
   color:#888;
-  font-size:13px;
-  letter-spacing:2px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:3px;
   text-transform:uppercase;
 }
 
-.section-header h2{
-  font-size:40px;
+.section-title{
+  margin-top:6px;
+  font-size:28px;
   font-weight:800;
-  margin-top:8px;
+  color:#111;
 }
 
 .view-all{
   text-decoration:none;
   color:#111;
-  font-weight:700;
+  font-size:14px;
+  font-weight:600;
+  transition:.3s;
+}
+
+.view-all:hover{
+  color:#ff4d4f;
 }
 
 .product-grid{
   display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:24px;
+  grid-template-columns:repeat(4,1fr);
+  gap:18px;
 }
 
 .product-card{
-  background:white;
-  border-radius:20px;
+  background:#fff;
+  border:1px solid #eee;
+  border-radius:14px;
   overflow:hidden;
   cursor:pointer;
-  border:1px solid #ececec;
-  transition:.35s;
+  transition:.3s;
 }
 
 .product-card:hover{
-  transform:translateY(-10px);
-
-  box-shadow:
-    0 20px 40px rgba(0,0,0,.1);
+  transform:translateY(-4px);
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
 }
 
 .image-wrapper{
+  position:relative;
   overflow:hidden;
+}
+
+.product-badge{
+  position:absolute;
+  top:10px;
+  left:10px;
+  z-index:10;
+
+  background:#111;
+  color:#fff;
+
+  padding:4px 8px;
+
+  border-radius:20px;
+
+  font-size:9px;
+  font-weight:700;
 }
 
 .image-wrapper img{
   width:100%;
-  height:260px;
+  height:220px;
   object-fit:cover;
-  transition:.5s;
+  transition:.4s;
 }
 
 .product-card:hover img{
-  transform:scale(1.08);
+  transform:scale(1.05);
 }
 
 .product-info{
-  padding:18px;
+  padding:14px;
 }
 
 .brand{
-  font-size:12px;
+  display:block;
   color:#888;
+  font-size:10px;
   font-weight:700;
+  letter-spacing:1px;
   text-transform:uppercase;
 }
 
-.product-info h3{
-  margin-top:10px;
-  font-size:17px;
-  min-height:48px;
+.product-name{
+  margin-top:8px;
+  font-size:15px;
+  font-weight:700;
+  color:#111;
+  line-height:1.4;
+
+  height:42px;
+  overflow:hidden;
+
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
 }
 
-.product-info p{
-  color:#666;
+.category-tag{
+  display:inline-block;
   margin-top:8px;
+
+  padding:4px 10px;
+
+  border-radius:20px;
+
+  background:#f5f5f5;
+
+  color:#666;
+
+  font-size:11px;
+}
+
+.product-footer{
+  margin-top:10px;
 }
 
 .btn-detail{
-  margin-top:15px;
-  font-weight:700;
+  font-size:12px;
+  font-weight:600;
+  color:#777;
+  transition:.3s;
+}
+
+.product-card:hover .btn-detail{
+  color:#111;
 }
 
 .loading{
   text-align:center;
   padding:50px;
+  color:#666;
 }
 
-@media(max-width:1400px){
-
-  .product-grid{
-    grid-template-columns:repeat(4,1fr);
-  }
-
-}
-
-@media(max-width:1100px){
-
+@media(max-width:1200px){
   .product-grid{
     grid-template-columns:repeat(3,1fr);
   }
-
 }
 
 @media(max-width:768px){
 
   .featured{
     padding:40px 20px;
+  }
+
+  .section-title{
+    font-size:24px;
   }
 
   .product-grid{
@@ -247,4 +306,6 @@ onMounted(loadProducts)
   }
 
 }
+
 </style>
+
