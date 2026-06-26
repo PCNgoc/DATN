@@ -15,6 +15,9 @@ public class KhachHangServiceImpl implements KhachHangService {
     @Autowired
     private KhachHangRepository khachHangRepository;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Override
     public List<KhachHang> getAllKhachHang() {
         return khachHangRepository.findAll();
@@ -27,6 +30,17 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     @Override
     public KhachHang createKhachHang(KhachHang khachHang) {
+        long count = khachHangRepository.count() + 1;
+        khachHang.setMaKhachHang(String.format("KH%03d", count));
+        if (khachHang.getMatKhau() == null || khachHang.getMatKhau().trim().isEmpty()) {
+            khachHang.setMatKhau(passwordEncoder.encode("123456"));
+        }
+        if (khachHang.getTrangThai() == null) {
+            khachHang.setTrangThai(true);
+        }
+        if (khachHang.getDaXacThuc() == null) {
+            khachHang.setDaXacThuc(true);
+        }
         return khachHangRepository.save(khachHang);
     }
 

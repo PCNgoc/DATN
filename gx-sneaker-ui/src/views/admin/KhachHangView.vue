@@ -75,6 +75,18 @@ const reset = () => {
 
 // SAVE CUSTOMER
 const save = async () => {
+  if (!form.value.hoTen || !form.value.hoTen.trim()) {
+    alert("Họ tên không được để trống!");
+    return;
+  }
+  if (!form.value.email || !form.value.email.trim()) {
+    alert("Email không được để trống!");
+    return;
+  }
+  if (!form.value.soDienThoai || !form.value.soDienThoai.trim()) {
+    alert("Số điện thoại không được để trống!");
+    return;
+  }
   try {
     if (form.value.id) {
       await update(form.value.id, form.value)
@@ -85,6 +97,7 @@ const save = async () => {
     load()
   } catch (err) {
     console.error(err)
+    alert(err.response?.data?.message || "Lỗi khi lưu thông tin khách hàng");
   }
 }
 
@@ -182,28 +195,54 @@ const changePage = (p) => {
     <!-- FORM BOX -->
     <div class="card form-box">
       <h3>{{ form.id ? "Cập nhật thông tin khách hàng" : "Thêm khách hàng mới" }}</h3>
+      
       <div class="grid">
-        <input v-model="form.maKhachHang" placeholder="Mã khách hàng" />
-        <input v-model="form.hoTen" placeholder="Họ tên" />
-        <input v-model="form.email" placeholder="Email" />
-        <input v-model="form.matKhau" type="password" placeholder="Mật khẩu" v-if="!form.id" />
-        <input v-model="form.soDienThoai" placeholder="Số điện thoại" />
-        <input v-model="form.ngaySinh" type="date" placeholder="Ngày sinh" />
+        <div class="form-group" v-if="form.id">
+          <label>Mã khách hàng</label>
+          <input v-model="form.maKhachHang" disabled placeholder="Tự động sinh" />
+        </div>
+
+        <div class="form-group">
+          <label>Họ tên <span class="required">*</span></label>
+          <input v-model="form.hoTen" placeholder="Nhập họ tên" />
+        </div>
+
+        <div class="form-group">
+          <label>Email <span class="required">*</span></label>
+          <input v-model="form.email" placeholder="Nhập email" />
+        </div>
+
+        <div class="form-group">
+          <label>Số điện thoại <span class="required">*</span></label>
+          <input v-model="form.soDienThoai" placeholder="Nhập số điện thoại" />
+        </div>
+
+        <div class="form-group">
+          <label>Ngày sinh</label>
+          <input v-model="form.ngaySinh" type="date" />
+        </div>
       </div>
 
       <div class="grid">
-        <select v-model="form.gioiTinh">
-          <option :value="true">Nam</option>
-          <option :value="false">Nữ</option>
-        </select>
-        <select v-model="form.trangThai">
-          <option :value="true">Hoạt động</option>
-          <option :value="false">Khóa</option>
-        </select>
+        <div class="form-group">
+          <label>Giới tính</label>
+          <select v-model="form.gioiTinh">
+            <option :value="true">Nam</option>
+            <option :value="false">Nữ</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Trạng thái</label>
+          <select v-model="form.trangThai">
+            <option :value="true">Hoạt động</option>
+            <option :value="false">Khóa</option>
+          </select>
+        </div>
       </div>
 
       <div class="actions">
-        <button class="btn-save" @click="save">💾 Lưu</button>
+        <button class="btn-save" @click="save">💾 Lưu khách hàng</button>
         <button class="btn-reset" @click="reset">Reset</button>
       </div>
     </div>
@@ -314,15 +353,42 @@ const changePage = (p) => {
 }
 .form-box input, .form-box textarea, .form-box select {
   width: 100%;
-  margin: 5px 0;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  margin: 5px 0 12px 0;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.form-box input:focus, .form-box select:focus {
+  border-color: #0d6efd;
+  outline: none;
+}
+.form-box input:disabled {
+  background-color: #f1f3f5;
+  color: #495057;
+  cursor: not-allowed;
+  border-color: #dee2e6;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 2px;
+  text-align: left;
+}
+.required {
+  color: #dc3545;
+  margin-left: 2px;
 }
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 15px;
 }
 .actions {
   margin-top: 10px;
