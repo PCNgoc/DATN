@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
-
 import { getAll } from "@/services/sanPhamService"
 
 const router = useRouter()
@@ -31,7 +30,6 @@ const goDetail = (id) => {
 onMounted(loadProducts)
 </script>
 
-```vue
 <template>
   <section class="featured">
 
@@ -47,26 +45,17 @@ onMounted(loadProducts)
         </h2>
       </div>
 
-      <router-link
-        to="/products"
-        class="view-all"
-      >
+      <router-link to="/products" class="view-all">
         Xem tất cả →
       </router-link>
 
     </div>
 
-    <div
-      v-if="loading"
-      class="loading"
-    >
+    <div v-if="loading" class="loading">
       Đang tải sản phẩm...
     </div>
 
-    <div
-      v-else
-      class="product-grid"
-    >
+    <div v-else class="product-grid">
 
       <div
         v-for="sp in products"
@@ -77,9 +66,7 @@ onMounted(loadProducts)
 
         <div class="image-wrapper">
 
-          <span class="product-badge">
-            HOT
-          </span>
+          <span class="product-badge">HOT</span>
 
           <img
             :src="`/images/${sp.anhDaiDien}`"
@@ -103,11 +90,9 @@ onMounted(loadProducts)
           </div>
 
           <div class="product-footer">
-
             <div class="btn-detail">
               Xem chi tiết →
             </div>
-
           </div>
 
         </div>
@@ -121,10 +106,21 @@ onMounted(loadProducts)
 
 <style scoped>
 
+/* =========================
+   QUAN TRỌNG: BỎ NỀN CỨNG
+========================= */
+
 .featured{
   padding:60px 40px;
-  background:#f8f9fb;
+
+  /* ❌ trước: #f8f9fb */
+  /* background:#f8f9fb; */
+
+  /* ✅ để lộ background Home */
+  background:transparent;
 }
+
+/* HEADER */
 
 .section-header{
   display:flex;
@@ -147,7 +143,6 @@ onMounted(loadProducts)
   font-size:36px;
   font-weight:900;
   color:#111;
-  line-height:1.2;
 }
 
 .view-all{
@@ -162,18 +157,26 @@ onMounted(loadProducts)
   color:#ff2a3d;
 }
 
+/* GRID */
+
 .product-grid{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
   gap:24px;
 }
 
+/* CARD - GLASS EFFECT */
+
 .product-card{
-  background:#fff;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);
+
   border-radius:20px;
   overflow:hidden;
   cursor:pointer;
+
   transition:all .3s ease;
+
   box-shadow:0 5px 20px rgba(0,0,0,.06);
 }
 
@@ -181,6 +184,8 @@ onMounted(loadProducts)
   transform:translateY(-8px);
   box-shadow:0 18px 35px rgba(0,0,0,.12);
 }
+
+/* IMAGE */
 
 .image-wrapper{
   position:relative;
@@ -209,14 +214,13 @@ onMounted(loadProducts)
   color:#fff;
 
   padding:6px 12px;
-
   border-radius:999px;
 
   font-size:10px;
   font-weight:800;
-
-  z-index:2;
 }
+
+/* INFO */
 
 .product-info{
   padding:18px;
@@ -224,25 +228,18 @@ onMounted(loadProducts)
 
 .brand{
   display:block;
-
   color:#999;
-
   font-size:10px;
   font-weight:700;
-
   letter-spacing:2px;
-
   text-transform:uppercase;
 }
 
 .product-name{
   margin-top:10px;
-
   font-size:17px;
   font-weight:800;
-
   color:#111;
-
   line-height:1.5;
 
   min-height:52px;
@@ -250,36 +247,31 @@ onMounted(loadProducts)
   display:-webkit-box;
   -webkit-line-clamp:2;
   -webkit-box-orient:vertical;
-
   overflow:hidden;
 }
 
 .category-tag{
   display:inline-block;
-
   margin-top:10px;
 
   padding:6px 12px;
-
   border-radius:999px;
 
   background:#fff1f2;
-
   color:#ff2a3d;
 
   font-size:11px;
   font-weight:700;
 }
 
-.product-footer{
-  margin-top:14px;
-}
-
 .btn-detail{
+  margin-top:14px;
   color:#ff2a3d;
   font-size:13px;
   font-weight:700;
 }
+
+/* LOADING */
 
 .loading{
   text-align:center;
@@ -287,16 +279,15 @@ onMounted(loadProducts)
   color:#666;
 }
 
-@media(max-width:1200px){
+/* RESPONSIVE */
 
+@media(max-width:1200px){
   .product-grid{
     grid-template-columns:repeat(3,1fr);
   }
-
 }
 
 @media(max-width:768px){
-
   .featured{
     padding:50px 20px;
   }
@@ -308,17 +299,12 @@ onMounted(loadProducts)
   .product-grid{
     grid-template-columns:repeat(2,1fr);
   }
-
 }
 
 @media(max-width:576px){
-
   .product-grid{
     grid-template-columns:1fr;
   }
-
 }
 
 </style>
-
-

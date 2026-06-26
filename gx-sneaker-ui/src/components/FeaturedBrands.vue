@@ -2,42 +2,27 @@
 import { ref, onMounted } from "vue"
 import { getAllThuongHieu } from "@/services/thuongHieuService"
 
-
 const brands = ref([])
 
-
-// lấy đường dẫn logo
 const getLogo = (logo) => {
-
-  if(!logo){
+  if (!logo) {
     return "https://via.placeholder.com/100"
   }
-
   return `/images/thuong-hieu/${logo}`
-
 }
 
-
-
-onMounted(async()=>{
-
+onMounted(async () => {
   const res = await getAllThuongHieu()
-
-  brands.value = res.data.slice(0,8)
-
+  brands.value = res.data.slice(0, 8)
 })
-
 </script>
 
-
 <template>
-
   <section class="brand-section">
 
     <div class="section-header">
 
       <div>
-
         <span class="sub-title">
           GX SNEAKER
         </span>
@@ -45,7 +30,6 @@ onMounted(async()=>{
         <h2 class="section-title">
           Thương hiệu nổi bật
         </h2>
-
       </div>
 
     </div>
@@ -67,27 +51,32 @@ onMounted(async()=>{
 
         </div>
 
-        <h4>
-          {{ item.ten }}
-        </h4>
+        <h4>{{ item.ten }}</h4>
 
       </div>
 
     </div>
 
   </section>
-
 </template>
-
-
 
 <style scoped>
 
+/* =========================
+   QUAN TRỌNG: BỎ NỀN CỨNG
+========================= */
 
 .brand-section{
   padding:70px 40px;
-  background:#f8f9fb;
+
+  /* ❌ trước: #f8f9fb */
+  /* background:#f8f9fb; */
+
+  /* ✅ để lộ background Home */
+  background:transparent;
 }
+
+/* HEADER */
 
 .section-header{
   margin-bottom:40px;
@@ -107,31 +96,37 @@ onMounted(async()=>{
   color:#111;
 }
 
+/* GRID */
+
 .brand-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:24px;
 }
 
+/* CARD - GLASS STYLE */
+
 .brand-card{
-  background:#fff;
-  border:none;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);
+
   border-radius:22px;
   padding:30px;
+
   text-align:center;
   cursor:pointer;
+
   transition:.35s;
 
-  box-shadow:
-    0 4px 15px rgba(0,0,0,.05);
+  box-shadow:0 4px 15px rgba(0,0,0,.05);
 }
 
 .brand-card:hover{
   transform:translateY(-8px);
-
-  box-shadow:
-    0 18px 35px rgba(255,42,61,.12);
+  box-shadow:0 18px 35px rgba(0,0,0,.12);
 }
+
+/* LOGO */
 
 .logo-wrapper{
   height:100px;
@@ -152,12 +147,16 @@ onMounted(async()=>{
   transform:scale(1.08);
 }
 
+/* TEXT */
+
 .brand-card h4{
   margin-top:18px;
   font-size:16px;
   font-weight:800;
   color:#111;
 }
+
+/* RESPONSIVE */
 
 @media(max-width:1200px){
   .brand-grid{

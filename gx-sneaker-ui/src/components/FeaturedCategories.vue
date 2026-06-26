@@ -1,19 +1,15 @@
 <script setup>
-import { ref,onMounted } from "vue"
+import { ref, onMounted } from "vue"
 import { getAll } from "@/services/danhMucService"
 
 const categories = ref([])
 
-onMounted(async()=>{
-
+onMounted(async () => {
   const res = await getAll()
-
-  categories.value = res.data.slice(0,6)
-
+  categories.value = res.data.slice(0, 6)
 })
 </script>
 
-```vue
 <template>
   <section class="category-section">
 
@@ -53,13 +49,24 @@ onMounted(async()=>{
 
   </section>
 </template>
-```css
+
 <style scoped>
+
+/* =========================
+   QUAN TRỌNG: BỎ NỀN TRẮNG
+========================= */
 
 .category-section{
   padding:70px 40px;
-  background:#ffffff;
+
+  /* ❌ trước đây: #fff */
+  /* background:#ffffff; */
+
+  /* ✅ để nền Home hiển thị */
+  background:transparent;
 }
+
+/* HEADER */
 
 .section-header{
   margin-bottom:40px;
@@ -79,30 +86,34 @@ onMounted(async()=>{
   color:#111;
 }
 
+/* GRID */
+
 .category-grid{
   display:grid;
   grid-template-columns:repeat(6,1fr);
   gap:22px;
 }
 
+/* CARD */
+
 .category-card{
-  background:#fff;
-  border:none;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);
+
   border-radius:22px;
   padding:30px 15px;
+
   text-align:center;
   cursor:pointer;
+
   transition:.35s;
 
-  box-shadow:
-    0 4px 15px rgba(0,0,0,.05);
+  box-shadow:0 4px 15px rgba(0,0,0,.05);
 }
 
 .category-card:hover{
   transform:translateY(-8px);
-
-  box-shadow:
-    0 15px 35px rgba(255,42,61,.15);
+  box-shadow:0 15px 35px rgba(255,42,61,.15);
 }
 
 .category-icon{
@@ -115,6 +126,8 @@ onMounted(async()=>{
   font-weight:800;
   color:#111;
 }
+
+/* RESPONSIVE */
 
 @media(max-width:1200px){
   .category-grid{
@@ -143,4 +156,3 @@ onMounted(async()=>{
 }
 
 </style>
-

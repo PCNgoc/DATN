@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
@@ -29,7 +28,7 @@ const goDetail = (id) => {
 
       <div>
         <span class="sub-title">
-          NEW ARRIVAL
+          GX SNEAKER
         </span>
 
         <h2 class="section-title">
@@ -50,9 +49,7 @@ const goDetail = (id) => {
 
         <div class="image-wrapper">
 
-          <span class="new-badge">
-            NEW
-          </span>
+          <span class="new-badge">NEW</span>
 
           <img
             :src="`/images/${sp.anhDaiDien}`"
@@ -88,10 +85,21 @@ const goDetail = (id) => {
 
 <style scoped>
 
+/* =========================
+   QUAN TRỌNG: BỎ NỀN CỨNG
+========================= */
+
 .new-products{
   padding:60px 40px;
-  background:#ffffff;
+
+  /* ❌ trước: #fff */
+  /* background:#ffffff; */
+
+  /* ✅ để lộ background Home */
+  background:transparent;
 }
+
+/* HEADER */
 
 .section-header{
   display:flex;
@@ -117,29 +125,35 @@ const goDetail = (id) => {
   line-height:1.2;
 }
 
+/* GRID */
+
 .product-grid{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
   gap:24px;
 }
 
+/* CARD - GLASS STYLE */
+
 .product-card{
-  background:#fff;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);
+
   border-radius:20px;
   overflow:hidden;
   cursor:pointer;
+
   transition:all .3s ease;
 
-  box-shadow:
-    0 5px 20px rgba(0,0,0,.06);
+  box-shadow:0 5px 20px rgba(0,0,0,.06);
 }
 
 .product-card:hover{
   transform:translateY(-8px);
-
-  box-shadow:
-    0 18px 35px rgba(0,0,0,.12);
+  box-shadow:0 18px 35px rgba(0,0,0,.12);
 }
+
+/* IMAGE */
 
 .image-wrapper{
   position:relative;
@@ -168,14 +182,13 @@ const goDetail = (id) => {
   color:#fff;
 
   padding:6px 12px;
-
   border-radius:999px;
 
   font-size:10px;
   font-weight:800;
-
-  z-index:2;
 }
+
+/* INFO */
 
 .info{
   padding:18px;
@@ -183,25 +196,18 @@ const goDetail = (id) => {
 
 .brand{
   display:block;
-
   color:#999;
-
   font-size:10px;
   font-weight:700;
-
   letter-spacing:2px;
-
   text-transform:uppercase;
 }
 
 .product-name{
   margin-top:10px;
-
   font-size:17px;
   font-weight:800;
-
   color:#111;
-
   line-height:1.5;
 
   min-height:52px;
@@ -209,15 +215,13 @@ const goDetail = (id) => {
   display:-webkit-box;
   -webkit-line-clamp:2;
   -webkit-box-orient:vertical;
-
   overflow:hidden;
 }
 
-.product-footer{
-  margin-top:14px;
-}
+/* BUTTON */
 
 .btn-detail{
+  margin-top:14px;
   color:#ff2a3d;
   font-size:13px;
   font-weight:700;
@@ -228,16 +232,15 @@ const goDetail = (id) => {
   transform:translateX(4px);
 }
 
-@media(max-width:1200px){
+/* RESPONSIVE */
 
+@media(max-width:1200px){
   .product-grid{
     grid-template-columns:repeat(3,1fr);
   }
-
 }
 
 @media(max-width:768px){
-
   .new-products{
     padding:50px 20px;
   }
@@ -249,18 +252,12 @@ const goDetail = (id) => {
   .product-grid{
     grid-template-columns:repeat(2,1fr);
   }
-
 }
 
 @media(max-width:576px){
-
   .product-grid{
     grid-template-columns:1fr;
   }
-
 }
 
 </style>
-
-
-
