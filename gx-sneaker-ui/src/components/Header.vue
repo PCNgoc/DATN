@@ -1,51 +1,62 @@
-
 <script setup>
-import { useAuth } from '@/composables/useAuth'
+import { useAuth } from "@/composables/useAuth"
 
 const { user, logout } = useAuth()
 </script>
 
 <template>
 
+  <!-- ================= TOP BAR ================= -->
+
   <div class="top-bar">
+
     <div class="marquee">
-
-      <span>👟 GX Sneaker - Nâng tầm phong cách của bạn</span>
-
-      <span>🔥 Bộ sưu tập Sneaker 2026 mới nhất đã cập bến</span>
 
       <span>🚚 Miễn phí giao hàng toàn quốc</span>
 
-      <span>💎 Chất lượng tạo nên đẳng cấp</span>
+      <span>🔥 Giảm đến 30% cho thành viên GX Club</span>
 
-      <span>⭐ Hơn 10.000 khách hàng đã lựa chọn GX Sneaker</span>
+      <span>⭐ Hơn 10.000 khách hàng tin dùng</span>
 
-      <span>🎁 Ưu đãi độc quyền dành cho thành viên GX Club</span>
+      <span>💎 Premium Sneaker Store</span>
+
+      <span>👟 Bộ sưu tập Sneaker 2026 đã cập bến</span>
+
+      <span>🎁 Đổi trả trong 30 ngày</span>
 
     </div>
+
   </div>
 
-  <!-- HEADER -->
+  <!-- ================= HEADER ================= -->
+
   <header class="navbar">
 
-    <!-- LOGO -->
-    <router-link to="/" class="logo">
+    <!-- Logo -->
+
+    <router-link
+      to="/"
+      class="logo"
+    >
+
       <div class="logo-icon">
+
         GX
+
       </div>
 
-      <div class="logo-content">
-        <div class="logo-title">
-          GX SNEAKER
-        </div>
+      <div class="logo-text">
 
-        <div class="logo-subtitle">
-          Premium Sneaker Store
-        </div>
+        <h2>GX SNEAKER</h2>
+
+        <span>PREMIUM SNEAKER STORE</span>
+
       </div>
+
     </router-link>
 
-    <!-- MENU -->
+    <!-- Menu -->
+
     <nav class="menu">
 
       <router-link to="/">
@@ -56,114 +67,128 @@ const { user, logout } = useAuth()
         Cửa hàng
       </router-link>
 
-      <router-link to="/new-arrival">
-        New Arrival
+      <router-link to="/wishlist">
+        Yêu thích
       </router-link>
 
-      <router-link to="/sale" class="sale-link">
-        🔥 Sale
+      <router-link to="/contact">
+        Liên hệ
       </router-link>
 
     </nav>
 
-    <!-- SEARCH -->
-    <div class="search-box">
+    <!-- Right -->
 
-      <i class="fas fa-search"></i>
-
-      <input
-        type="text"
-        placeholder="Tìm kiếm sản phẩm..."
-      />
-
-    </div>
-
-    <!-- ACTIONS -->
     <div class="actions">
 
       <!-- USER -->
-      <div
-        v-if="user"
-        class="user-dropdown"
-      >
 
-        <div class="user-trigger">
+      <template v-if="user">
 
-          <div class="avatar">
-            {{ user.hoTen?.charAt(0) }}
-          </div>
-
-          <span>
-            {{ user.hoTen }}
-          </span>
-
-        </div>
-
-        <div class="user-menu">
-
-          <router-link to="/profile">
-            👤 Hồ sơ cá nhân
-          </router-link>
-
-          <router-link to="/orders">
-            📦 Đơn hàng
-          </router-link>
-
-          <button @click="logout">
-            🚪 Đăng xuất
-          </button>
-
-        </div>
-
-      </div>
-
-      <!-- LOGIN -->
-      <router-link
-        v-else
-        to="/login"
-        class="action-item"
-      >
-        <div class="icon-wrap">
-          <i class="far fa-user"></i>
-        </div>
-
-        <span>Đăng nhập</span>
-      </router-link>
-
-      <!-- WISHLIST -->
-      <router-link
-        to="/wishlist"
-        class="action-item"
-      >
-        <div class="icon-wrap">
+        <router-link
+          to="/wishlist"
+          class="circle-btn"
+        >
 
           <i class="far fa-heart"></i>
 
-          <span class="badge">
-            0
-          </span>
+          <span class="badge">0</span>
 
-        </div>
+        </router-link>
 
-        <span>Yêu thích</span>
-      </router-link>
-
-      <!-- CART -->
-      <router-link
-        to="/cart"
-        class="action-item"
-      >
-        <div class="icon-wrap">
+        <router-link
+          to="/cart"
+          class="circle-btn"
+        >
 
           <i class="fas fa-cart-shopping"></i>
 
-          <span class="badge">
-            0
-          </span>
+          <span class="badge">0</span>
+
+        </router-link>
+
+        <div class="user-dropdown">
+
+          <div class="user-trigger">
+
+            <div class="avatar">
+
+              {{ user.hoTen?.charAt(0).toUpperCase() }}
+
+            </div>
+
+            <div class="user-info">
+
+              <strong>
+
+                {{ user.hoTen }}
+
+              </strong>
+
+              <small>
+
+                Thành viên GX Club
+
+              </small>
+
+            </div>
+
+            <i class="fas fa-chevron-down arrow"></i>
+
+          </div>
+
+          <div class="user-menu">
+
+            <router-link to="/profile">
+
+              <i class="far fa-user"></i>
+
+              Hồ sơ cá nhân
+
+            </router-link>
+
+            <router-link to="/orders">
+
+              <i class="fas fa-box"></i>
+
+              Đơn hàng
+
+            </router-link>
+
+            <router-link to="/wishlist">
+
+              <i class="far fa-heart"></i>
+
+              Sản phẩm yêu thích
+
+            </router-link>
+
+            <button @click="logout">
+
+              <i class="fas fa-right-from-bracket"></i>
+
+              Đăng xuất
+
+            </button>
+
+          </div>
 
         </div>
 
-        <span>Giỏ hàng</span>
+      </template>
+
+      <!-- LOGIN -->
+
+      <router-link
+        v-else
+        to="/login"
+        class="login-btn"
+      >
+
+        <i class="far fa-user"></i>
+
+        Đăng nhập
+
       </router-link>
 
     </div>
@@ -173,350 +198,958 @@ const { user, logout } = useAuth()
 </template>
 
 <style scoped>
+/* ==========================================
+   RESET
+========================================== */
 
 *{
+  margin:0;
+  padding:0;
   box-sizing:border-box;
 }
 
+a{
+  text-decoration:none;
+}
+
+button{
+  font-family:inherit;
+  cursor:pointer;
+}
+
+:root{
+
+  --primary:#111;
+  --text:#222;
+  --gray:#777;
+  --border:#ececec;
+  --bg:#ffffff;
+  --hover:#f6f6f6;
+  --danger:#ff3b30;
+
+}
+
+/* ==========================================
+   TOP BAR
+========================================== */
+
 .top-bar{
-  height:40px;
-  background:#111;
+
+  height:38px;
+
+  background:linear-gradient(
+    90deg,
+    #111,
+    #1f1f1f,
+    #111
+  );
+
   color:#fff;
+
+  display:flex;
+
+  align-items:center;
+
   overflow:hidden;
-  position:relative;
+
 }
 
 .marquee{
+
   display:flex;
+
   align-items:center;
+
   gap:80px;
 
-  width:max-content;
-  height:100%;
+  white-space:nowrap;
 
-  animation: scroll-left 20s linear infinite;
+  width:max-content;
+
+  animation:marquee 25s linear infinite;
+
 }
 
 .marquee span{
-  white-space:nowrap;
+
   font-size:13px;
+
   font-weight:500;
+
+  letter-spacing:.4px;
+
 }
 
-@keyframes scroll-left{
+@keyframes marquee{
+
   from{
-    transform:translateX(0);
+
+    transform:translateX(100%);
+
   }
 
   to{
-    transform:translateX(-50%);
+
+    transform:translateX(-100%);
+
   }
+
 }
+
+/* ==========================================
+   NAVBAR
+========================================== */
+
 .navbar{
-  height:90px;
+
+  position:sticky;
+
+  top:0;
+
+  z-index:999;
+
+  height:76px;
+
+  background:rgba(255,255,255,.95);
+
+  backdrop-filter:blur(18px);
+
+  border-bottom:1px solid var(--border);
 
   display:flex;
-  align-items:center;
+
   justify-content:space-between;
 
-  padding:0 50px;
+  align-items:center;
 
-  background:white;
+  padding:0 60px;
 
-  border-bottom:1px solid #eee;
+  transition:.35s;
+
+  box-shadow:
+
+    0 10px 28px rgba(0,0,0,.05);
+
 }
 
-.logo{
-  display:flex;
-  align-items:center;
-  gap:12px;
+.navbar:hover{
 
-  text-decoration:none;
+  box-shadow:
+
+    0 15px 35px rgba(0,0,0,.08);
+
+}
+
+/* ==========================================
+   LOGO
+========================================== */
+
+.logo{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:14px;
+
 }
 
 .logo-icon{
-  width:55px;
-  height:55px;
 
-  border-radius:16px;
+  width:58px;
 
-  background:linear-gradient(
-    135deg,
-    #000,
-    #444
-  );
+  height:58px;
 
-  color:white;
+  border-radius:18px;
+
+  background:
+
+    linear-gradient(
+      135deg,
+      #111,
+      #444
+    );
+
+  color:#fff;
 
   display:flex;
-  align-items:center;
+
   justify-content:center;
 
-  font-weight:800;
-  font-size:18px;
+  align-items:center;
 
-  transition:.3s;
+  font-size:22px;
+
+  font-weight:800;
+
+  letter-spacing:1px;
+
+  transition:.35s;
+
+  box-shadow:
+
+    0 12px 25px rgba(0,0,0,.18);
+
 }
 
 .logo:hover .logo-icon{
-  transform:rotate(-8deg);
+
+  transform:
+
+    rotate(-8deg)
+
+    scale(1.08);
+
 }
 
-.logo-title{
+.logo-text{
+
+  display:flex;
+
+  flex-direction:column;
+
+}
+
+.logo-text h2{
+
   color:#111;
-  font-size:24px;
+
+  font-size:22px;
+
   font-weight:800;
+
+  letter-spacing:2px;
+
 }
 
-.logo-subtitle{
+.logo-text span{
+
   color:#888;
-  font-size:12px;
+
+  font-size:11px;
+
+  letter-spacing:2px;
+
+  margin-top:3px;
+
 }
+
+/* ==========================================
+   MENU
+========================================== */
 
 .menu{
+
   display:flex;
-  gap:35px;
+
+  align-items:center;
+
+  gap:42px;
+
 }
 
 .menu a{
-  color:#222;
-  text-decoration:none;
-  font-weight:600;
 
   position:relative;
+
+  color:#222;
+
+  font-size:15px;
+
+  font-weight:600;
+
+  transition:.35s;
+
 }
 
 .menu a::after{
+
   content:"";
 
   position:absolute;
 
   left:0;
-  bottom:-8px;
+
+  bottom:-10px;
 
   width:0;
-  height:2px;
 
-  background:black;
+  height:3px;
 
-  transition:.3s;
+  background:#111;
+
+  border-radius:30px;
+
+  transition:.35s;
+
+}
+
+.menu a:hover{
+
+  color:#000;
+
 }
 
 .menu a:hover::after{
+
   width:100%;
+
 }
 
-.sale-link{
-  color:#ff4d4f !important;
+.menu .router-link-active{
+
+  color:#000;
+
 }
 
-.search-box{
-  width:420px;
-  height:52px;
+.menu .router-link-active::after{
 
-  display:flex;
-  align-items:center;
+  width:100%;
 
-  padding:0 20px;
-
-  background:#f7f7f7;
-
-  border-radius:60px;
-
-  transition:.3s;
 }
-
-.search-box:focus-within{
-  background:white;
-
-  box-shadow:
-    0 0 0 2px #111,
-    0 10px 30px rgba(0,0,0,.08);
-}
-
-.search-box input{
-  flex:1;
-
-  border:none;
-  outline:none;
-
-  background:transparent;
-
-  padding-left:10px;
-}
+/* ==========================================
+   ACTIONS
+========================================== */
 
 .actions{
   display:flex;
   align-items:center;
-  gap:18px;
+  gap:14px;
 }
 
-.action-item{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+/* ==========================================
+   LOGIN BUTTON
+========================================== */
 
-  gap:5px;
+.login-btn{
 
-  text-decoration:none;
-  color:#111;
+  height:46px;
 
-  font-size:12px;
-}
+  padding:0 22px;
 
-.icon-wrap{
-  position:relative;
-
-  width:48px;
-  height:48px;
-
-  border-radius:14px;
-
-  background:#f6f6f6;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  transition:.3s;
-}
-
-.action-item:hover .icon-wrap{
-  transform:translateY(-3px);
+  border-radius:50px;
 
   background:#111;
-  color:white;
+
+  color:#fff;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  font-size:14px;
+
+  font-weight:600;
+
+  transition:.35s;
+
 }
 
+.login-btn:hover{
+
+  transform:translateY(-2px);
+
+  background:#000;
+
+  box-shadow:0 10px 25px rgba(0,0,0,.18);
+
+}
+
+/* ==========================================
+   CIRCLE BUTTON
+========================================== */
+
+.circle-btn{
+
+  position:relative;
+
+  width:46px;
+
+  height:46px;
+
+  border-radius:50%;
+
+  background:#f5f5f5;
+
+  color:#222;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  transition:.35s;
+
+}
+
+.circle-btn i{
+
+  font-size:18px;
+
+}
+
+.circle-btn:hover{
+
+  background:#111;
+
+  color:#fff;
+
+  transform:translateY(-3px);
+
+  box-shadow:0 10px 22px rgba(0,0,0,.15);
+
+}
+
+/* ==========================================
+   BADGE
+========================================== */
+
 .badge{
+
   position:absolute;
 
-  top:-6px;
-  right:-6px;
+  top:-4px;
+
+  right:-4px;
 
   width:18px;
+
   height:18px;
 
   border-radius:50%;
 
-  background:red;
-  color:white;
+  background:#ff3b30;
 
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  color:#fff;
 
   font-size:10px;
+
+  font-weight:700;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border:2px solid #fff;
+
 }
 
+/* ==========================================
+   USER
+========================================== */
+
 .user-dropdown{
+
   position:relative;
+
 }
 
 .user-trigger{
+
   display:flex;
+
   align-items:center;
-  gap:10px;
+
+  gap:12px;
+
+  padding:6px 10px;
+
+  border-radius:50px;
 
   cursor:pointer;
+
+  transition:.35s;
+
+}
+
+.user-trigger:hover{
+
+  background:#f7f7f7;
+
 }
 
 .avatar{
-  width:40px;
-  height:40px;
+
+  width:44px;
+
+  height:44px;
 
   border-radius:50%;
 
-  background:#111;
-  color:white;
+  background:linear-gradient(135deg,#111,#555);
+
+  color:#fff;
 
   display:flex;
+
   align-items:center;
+
   justify-content:center;
 
+  font-size:17px;
+
   font-weight:700;
+
+  flex-shrink:0;
+
 }
 
+.user-info{
+
+  display:flex;
+
+  flex-direction:column;
+
+  line-height:1.2;
+
+}
+
+.user-info strong{
+
+  font-size:14px;
+
+  color:#111;
+
+}
+
+.user-info small{
+
+  color:#888;
+
+  font-size:11px;
+
+}
+
+.arrow{
+
+  color:#666;
+
+  font-size:11px;
+
+  margin-left:4px;
+
+}
+
+/* ==========================================
+   DROPDOWN
+========================================== */
+
 .user-menu{
+
   position:absolute;
 
-  top:120%;
   right:0;
 
-  width:240px;
+  top:62px;
 
-  background:white;
+  width:260px;
 
-  border-radius:16px;
+  background:#fff;
+
+  border-radius:18px;
 
   overflow:hidden;
 
-  box-shadow:
-    0 15px 35px rgba(0,0,0,.15);
+  border:1px solid #eee;
+
+  box-shadow:0 20px 45px rgba(0,0,0,.12);
 
   opacity:0;
+
   visibility:hidden;
 
-  transition:.25s;
+  transform:translateY(15px);
+
+  transition:.3s;
+
 }
 
 .user-dropdown:hover .user-menu{
+
   opacity:1;
+
   visibility:visible;
+
+  transform:translateY(0);
+
 }
 
 .user-menu a,
+
 .user-menu button{
+
   width:100%;
 
-  padding:14px;
+  padding:15px 20px;
 
-  display:block;
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
 
   border:none;
 
   background:none;
 
+  color:#222;
+
+  font-size:14px;
+
+  transition:.3s;
+
   text-align:left;
 
-  text-decoration:none;
-
-  color:#333;
-
-  cursor:pointer;
 }
 
 .user-menu a:hover,
+
 .user-menu button:hover{
+
   background:#f7f7f7;
+
+  padding-left:26px;
+
 }
 
-@media(max-width:992px){
+.user-menu button{
+
+  border-top:1px solid #eee;
+
+  color:#d93025;
+
+}
+
+.user-menu i{
+
+  width:18px;
+
+  text-align:center;
+
+}
+
+/* ==========================================
+   ANIMATION
+========================================== */
+
+.logo,
+
+.menu a,
+
+.circle-btn,
+
+.login-btn,
+
+.user-trigger{
+
+  animation:fadeUp .6s ease both;
+
+}
+
+@keyframes fadeUp{
+
+  from{
+
+    opacity:0;
+
+    transform:translateY(15px);
+
+  }
+
+  to{
+
+    opacity:1;
+
+    transform:translateY(0);
+
+  }
+
+}/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width:1200px){
 
   .navbar{
-    flex-wrap:wrap;
-    height:auto;
-    padding:20px;
-    gap:15px;
+    padding:0 35px;
   }
 
-  .search-box{
-    width:100%;
+  .menu{
+    gap:28px;
   }
 
 }
 
-@media(max-width:768px){
+@media (max-width:992px){
+
+  .navbar{
+
+    height:auto;
+
+    padding:18px 25px;
+
+    flex-wrap:wrap;
+
+    gap:20px;
+
+  }
+
+  .logo{
+
+    width:100%;
+
+    justify-content:center;
+
+  }
 
   .menu{
-    display:none;
+
+    width:100%;
+
+    justify-content:center;
+
+    gap:25px;
+
   }
 
-  .top-bar{
-    display:none;
+  .actions{
+
+    width:100%;
+
+    justify-content:center;
+
   }
+
+}
+
+@media (max-width:768px){
+
+  .top-bar{
+
+    display:none;
+
+  }
+
+  .navbar{
+
+    padding:15px;
+
+  }
+
+  .menu{
+
+    display:none;
+
+  }
+
+  .actions{
+
+    gap:10px;
+
+  }
+
+  .login-btn{
+
+    height:42px;
+
+    padding:0 18px;
+
+    font-size:13px;
+
+  }
+
+  .circle-btn{
+
+    width:42px;
+
+    height:42px;
+
+  }
+
+  .avatar{
+
+    width:40px;
+
+    height:40px;
+
+    font-size:15px;
+
+  }
+
+  .user-info{
+
+    display:none;
+
+  }
+
+  .user-menu{
+
+    width:230px;
+
+    right:-10px;
+
+  }
+
+}
+
+@media (max-width:480px){
+
+  .navbar{
+
+    padding:12px;
+
+  }
+
+  .logo{
+
+    gap:10px;
+
+  }
+
+  .logo-icon{
+
+    width:48px;
+
+    height:48px;
+
+    font-size:18px;
+
+    border-radius:14px;
+
+  }
+
+  .logo-text h2{
+
+    font-size:17px;
+
+    letter-spacing:1px;
+
+  }
+
+  .logo-text span{
+
+    font-size:9px;
+
+    letter-spacing:1px;
+
+  }
+
+}
+
+/* ==========================================
+   SMOOTH EFFECT
+========================================== */
+
+html{
+
+  scroll-behavior:smooth;
+
+}
+
+body{
+
+  background:#fff;
+
+  color:#222;
+
+  font-family:
+    "Inter",
+    "Segoe UI",
+    sans-serif;
+
+}
+
+/* ==========================================
+   EXTRA EFFECT
+========================================== */
+
+.logo,
+.menu a,
+.circle-btn,
+.login-btn,
+.user-trigger{
+
+  transition:all .3s ease;
+
+}
+
+.menu a:hover{
+
+  transform:translateY(-2px);
+
+}
+
+.logo:hover{
+
+  transform:translateY(-1px);
+
+}
+
+.circle-btn:hover{
+
+  transform:translateY(-3px) scale(1.05);
+
+}
+
+.user-trigger:hover{
+
+  background:#f5f5f5;
+
+}
+
+.user-menu{
+
+  animation:dropdown .25s ease;
+
+}
+
+@keyframes dropdown{
+
+  from{
+
+    opacity:0;
+
+    transform:
+      translateY(10px)
+      scale(.96);
+
+  }
+
+  to{
+
+    opacity:1;
+
+    transform:
+      translateY(0)
+      scale(1);
+
+  }
+
+}
+
+::-webkit-scrollbar{
+
+  width:8px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+  background:#bbb;
+
+  border-radius:20px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+  background:#888;
 
 }
 
 </style>
-```
