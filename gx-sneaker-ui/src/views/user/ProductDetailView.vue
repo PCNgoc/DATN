@@ -10,6 +10,7 @@ import {
   getBySanPham
 } from "@/services/ChiTietSanPhamService"
 
+
 const route = useRoute()
 const router = useRouter()
 
@@ -339,11 +340,94 @@ const addToCart = () => {
    BUY NOW
 =========================== */
 
+// const buyNow = () => {
+//
+//   addToCart()
+//
+//   router.push("/cart")
+// }
+
+
 const buyNow = () => {
 
-  addToCart()
+// Chưa chọn biến thể
+  if (!selectedVariant.value) {
 
-  router.push("/cart")
+
+alert(
+  "Vui lòng chọn màu sắc và kích thước"
+)
+
+return
+
+
+  }
+
+// Hết hàng
+  if (stock.value <= 0) {
+
+
+alert(
+  "Sản phẩm hiện đã hết hàng"
+)
+
+return
+
+
+  }
+
+// Số lượng vượt tồn kho
+  if (quantity.value > stock.value) {
+
+
+alert(
+  "Số lượng vượt quá tồn kho"
+)
+
+return
+
+
+  }
+
+  const buyNowProduct = {
+
+
+productId:
+  product.value.id,
+
+detailId:
+  selectedVariant.value.id,
+
+productName:
+  product.value.tenSanPham,
+
+image:
+  product.value.anhDaiDien,
+
+color:
+  selectedVariant.value.tenMauSac,
+
+size:
+  selectedVariant.value.size,
+
+quantity:
+  quantity.value,
+
+price:
+  selectedVariant.value.giaBan
+
+
+}
+
+// Lưu sản phẩm mua ngay
+  localStorage.setItem(
+    "buyNowProduct",
+    JSON.stringify(buyNowProduct)
+  )
+
+// Chuyển sang trang thanh toán
+  router.push("/checkout")
+
 }
 
 /* ===========================

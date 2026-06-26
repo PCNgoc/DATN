@@ -32,7 +32,8 @@ import ProductDetailView from '@/views/user/ProductDetailView.vue'
 //Hóa đơn
 import HoaDonView from '@/views/admin/HoaDonView.vue'
 import Dashboard from "@/views/admin/Dashboard.vue";
-
+// Giao diện nút mua ngay
+import CheckoutView from '@/views/user/CheckoutView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -151,6 +152,11 @@ const router = createRouter({
       path: '/products/:id',
       name: 'product-detail',
       component: ProductDetailView,
+    },
+    {
+      path: '/checkout',
+      name: 'checkout',
+      component: CheckoutView
     },
 
     // Admin
