@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PhieuGiamGiaRepository extends JpaRepository<PhieuGiamGia, Integer> {
+    java.util.Optional<PhieuGiamGia> findByMaPhieu(String maPhieu);
 }

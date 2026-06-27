@@ -36,7 +36,13 @@ const formatPrice = (price) => {
 
 const formatDate = (date) => {
   if (!date) return ""
-  return new Date(date).toLocaleDateString("vi-VN")
+  return new Date(date).toLocaleString("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  })
 }
 
 const formatDateTimeLocal = (date) => {
@@ -80,21 +86,65 @@ const reset = () => {
 
 // SAVE
 const save = async () => {
+  if (!form.value.maPhieu || !form.value.maPhieu.trim()) {
+    alert("Mã phiếu giảm giá không được để trống!");
+    return;
+  }
+  if (!form.value.tenPhieu || !form.value.tenPhieu.trim()) {
+    alert("Tên phiếu giảm giá không được để trống!");
+    return;
+  }
+  if (form.value.giaTriGiam <= 0) {
+    alert("Giá trị giảm phải lớn hơn 0!");
+    return;
+  }
+  if (form.value.loaiGiamGia && form.value.giaTriGiam > 100) {
+    alert("Giá trị giảm theo phần trăm không được vượt quá 100%!");
+    return;
+  }
+  if (form.value.giaTriDonHangToiThieu < 0) {
+    alert("Giá trị đơn hàng tối thiểu không được nhỏ hơn 0!");
+    return;
+  }
+  if (form.value.loaiGiamGia && form.value.giaTriGiamToiDa < 0) {
+    alert("Giá trị giảm tối đa không được nhỏ hơn 0!");
+    return;
+  }
+  if (form.value.soLuong < 0) {
+    alert("Số lượng phát hành không được nhỏ hơn 0!");
+    return;
+  }
+  if (!form.value.ngayBatDau) {
+    alert("Ngày bắt đầu không được để trống!");
+    return;
+  }
+  if (!form.value.ngayKetThuc) {
+    alert("Ngày kết thúc không được để trống!");
+    return;
+  }
+  if (new Date(form.value.ngayKetThuc) < new Date(form.value.ngayBatDau)) {
+    alert("Ngày kết thúc phải sau ngày bắt đầu!");
+    return;
+  }
+
   try {
     const data = { ...form.value }
-    // Convert datetimes
-    if (data.ngayBatDau) data.ngayBatDau = new Date(data.ngayBatDau)
-    if (data.ngayKetThuc) data.ngayKetThuc = new Date(data.ngayKetThuc)
+    data.maPhieu = data.maPhieu.trim().toUpperCase()
+    data.ngayBatDau = new Date(data.ngayBatDau)
+    data.ngayKetThuc = new Date(data.ngayKetThuc)
     
     if (form.value.id) {
       await update(form.value.id, data)
+      alert("Cập nhật phiếu giảm giá thành công!");
     } else {
       await create(data)
+      alert("Tạo phiếu giảm giá thành công!");
     }
     reset()
     load()
   } catch (err) {
     console.error(err)
+    alert(err.response?.data?.message || "Lỗi khi lưu phiếu giảm giá!");
   }
 }
 
@@ -136,45 +186,84 @@ const changePage = (p) => {
     <!-- FORM BOX -->
     <div class="card form-box">
       <h3>{{ form.id ? "Cập nhật phiếu giảm giá" : "Tạo phiếu giảm giá mới" }}</h3>
+      
       <div class="grid">
-        <input v-model="form.maPhieu" placeholder="Mã phiếu (Ví dụ: KHUYENMAI20)" />
-        <input v-model="form.tenPhieu" placeholder="Tên chương trình / Tên phiếu" />
+        <div class="form-group">
+          <label>Mã phiếu <span class="required">*</span></label>
+          <input v-model="form.maPhieu" placeholder="Ví dụ: KHUYENMAI20" style="text-transform: uppercase;" />
+        </div>
+        <div class="form-group">
+          <label>Tên chương trình <span class="required">*</span></label>
+          <input v-model="form.tenPhieu" placeholder="Tên chương trình / Tên phiếu" />
+        </div>
       </div>
 
       <div class="grid">
-        <select v-model="form.loaiGiamGia">
-          <option :value="true">Giảm theo %</option>
-          <option :value="false">Giảm tiền mặt trực tiếp</option>
-        </select>
-        <input v-model="form.giaTriGiam" type="number" placeholder="Giá trị giảm (% hoặc VNĐ)" />
+        <div class="form-group">
+          <label>Loại giảm giá</label>
+          <select v-model="form.loaiGiamGia">
+            <option :value="true">Giảm theo %</option>
+            <option :value="false">Giảm tiền mặt trực tiếp</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Giá trị giảm <span class="required">*</span></label>
+          <input v-model="form.giaTriGiam" type="number" :placeholder="form.loaiGiamGia ? 'Nhập % giảm (Ví dụ: 10)' : 'Nhập số tiền giảm (Ví dụ: 50000)'" />
+        </div>
       </div>
 
       <div class="grid">
-        <input v-model="form.giaTriDonHangToiThieu" type="number" placeholder="Giá trị đơn hàng tối thiểu" />
-        <input v-model="form.giaTriGiamToiDa" type="number" placeholder="Giá trị giảm tối đa (nếu giảm theo %)" :disabled="!form.loaiGiamGia" />
+        <div class="form-group">
+          <label>Đơn hàng tối thiểu <span class="required">*</span></label>
+          <input v-model="form.giaTriDonHangToiThieu" type="number" placeholder="Giá trị đơn hàng tối thiểu" />
+        </div>
+        <div class="form-group">
+          <label>Giảm tối đa (nếu giảm theo %)</label>
+          <input v-model="form.giaTriGiamToiDa" type="number" placeholder="Giá trị giảm tối đa" :disabled="!form.loaiGiamGia" />
+        </div>
       </div>
 
       <div class="grid">
-        <input v-model="form.soLuong" type="number" placeholder="Số lượng phát hành" />
-        <select v-model="form.trangThai">
-          <option :value="true">Hoạt động</option>
-          <option :value="false">Tạm ẩn / Đóng</option>
-        </select>
+        <div class="form-group">
+          <label>Số lượng phát hành <span class="required">*</span></label>
+          <input v-model="form.soLuong" type="number" placeholder="Số lượng phát hành" />
+        </div>
+        <div class="form-group">
+          <label>Trạng thái</label>
+          <select v-model="form.trangThai">
+            <option :value="true">Hoạt động</option>
+            <option :value="false">Tạm ẩn / Đóng</option>
+          </select>
+        </div>
       </div>
 
       <div class="grid">
-        <div>
-          <label>Ngày bắt đầu:</label>
+        <div class="form-group">
+          <label>Ngày bắt đầu <span class="required">*</span></label>
           <input v-model="form.ngayBatDau" type="datetime-local" />
         </div>
-        <div>
-          <label>Ngày kết thúc:</label>
+        <div class="form-group">
+          <label>Ngày kết thúc <span class="required">*</span></label>
           <input v-model="form.ngayKetThuc" type="datetime-local" />
         </div>
       </div>
 
+      <!-- Live Summary Card -->
+      <div class="preview-card mt-2">
+        <strong>💡 Tóm tắt chương trình:</strong>
+        <p v-if="form.loaiGiamGia">
+          Giảm <span class="text-primary">{{ form.giaTriGiam || 0 }}%</span> cho đơn hàng có giá trị từ 
+          <span class="text-primary">{{ formatPrice(form.giaTriDonHangToiThieu) }}</span> trở lên. 
+          Mức giảm tối đa là <span class="text-primary">{{ formatPrice(form.giaTriGiamToiDa) }}</span>.
+        </p>
+        <p v-else>
+          Giảm <span class="text-primary">{{ formatPrice(form.giaTriGiam) }}</span> trực tiếp cho đơn hàng có giá trị từ 
+          <span class="text-primary">{{ formatPrice(form.giaTriDonHangToiThieu) }}</span> trở lên.
+        </p>
+      </div>
+
       <div class="actions">
-        <button class="btn-save" @click="save">💾 Lưu</button>
+        <button class="btn-save" @click="save">💾 Lưu phiếu giảm giá</button>
         <button class="btn-reset" @click="reset">Reset</button>
       </div>
     </div>
@@ -230,89 +319,198 @@ const changePage = (p) => {
 
 <style scoped>
 .container {
-  padding: 20px;
-  font-family: Inter, Arial, sans-serif;
+  padding: 24px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #f8f9fa;
+  min-height: 100vh;
 }
 .title {
-  margin-bottom: 15px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 20px;
+  text-align: left;
 }
 .card {
   background: #fff;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid #e9ecef;
+}
+.form-box h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 20px;
+  text-align: left;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 6px;
+}
+.required {
+  color: #dc3545;
+  margin-left: 2px;
 }
 .form-box input, .form-box select {
   width: 100%;
-  margin: 5px 0;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 10px 14px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #212529;
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin-bottom: 12px;
 }
-.form-box label {
-  font-size: 12px;
-  color: #555;
-  display: block;
-  margin-top: 5px;
+.form-box input:focus, .form-box select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+  outline: none;
+}
+.form-box input:disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  border-color: #dee2e6;
 }
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 16px;
+}
+.preview-card {
+  background-color: #f1f8ff;
+  border-left: 4px solid #0366d6;
+  padding: 12px 16px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 13.5px;
+  color: #24292e;
+  margin: 8px 0 16px 0;
+}
+.preview-card p {
+  margin: 4px 0 0 0;
+  line-height: 1.5;
+}
+.text-primary {
+  color: #0d6efd;
+  font-weight: 700;
 }
 .actions {
-  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+  margin-top: 8px;
 }
 button {
-  margin-right: 5px;
   cursor: pointer;
-  padding: 6px 12px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+button:active {
+  transform: scale(0.98);
 }
 .btn-save {
-  background: green;
+  background: #0d6efd;
   color: white;
+}
+.btn-save:hover {
+  background: #0b5ed7;
 }
 .btn-reset {
-  background: gray;
+  background: #6c757d;
   color: white;
 }
+.btn-reset:hover {
+  background: #5c636a;
+}
 .active {
-  color: green;
-  font-weight: bold;
+  background-color: #d1e7dd;
+  color: #0f5132;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
 }
 .hidden {
-  color: red;
-  font-weight: bold;
+  background-color: #f8d7da;
+  color: #842029;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
 }
 table {
   width: 100%;
   border-collapse: collapse;
 }
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  border-bottom: 2px solid #dee2e6;
   text-align: left;
 }
+td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 14px;
+  color: #212529;
+  text-align: left;
+}
+.btn-group {
+  display: flex;
+  gap: 6px;
+}
 .btn-group button {
-  background: #f0f0f0;
+  padding: 6px 10px;
+  background: #f8f9fa;
+  border: 1px solid #ced4da;
+  font-size: 12px;
 }
 .btn-group button:hover {
-  background: #e0e0e0;
+  background: #e9ecef;
 }
 .pagination {
-  margin-top: 15px;
+  margin-top: 20px;
   display: flex;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
 }
 .pagination button {
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  color: #0d6efd;
+}
+.pagination button:hover:not(:disabled) {
   background: #e9ecef;
+}
+.pagination button:disabled {
+  color: #6c757d;
+  cursor: not-allowed;
+  background-color: #f8f9fa;
 }
 .activePage {
   background: #0d6efd !important;
-  color: white;
+  color: white !important;
+  border-color: #0d6efd !important;
 }
 </style>

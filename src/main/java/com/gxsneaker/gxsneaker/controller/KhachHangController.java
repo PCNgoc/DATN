@@ -29,17 +29,25 @@ public class KhachHangController {
     }
 
     @PostMapping
-    public KhachHang createKhachHang(@RequestBody KhachHang khachHang) {
-        return khachHangService.createKhachHang(khachHang);
+    public ResponseEntity<?> createKhachHang(@RequestBody KhachHang khachHang) {
+        try {
+            KhachHang created = khachHangService.createKhachHang(khachHang);
+            return ResponseEntity.ok(created);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<KhachHang> updateKhachHang(@PathVariable Integer id, @RequestBody KhachHang khachHang) {
+    public ResponseEntity<?> updateKhachHang(@PathVariable Integer id, @RequestBody KhachHang khachHang) {
         try {
             KhachHang updatedKhachHang = khachHangService.updateKhachHang(id, khachHang);
             return ResponseEntity.ok(updatedKhachHang);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
         }
     }
 

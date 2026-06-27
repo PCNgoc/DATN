@@ -134,6 +134,31 @@ const loadAddresses = async () => {
 }
 
 const saveAddress = async () => {
+  if (!addressForm.value.hoTenNguoiNhan || !addressForm.value.hoTenNguoiNhan.trim()) {
+    alert("Tên người nhận không được để trống!");
+    return;
+  }
+  if (!addressForm.value.soDienThoai || !addressForm.value.soDienThoai.trim()) {
+    alert("Số điện thoại nhận không được để trống!");
+    return;
+  }
+  if (!addressForm.value.tinhThanh || !addressForm.value.tinhThanh.trim()) {
+    alert("Tỉnh / Thành phố không được để trống!");
+    return;
+  }
+  if (!addressForm.value.quanHuyen || !addressForm.value.quanHuyen.trim()) {
+    alert("Quận / Huyện không được để trống!");
+    return;
+  }
+  if (!addressForm.value.phuongXa || !addressForm.value.phuongXa.trim()) {
+    alert("Phường / Xã không được để trống!");
+    return;
+  }
+  if (!addressForm.value.diaChiChiTiet || !addressForm.value.diaChiChiTiet.trim()) {
+    alert("Địa chỉ chi tiết không được để trống!");
+    return;
+  }
+
   try {
     const data = {
       ...addressForm.value,
@@ -146,8 +171,10 @@ const saveAddress = async () => {
     }
     resetAddressForm()
     await loadAddresses()
+    alert("Lưu địa chỉ thành công!");
   } catch (err) {
     console.error(err)
+    alert("Lỗi khi lưu địa chỉ!");
   }
 }
 
@@ -223,7 +250,7 @@ const changePage = (p) => {
         </div>
       </div>
 
-      <div class="grid">
+      <div class="grid mt-2">
         <div class="form-group">
           <label>Giới tính</label>
           <select v-model="form.gioiTinh">
@@ -239,6 +266,10 @@ const changePage = (p) => {
             <option :value="false">Khóa</option>
           </select>
         </div>
+      </div>
+
+      <div class="mt-2 text-start" v-if="!form.id">
+        <small class="text-muted">💡 Mật khẩu mặc định khi tạo mới là <strong style="color: #0d6efd;">123456</strong> (Khách hàng có thể đổi lại sau)</small>
       </div>
 
       <div class="actions">
@@ -302,15 +333,39 @@ const changePage = (p) => {
           <!-- Form address -->
           <div class="address-form">
             <h4>{{ addressForm.id ? "Sửa địa chỉ" : "Thêm địa chỉ mới" }}</h4>
-            <input v-model="addressForm.hoTenNguoiNhan" placeholder="Tên người nhận" />
-            <input v-model="addressForm.soDienThoai" placeholder="Số điện thoại nhận" />
-            <input v-model="addressForm.tinhThanh" placeholder="Tỉnh / Thành phố" />
-            <input v-model="addressForm.quanHuyen" placeholder="Quận / Huyện" />
-            <input v-model="addressForm.phuongXa" placeholder="Phường / Xã" />
-            <textarea v-model="addressForm.diaChiChiTiet" placeholder="Địa chỉ chi tiết"></textarea>
             
-            <div class="btn-group">
-              <button class="btn-save" @click="saveAddress">Lưu địa chỉ</button>
+            <div class="form-group">
+              <label>Tên người nhận <span class="required">*</span></label>
+              <input v-model="addressForm.hoTenNguoiNhan" placeholder="Tên người nhận" />
+            </div>
+            
+            <div class="form-group">
+              <label>Số điện thoại nhận <span class="required">*</span></label>
+              <input v-model="addressForm.soDienThoai" placeholder="Số điện thoại nhận" />
+            </div>
+            
+            <div class="form-group">
+              <label>Tỉnh / Thành phố <span class="required">*</span></label>
+              <input v-model="addressForm.tinhThanh" placeholder="Tỉnh / Thành phố" />
+            </div>
+            
+            <div class="form-group">
+              <label>Quận / Huyện <span class="required">*</span></label>
+              <input v-model="addressForm.quanHuyen" placeholder="Quận / Huyện" />
+            </div>
+            
+            <div class="form-group">
+              <label>Phường / Xã <span class="required">*</span></label>
+              <input v-model="addressForm.phuongXa" placeholder="Phường / Xã" />
+            </div>
+            
+            <div class="form-group">
+              <label>Địa chỉ chi tiết <span class="required">*</span></label>
+              <textarea v-model="addressForm.diaChiChiTiet" placeholder="Địa chỉ chi tiết"></textarea>
+            </div>
+            
+            <div class="btn-group mt-2">
+              <button class="btn-save" @click="saveAddress">💾 Lưu địa chỉ</button>
               <button class="btn-reset" @click="resetAddressForm">Reset</button>
             </div>
           </div>
@@ -351,7 +406,8 @@ const changePage = (p) => {
   margin-bottom: 15px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-.form-box input, .form-box textarea, .form-box select {
+.form-box input, .form-box textarea, .form-box select,
+.address-form input, .address-form textarea, .address-form select {
   width: 100%;
   margin: 5px 0 12px 0;
   padding: 8px 12px;
@@ -360,7 +416,8 @@ const changePage = (p) => {
   font-size: 14px;
   transition: border-color 0.2s;
 }
-.form-box input:focus, .form-box select:focus {
+.form-box input:focus, .form-box select:focus,
+.address-form input:focus, .address-form select:focus, .address-form textarea:focus {
   border-color: #0d6efd;
   outline: none;
 }
@@ -374,7 +431,7 @@ const changePage = (p) => {
   display: flex;
   flex-direction: column;
 }
-.form-group label {
+.form-group label, .address-form label {
   font-size: 13px;
   font-weight: 600;
   color: #495057;

@@ -36,17 +36,25 @@ public class PhieuGiamGiaController {
     }
 
     @PostMapping
-    public PhieuGiamGia createPhieuGiamGia(@RequestBody PhieuGiamGia phieuGiamGia) {
-        return phieuGiamGiaService.createPhieuGiamGia(phieuGiamGia);
+    public ResponseEntity<?> createPhieuGiamGia(@RequestBody PhieuGiamGia phieuGiamGia) {
+        try {
+            PhieuGiamGia created = phieuGiamGiaService.createPhieuGiamGia(phieuGiamGia);
+            return ResponseEntity.ok(created);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PhieuGiamGia> updatePhieuGiamGia(@PathVariable Integer id, @RequestBody PhieuGiamGia phieuGiamGia) {
+    public ResponseEntity<?> updatePhieuGiamGia(@PathVariable Integer id, @RequestBody PhieuGiamGia phieuGiamGia) {
         try {
             PhieuGiamGia updated = phieuGiamGiaService.updatePhieuGiamGia(id, phieuGiamGia);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
         }
     }
 
