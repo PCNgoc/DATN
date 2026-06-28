@@ -1,7 +1,6 @@
 package com.gxsneaker.gxsneaker.controller;
 
-import com.gxsneaker.gxsneaker.dto.TopSanPhamBanChayDTO;
-import com.gxsneaker.gxsneaker.dto.UpdateTrangThaiRequest;
+import com.gxsneaker.gxsneaker.dto.*;
 import com.gxsneaker.gxsneaker.entity.HoaDon;
 import com.gxsneaker.gxsneaker.entity.LichSuTrangThaiHoaDon;
 import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
@@ -20,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.Date;
 import java.util.List;
-import com.gxsneaker.gxsneaker.dto.ThongKeDashboardResponse;
 
 @RestController
 @RequestMapping("/api/hoa-don")
@@ -33,6 +31,8 @@ public class HoaDonController {
     private LichSuTrangThaiHoaDonRepository lichSuRepository;
     @Autowired
     private HoaDonService hoaDonService;
+    @Autowired
+    private HoaDonRepository hoaDonRepository;
 
     @GetMapping
     public List<HoaDon> getAll() {
@@ -40,8 +40,8 @@ public class HoaDonController {
     }
 
     @GetMapping("/{id}")
-    public HoaDon getById(@PathVariable Long id) {
-        return repository.findById(id).orElse(null);
+    public OrderResponseDTO getById(@PathVariable Long id) {
+        return hoaDonService.getOrderById(id);
     }
 
     @PostMapping
@@ -411,6 +411,35 @@ public class HoaDonController {
                 hoaDonService.getThongKeTrangThaiDonHang(year)
         );
     }
+
+
+        return ResponseEntity.ok(
+                hoaDonService.getTop5SanPhamBanChay(year)
+        );
+    }
+
+
+    @PostMapping("/dat-hang")
+    public ResponseEntity<HoaDon> datHang(
+            @RequestBody DatHangRequestDTO request
+    ){
+
+        HoaDon hoaDon = hoaDonService.datHang(request);
+
+        return ResponseEntity.ok(hoaDon);
+
+    }
+
+    @GetMapping("/khach-hang/{id}")
+    public List<OrderResponseDTO> getByKhachHang(
+            @PathVariable Long id
+    ) {
+
+        return hoaDonService.getOrdersByCustomer(id);
+
+    }
+
+
 
 
 }
