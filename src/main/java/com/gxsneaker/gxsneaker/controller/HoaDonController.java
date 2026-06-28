@@ -412,14 +412,5 @@ public class HoaDonController {
         );
     }
 
-    @GetMapping("/top-5-san-pham")
-    public ResponseEntity<List<TopSanPhamBanChayDTO>>
-    getTop5SanPham(@RequestParam Integer year) {
-
-        return ResponseEntity.ok(
-                hoaDonService.getTop5SanPhamBanChay(year)
-        );
-    }
-
 
 }
