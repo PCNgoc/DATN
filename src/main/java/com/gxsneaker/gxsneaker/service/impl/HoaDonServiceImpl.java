@@ -58,7 +58,7 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
     @Override
-    public List<TopSanPhamBanChayDTO> getTop5SanPhamBanChay(Integer year) {
+    public List<TopSanPhamBanChayDTO> getTop5SanPhamBanChay(int year) {
 
         List<Object[]> data =
                 hoaDonRepository.getTop5SanPhamBanChay(year);

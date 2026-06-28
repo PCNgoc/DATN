@@ -17,4 +17,5 @@ public interface HoaDonService {
     OrderResponseDTO getOrderById(Long id);
     List<OrderResponseDTO> getOrdersByCustomer(Long customerId);
 
+    List<TopSanPhamBanChayDTO> getTop5SanPhamBanChay(int year);
 }
