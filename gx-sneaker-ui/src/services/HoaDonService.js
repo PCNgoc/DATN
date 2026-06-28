@@ -1,18 +1,33 @@
-import axios from "axios";
+import axios from 'axios'
 
-const API = "http://localhost:8080/api/hoa-don";
+const API_URL = 'http://localhost:8080/api/hoa-don'
 
-// Đặt hàng
+const getAuthHeader = () => {
+  const token = localStorage.getItem('token')
+
+  return {
+    headers: token
+      ? {
+        Authorization: `Bearer ${token}`,
+      }
+      : {},
+  }
+}
+
 export const datHang = (data) => {
-  return axios.post(`${API}/dat-hang`, data);
-};
+  return axios.post(`${API_URL}/dat-hang`, data, getAuthHeader())
+}
 
-// Lấy danh sách đơn hàng theo khách hàng
 export const getHoaDonByKhachHang = (idKhachHang) => {
-  return axios.get(`${API}/khach-hang/${idKhachHang}`);
-};
+  return axios.get(`${API_URL}/khach-hang/${idKhachHang}`, getAuthHeader())
+}
 
-// Lấy chi tiết hóa đơn
-export const getHoaDonById = (id) => {
-  return axios.get(`${API}/${id}`);
-};
+export const getHoaDonById = (idHoaDon) => {
+  return axios.get(`${API_URL}/${idHoaDon}`, getAuthHeader())
+}
+
+export default {
+  datHang,
+  getHoaDonByKhachHang,
+  getHoaDonById,
+}

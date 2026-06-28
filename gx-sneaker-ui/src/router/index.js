@@ -14,6 +14,7 @@ import AdminLoginView from '@/views/admin/AdminLoginView.vue'
 import AdminDashboardView from '@/views/admin/AdminDashboardView.vue'
 import StaffDashboardView from '@/views/admin/StaffDashboardView.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
+import NhanVienView from '@/views/admin/NhanVienView.vue'
 // Danh mục sản phẩm
 import ThuongHieuView from '../views/ThuongHieuView.vue'
 import DanhMucView from '@/views/DanhMucView.vue'
@@ -97,6 +98,11 @@ const router = createRouter({
         {
           path: 'dashboard',
           component: AdminDashboardView,
+        },
+        {
+          path: 'nhan-vien',
+          name: 'AdminNhanVien',
+          component: NhanVienView,
         },
         {
           path: 'san-pham',
