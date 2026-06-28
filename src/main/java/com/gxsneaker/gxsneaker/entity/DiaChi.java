@@ -3,49 +3,41 @@ package com.gxsneaker.gxsneaker.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
-@Table(name = "khach_hang")
+@Table(name = "dia_chi")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class KhachHang {
-
+public class DiaChi {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_khach_hang")
-    private String maKhachHang;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_khach_hang")
+    private KhachHang khachHang;
 
-    @Column(name = "ho_ten")
-    private String hoTen;
-
-    private String email;
-
-    @Column(name = "mat_khau")
-    private String matKhau;
+    @Column(name = "ho_ten_nguoi_nhan")
+    private String hoTenNguoiNhan;
 
     @Column(name = "so_dien_thoai")
     private String soDienThoai;
 
-    @Column(name = "gioi_tinh")
-    private Boolean gioiTinh;
+    @Column(name = "tinh_thanh")
+    private String tinhThanh;
 
-    @Column(name = "ngay_sinh")
-    private LocalDate ngaySinh;
+    @Column(name = "quan_huyen")
+    private String quanHuyen;
 
-    private String avatar;
+    @Column(name = "phuong_xa")
+    private String phuongXa;
 
-    @Column(name = "trang_thai")
-    private Boolean trangThai;
-
-    @Column(name = "da_xac_thuc")
-    private Boolean daXacThuc;
+    @Column(name = "dia_chi_chi_tiet")
+    private String diaChiChiTiet;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "ngay_tao")

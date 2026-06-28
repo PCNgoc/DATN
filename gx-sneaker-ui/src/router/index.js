@@ -35,6 +35,12 @@ import Dashboard from "@/views/admin/Dashboard.vue";
 // Giao diện nút mua ngay
 import CheckoutView from '@/views/user/CheckoutView.vue'
 
+// Hải's Khách Hàng, Phiếu Giảm Giá & Giỏ Hàng
+import KhachHangView from '@/views/admin/KhachHangView.vue'
+import PhieuGiamGiaView from '@/views/admin/PhieuGiamGiaView.vue'
+import GioHangView from '@/views/user/GioHangView.vue'
+
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -134,13 +140,19 @@ const router = createRouter({
         {
           path: 'thong-ke',
           component: Dashboard,
+        },
+        {
+          path: 'khach-hang',
+          component: KhachHangView,
+        },
+        {
+          path: 'phieu-giam-gia',
+          component: PhieuGiamGiaView,
         }
-
 
       ],
 
     },
-
 
     {
       path: '/products',
@@ -154,10 +166,16 @@ const router = createRouter({
       component: ProductDetailView,
     },
     {
+      path: '/cart',
+      name: 'cart',
+      component: GioHangView,
+    },
+    {
       path: '/checkout',
       name: 'checkout',
       component: CheckoutView
     },
+
 
     // Admin
     {
