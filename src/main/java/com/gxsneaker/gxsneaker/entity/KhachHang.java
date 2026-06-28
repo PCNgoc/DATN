@@ -1,9 +1,12 @@
 package com.gxsneaker.gxsneaker.entity;
 
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "khach_hang")
@@ -45,4 +48,7 @@ public class KhachHang {
 
     @Column(name = "da_xac_thuc")
     private Boolean daXacThuc;
+    @OneToMany(mappedBy = "khachHang")
+    @JsonIgnore
+    private List<HoaDon> hoaDons;
 }

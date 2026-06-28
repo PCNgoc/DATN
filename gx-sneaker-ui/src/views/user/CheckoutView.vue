@@ -1,9 +1,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue"
-
+import { datHang } from "@/services/HoaDonService";
+import { getHoaDonByKhachHang } from "@/services/HoaDonService";
+import { useRouter } from "vue-router";
 const product = ref(null)
 
+
+const router = useRouter();
 const fullName = ref("")
 const phone = ref("")
 const address = ref("")
@@ -15,16 +19,28 @@ const formatMoney = (value) => {
   return Number(value).toLocaleString("vi-VN") + " đ"
 }
 
+// onMounted(async () => {
+//   try {
+//     const res = await getHoaDonByKhachHang(1);
+//     orders.value = res.data;
+//   } catch (e) {
+//     console.error(e);
+//   }
+// });
+
+
 onMounted(() => {
-  const buyNowItem = JSON.parse(
-    localStorage.getItem("buyNowProduct")
-  )
 
-  if (buyNowItem) {
-    product.value = buyNowItem
+  const data = localStorage.getItem("buyNowProduct");
+
+  if (!data) {
+    alert("Không có sản phẩm để thanh toán");
+    return;
   }
-})
 
+  product.value = JSON.parse(data);
+
+});
 const totalMoney = computed(() => {
   if (!product.value) return 0
 
@@ -38,34 +54,94 @@ const finalTotal = computed(() => {
   return totalMoney.value + shipFee.value
 })
 
-const placeOrder = () => {
+const placeOrder = async () => {
+  if (!product.value) {
+    alert("Không có sản phẩm");
+    return;
+  }
 
   if (!fullName.value.trim()) {
-    alert("Vui lòng nhập họ tên")
-    return
+
+    alert("Vui lòng nhập họ tên");
+
+    return;
+
   }
 
   if (!phone.value.trim()) {
-    alert("Vui lòng nhập số điện thoại")
-    return
+
+    alert("Vui lòng nhập số điện thoại");
+
+    return;
+
   }
 
   if (!address.value.trim()) {
-    alert("Vui lòng nhập địa chỉ nhận hàng")
-    return
+
+    alert("Vui lòng nhập địa chỉ");
+
+    return;
+
   }
 
-  console.log({
-    customerName: fullName.value,
-    phone: phone.value,
-    address: address.value,
-    note: note.value,
-    product: product.value,
-    totalMoney: finalTotal.value
-  })
+  try {
 
-  alert("Đặt hàng thành công")
-}
+    const request = {
+
+      idKhachHang: 1,
+
+      tenNguoiNhan: fullName.value,
+
+      soDienThoai: phone.value,
+
+      diaChi: address.value,
+
+      ghiChu: note.value,
+
+      items: [
+
+        {
+
+          chiTietSanPhamId: product.value.detailId,
+
+          soLuong: product.value.quantity
+
+        }
+
+      ]
+
+    };
+    console.log(request);
+    const res = await datHang(request);
+
+    console.log(res.data);
+
+    localStorage.removeItem("buyNowProduct");
+
+    alert(
+      "Đặt hàng thành công!\nMã hóa đơn: " +
+      res.data.maHoaDon
+    );
+
+    router.push("/orders");
+
+  }  catch (e) {
+
+    console.error(e);
+
+    console.log(e.response);
+
+    console.log(e.response?.data);
+
+    alert(
+      e.response?.data?.message ||
+      e.response?.data ||
+      "Đặt hàng thất bại"
+    );
+
+  }
+
+};
 </script>
 
 <template>

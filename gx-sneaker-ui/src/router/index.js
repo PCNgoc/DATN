@@ -34,6 +34,11 @@ import HoaDonView from '@/views/admin/HoaDonView.vue'
 import Dashboard from "@/views/admin/Dashboard.vue";
 // Giao diện nút mua ngay
 import CheckoutView from '@/views/user/CheckoutView.vue'
+// Order
+import OrderView from "@/views/user/OrderView.vue"
+import OrderDetailView from "@/views/user/OrderDetailView.vue"
+//
+
 
 const router = createRouter({
   history: createWebHistory(),
@@ -75,6 +80,8 @@ const router = createRouter({
       name: 'change-password',
       component: ChangePasswordView,
     },
+    //Đặt hàng
+
 
     // Danh mục
     {
@@ -158,6 +165,17 @@ const router = createRouter({
       name: 'checkout',
       component: CheckoutView
     },
+    {
+      path:"/orders",
+      component:OrderView
+    },
+
+
+{
+  path: "/orders/:id",
+    name: "OrderDetail",
+  component: OrderDetailView
+},
 
     // Admin
     {
