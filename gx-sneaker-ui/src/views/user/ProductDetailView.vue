@@ -4,15 +4,23 @@ import { useRoute, useRouter } from "vue-router"
 
 import {
   getById as getProductById
-} from "@/services/SanPhamService"
+} from "@/services/sanPhamService"
 
 import {
   getBySanPham
-} from "@/services/ChiTietSanPhamService"
+} from "@/services/chiTietSanPhamService"
+
+import {
+  addItemToCart
+} from "@/services/gioHangService"
+import { useCart } from "@/composables/useCart"
+
+
 
 
 const route = useRoute()
 const router = useRouter()
+const { fetchCartCount } = useCart()
 
 const loading = ref(true)
 
@@ -284,57 +292,38 @@ watch(stock, () => {
    ADD TO CART
 =========================== */
 
-const addToCart = () => {
+const addToCart = async () => {
 
   if (!selectedVariant.value) {
-
-    alert(
-      "Vui lòng chọn màu sắc và kích thước"
-    )
-
+    alert("Vui lòng chọn màu sắc và kích thước")
     return
   }
 
-  const cart =
-    JSON.parse(
-      localStorage.getItem("cart")
-    ) || []
+  const userData = localStorage.getItem("user")
+  if (!userData) {
+    alert("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng")
+    router.push("/login")
+    return
+  }
 
-  cart.push({
+  try {
+    const parsedUser = JSON.parse(userData)
+    if (!parsedUser || !parsedUser.id) {
+      alert("Vui lòng đăng nhập lại")
+      router.push("/login")
+      return
+    }
 
-    productId: product.value.id,
-
-    detailId:
-    selectedVariant.value.id,
-
-    productName:
-    product.value.tenSanPham,
-
-    image:
-    product.value.anhDaiDien,
-
-    color:
-    selectedVariant.value.tenMauSac,
-
-    size:
-    selectedVariant.value.size,
-
-    quantity:
-    quantity.value,
-
-    price:
-    selectedVariant.value.giaBan
-  })
-
-  localStorage.setItem(
-    "cart",
-    JSON.stringify(cart)
-  )
-
-  alert(
-    "Đã thêm sản phẩm vào giỏ hàng"
-  )
+    // Call backend API to add to cart database
+    await addItemToCart(parsedUser.id, selectedVariant.value.id, quantity.value)
+    await fetchCartCount(parsedUser.id)
+    alert("Đã thêm sản phẩm vào giỏ hàng thành công!")
+  } catch (err) {
+    console.error("Lỗi thêm vào giỏ hàng:", err)
+    alert("Không thể thêm vào giỏ hàng: " + (err.response?.data?.message || err.message))
+  }
 }
+
 
 /* ===========================
    BUY NOW
