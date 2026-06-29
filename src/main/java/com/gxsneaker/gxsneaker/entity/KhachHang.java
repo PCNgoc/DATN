@@ -22,7 +22,7 @@ public class KhachHang {
     @Column(name = "ma_khach_hang")
     private String maKhachHang;
 
-    @Column(name = "ho_ten")
+    @Column(name = "ho_ten", columnDefinition = "NVARCHAR(255)")
     private String hoTen;
 
     private String email;

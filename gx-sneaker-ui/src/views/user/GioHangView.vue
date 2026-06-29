@@ -4,11 +4,13 @@ import { useRouter } from "vue-router"
 import { getCartByKhachHangId, updateItemQuantity, removeItemFromCart, clearCart } from "@/services/gioHangService"
 import { getByMa } from "@/services/phieuGiamGiaService"
 import { getMeApi } from "@/api/authApi"
+import { useCart } from "@/composables/useCart"
 
 const router = useRouter()
 const cart = ref(null)
 const loading = ref(false)
 const user = ref(null)
+const { fetchCartCount } = useCart()
 
 // Voucher states
 const voucherCode = ref("")
@@ -32,6 +34,7 @@ const loadCartData = async () => {
     if (user.value && user.value.id) {
       const cartRes = await getCartByKhachHangId(user.value.id)
       cart.value = cartRes.data
+      await fetchCartCount(user.value.id)
     }
   } catch (err) {
     console.error("Lỗi khi tải giỏ hàng:", err)
@@ -152,19 +155,24 @@ const checkout = () => {
     return
   }
   
-  // Set first item in localStorage to fit the existing CheckoutView.vue setup for demo purposes
-  // or redirect to a comprehensive checkout. Here, we can populate CheckoutView's buyNowProduct or similar.
-  const firstItem = cart.value.items[0]
-  const checkoutProduct = {
-    image: firstItem.chiTietSanPham?.hinhAnh || "banner1.png",
-    productName: firstItem.chiTietSanPham?.sanPham?.ten || "Giày Sneaker",
-    color: firstItem.chiTietSanPham?.mauSac?.ten || "Mặc định",
-    size: firstItem.chiTietSanPham?.kichThuoc?.ten || "Mặc định",
-    quantity: firstItem.soLuong,
-    price: firstItem.chiTietSanPham?.giaBan || 0
+  const checkoutData = {
+    isFromCart: true,
+    items: cart.value.items.map(item => ({
+      image: item.chiTietSanPham?.hinhAnh || "banner1.png",
+      productName: item.chiTietSanPham?.sanPham?.ten || "Giày Sneaker",
+      color: item.chiTietSanPham?.mauSac?.ten || "Mặc định",
+      size: item.chiTietSanPham?.kichThuoc?.ten || "Mặc định",
+      quantity: item.soLuong,
+      price: item.chiTietSanPham?.giaBan || 0
+    })),
+    appliedVoucher: appliedVoucher.value,
+    discountAmount: discountAmount.value,
+    subtotal: subtotal.value,
+    finalTotal: finalTotal.value
   }
   
-  localStorage.setItem("buyNowProduct", JSON.stringify(checkoutProduct))
+  localStorage.setItem("checkoutData", JSON.stringify(checkoutData))
+  localStorage.removeItem("buyNowProduct")
   router.push("/checkout")
 }
 </script>
