@@ -29,11 +29,11 @@ public class GioHangChiTiet {
     private Integer soLuong;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "ngay_them")
-    private Date ngayThem;
+    @Column(name = "ngay_tao")
+    private Date ngayTao;
 
     @PrePersist
     public void prePersist() {
-        ngayThem = new Date();
+        ngayTao = new Date();
     }
 }

@@ -18,4 +18,6 @@ public interface HoaDonService {
     List<OrderResponseDTO> getOrdersByCustomer(Long customerId);
 
     List<TopSanPhamBanChayDTO> getTop5SanPhamBanChay(int year);
+
+    HoaDon capNhatTrangThai(Long idHoaDon, UpdateTrangThaiRequest request);
 }

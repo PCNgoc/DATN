@@ -5,6 +5,7 @@ import com.gxsneaker.gxsneaker.entity.HoaDon;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.util.Optional;
 
 import java.awt.print.Pageable;
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Long> {
             String maHoaDon,
             String trangThai
     );
+
 
     // ==========================================
     // CHỨC NĂNG: LỌC HÓA ĐƠN THEO NGÀY ĐẶT HÀNG
@@ -209,4 +211,11 @@ ORDER BY SUM(hdct.so_luong) DESC
     //Đơn hàng
     @Query("SELECT COUNT(h) FROM HoaDon h")
     Long countHoaDon();
+
+    Optional<HoaDon> findByPayosOrderCode(Long payosOrderCode);
+
+    List<HoaDon> findByTrangThaiThanhToanAndHanThanhToanBefore(
+            String trangThaiThanhToan,
+            Date hanThanhToan
+    );
 }

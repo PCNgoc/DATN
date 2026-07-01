@@ -87,6 +87,15 @@ public class AuthService {
 
         String role = nv.get().getPhanQuyen().getMaQuyen();
 
+        role = role.trim().toUpperCase();
+
+        if ("NHAN_VIEN".equals(role)) {
+            role = "STAFF";
+        }
+        if ("QUAN_TRI".equals(role) || "ADMINISTRATOR".equals(role)) {
+            role = "ADMIN";
+        }
+
         String token = jwtService.generateToken(
                 nv.get().getEmail(),
                 role
@@ -276,7 +285,16 @@ public class AuthService {
         String role =
                 nv.get().getPhanQuyen()
                         .getMaQuyen()
+                        .trim()
                         .toUpperCase();
+
+        if ("NHAN_VIEN".equals(role)) {
+            role = "STAFF";
+        }
+
+        if ("QUAN_TRI".equals(role) || "ADMINISTRATOR".equals(role)) {
+            role = "ADMIN";
+        }
 
         System.out.println("TEN QUYEN = "
                 + nv.get().getPhanQuyen().getTenQuyen());

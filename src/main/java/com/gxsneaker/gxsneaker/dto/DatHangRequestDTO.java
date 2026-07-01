@@ -17,6 +17,9 @@ public class DatHangRequestDTO {
 
     private String ghiChu;
 
-    private List<DatHangItemDTO> items;
+    private String maPhieuGiamGia;
 
+    private String phuongThucThanhToan;
+
+    private List<DatHangItemDTO> items;
 }

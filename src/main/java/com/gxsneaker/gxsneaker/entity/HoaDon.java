@@ -65,6 +65,31 @@ public class HoaDon {
 
     private String ghiChu;
 
+    @Column(name = "phuong_thuc_thanh_toan")
+    private String phuongThucThanhToan;
+// COD, PAYOS
+
+    @Column(name = "trang_thai_thanh_toan")
+    private String trangThaiThanhToan;
+// CHUA_THANH_TOAN, CHO_THANH_TOAN, DA_THANH_TOAN, QUA_HAN
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "han_thanh_toan")
+    private Date hanThanhToan;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "ngay_thanh_toan")
+    private Date ngayThanhToan;
+
+    @Column(name = "payos_order_code")
+    private Long payosOrderCode;
+
+    @Column(name = "payment_link_id")
+    private String paymentLinkId;
+
+    @Column(name = "checkout_url", length = 2000)
+    private String checkoutUrl;
+
     @Temporal(TemporalType.TIMESTAMP)
     private Date ngayDatHang;
 

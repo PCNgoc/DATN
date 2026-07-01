@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import '@/api/authApi.js'
 
 import {
   Chart as ChartJS,
@@ -13,14 +14,10 @@ import {
   CategoryScale,
   LinearScale,
   ArcElement,
-  BarElement
+  BarElement,
 } from 'chart.js'
 
-import {
-  Line,
-  Pie,
-  Bar
-} from 'vue-chartjs'
+import { Line, Pie, Bar } from 'vue-chartjs'
 
 ChartJS.register(
   Title,
@@ -31,7 +28,7 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   ArcElement,
-  BarElement
+  BarElement,
 )
 const router = useRouter()
 
@@ -42,12 +39,12 @@ const dashboard = ref({
   soDonDaXacNhan: 0,
   soDonDangGiao: 0,
   soDonHoanThanh: 0,
-  soDonDaHuy: 0
+  soDonDaHuy: 0,
 })
 
 const revenueChartData = ref({
   labels: [],
-  datasets: []
+  datasets: [],
 })
 
 const chartOptions = {
@@ -55,8 +52,8 @@ const chartOptions = {
 
   plugins: {
     legend: {
-      position: 'top'
-    }
+      position: 'top',
+    },
   },
 
   scales: {
@@ -64,10 +61,10 @@ const chartOptions = {
       ticks: {
         callback: function (value) {
           return new Intl.NumberFormat('vi-VN').format(value) + ' đ'
-        }
-      }
-    }
-  }
+        },
+      },
+    },
+  },
 }
 
 const xemTatCaDonHang = () => {
@@ -76,9 +73,7 @@ const xemTatCaDonHang = () => {
 
 const loadDashboard = async () => {
   try {
-    const response = await axios.get(
-      'http://localhost:8080/api/hoa-don/thong-ke/dashboard'
-    )
+    const response = await axios.get('http://localhost:8080/api/hoa-don/thong-ke/dashboard')
 
     dashboard.value = response.data
   } catch (error) {
@@ -89,28 +84,26 @@ const selectedYear = ref(new Date().getFullYear())
 
 const loadRevenueChart = async () => {
   try {
-
     const response = await axios.get(
-      `http://localhost:8080/api/hoa-don/thong-ke/bieu-do-doanh-thu-thang?year=${selectedYear.value}`
+      `http://localhost:8080/api/hoa-don/thong-ke/bieu-do-doanh-thu-thang?year=${selectedYear.value}`,
     )
 
     revenueChartData.value = {
-      labels: response.data.map(item => `Tháng ${item.thang}`),
+      labels: response.data.map((item) => `Tháng ${item.thang}`),
 
       datasets: [
         {
           label: `Doanh thu năm ${selectedYear.value}`,
-          data: response.data.map(item => item.doanhThu),
+          data: response.data.map((item) => item.doanhThu),
 
           borderColor: '#0d6efd',
           backgroundColor: '#0d6efd',
 
           tension: 0.4,
-          fill: false
-        }
-      ]
+          fill: false,
+        },
+      ],
     }
-
   } catch (error) {
     console.error('Lỗi tải biểu đồ doanh thu:', error)
   }
@@ -122,12 +115,12 @@ const formatCurrency = (value) => {
 
 const statusChartData = ref({
   labels: [],
-  datasets: []
+  datasets: [],
 })
 
 const pieOptions = {
   responsive: true,
-  maintainAspectRatio: false
+  maintainAspectRatio: false,
 }
 
 const handleYearChange = () => {
@@ -137,76 +130,53 @@ const handleYearChange = () => {
 
 const loadStatusChart = async () => {
   try {
-
     const response = await axios.get(
-      `http://localhost:8080/api/hoa-don/thong-ke/trang-thai-don-hang?year=${selectedYear.value}`
+      `http://localhost:8080/api/hoa-don/thong-ke/trang-thai-don-hang?year=${selectedYear.value}`,
     )
 
     statusChartData.value = {
-      labels: response.data.map(item => item.trangThai),
+      labels: response.data.map((item) => item.trangThai),
 
       datasets: [
         {
-          data: response.data.map(item => item.soLuong),
+          data: response.data.map((item) => item.soLuong),
 
-          backgroundColor: [
-            '#198754',
-            '#0d6efd',
-            '#ffc107',
-            '#dc3545',
-            '#6c757d'
-          ]
-        }
-      ]
+          backgroundColor: ['#198754', '#0d6efd', '#ffc107', '#dc3545', '#6c757d'],
+        },
+      ],
     }
-
   } catch (error) {
     console.error(error)
   }
 }
 
 const tongTrangThai = computed(() => {
-  return statusChartData.value?.datasets?.[0]?.data?.reduce(
-    (tong, item) => tong + item,
-    0
-  ) || 0
+  return statusChartData.value?.datasets?.[0]?.data?.reduce((tong, item) => tong + item, 0) || 0
 })
 
 const topSanPhamData = ref([])
 
 const loadTopSanPham = async () => {
   try {
-
     const res = await axios.get(
-      `http://localhost:8080/api/hoa-don/top-5-san-pham?year=${selectedYear.value}`
+      `http://localhost:8080/api/hoa-don/thong-ke/top-5-san-pham-ban-chay?year=${selectedYear.value}`,
     )
 
     topSanPhamData.value = res.data
-
   } catch (error) {
-    console.error("Lỗi tải top sản phẩm:", error)
+    console.error('Lỗi tải top sản phẩm:', error)
   }
 }
 const topSanPhamChartData = computed(() => ({
-  labels: topSanPhamData.value.map(
-    item => item.tenSanPham
-  ),
+  labels: topSanPhamData.value.map((item) => item.tenSanPham),
 
   datasets: [
     {
-      label: "Số lượng bán",
+      label: 'Số lượng bán',
 
-      data: topSanPhamData.value.map(
-        item => item.tongSoLuongBan
-      ),
+      data: topSanPhamData.value.map((item) => item.tongSoLuongBan),
 
-      backgroundColor: [
-        "#ef4444",
-        "#3b82f6",
-        "#f59e0b",
-        "#14b8a6",
-        "#8b5cf6"
-      ],
+      backgroundColor: ['#ef4444', '#3b82f6', '#f59e0b', '#14b8a6', '#8b5cf6'],
 
       borderRadius: 12,
 
@@ -214,9 +184,9 @@ const topSanPhamChartData = computed(() => ({
       maxBarThickness: 40,
 
       categoryPercentage: 0.4,
-      barPercentage: 0.7
-    }
-  ]
+      barPercentage: 0.7,
+    },
+  ],
 }))
 
 const topSanPhamOptions = {
@@ -225,21 +195,21 @@ const topSanPhamOptions = {
 
   plugins: {
     legend: {
-      display: false
+      display: false,
     },
 
     tooltip: {
-      backgroundColor: "#111827",
+      backgroundColor: '#111827',
       padding: 12,
-      titleColor: "#fff",
-      bodyColor: "#fff",
+      titleColor: '#fff',
+      bodyColor: '#fff',
 
       callbacks: {
         label: function (context) {
           return `Số lượng bán: ${context.raw}`
-        }
-      }
-    }
+        },
+      },
+    },
   },
 
   scales: {
@@ -247,24 +217,24 @@ const topSanPhamOptions = {
       offset: true,
 
       grid: {
-        display: false
+        display: false,
       },
 
       border: {
-        display: false
+        display: false,
       },
 
       ticks: {
-        color: "#374151",
+        color: '#374151',
 
         font: {
           size: 13,
-          weight: "600"
+          weight: '600',
         },
 
         maxRotation: 0,
-        minRotation: 0
-      }
+        minRotation: 0,
+      },
     },
 
     y: {
@@ -273,17 +243,17 @@ const topSanPhamOptions = {
       ticks: {
         precision: 0,
         stepSize: 1,
-        color: "#6B7280"
+        color: '#6B7280',
       },
 
       grid: {
-        color: "#f3f4f6"
+        color: '#f3f4f6',
       },
 
       border: {
-        display: false
-      }
-    }
+        display: false,
+      },
+    },
   },
 
   layout: {
@@ -291,9 +261,9 @@ const topSanPhamOptions = {
       top: 10,
       bottom: 10,
       left: 40,
-      right: 40
-    }
-  }
+      right: 40,
+    },
+  },
 }
 
 onMounted(() => {
@@ -305,13 +275,9 @@ onMounted(() => {
 
 <template>
   <div class="dashboard-container">
-    <h1 class="dashboard-title">
-      Dashboard Thống Kê GX Sneaker
-    </h1>
-
+    <h1 class="dashboard-title">Dashboard Thống Kê GX Sneaker</h1>
 
     <div class="dashboard-grid">
-
       <div class="card" @click="xemTatCaDonHang">
         <h3>Tổng đơn hàng</h3>
         <p>{{ dashboard.tongSoDon }}</p>
@@ -346,17 +312,12 @@ onMounted(() => {
         <h3>Đã hủy</h3>
         <p>{{ dashboard.soDonDaHuy }}</p>
       </div>
-
     </div>
 
     <div class="year-filter mt-4 mb-4">
       <label class="form-label">Chọn năm</label>
 
-      <select
-        class="form-select year-select"
-        v-model="selectedYear"
-        @change="handleYearChange"
-      >
+      <select class="form-select year-select" v-model="selectedYear" @change="handleYearChange">
         <option :value="2024">2024</option>
         <option :value="2025">2025</option>
         <option :value="2026">2026</option>
@@ -364,52 +325,33 @@ onMounted(() => {
     </div>
 
     <div class="chart-grid">
-
       <!-- Biểu đồ doanh thu -->
       <div class="chart-card">
-        <h3 class="chart-title">
-          📈 Biểu đồ doanh thu theo tháng năm {{ selectedYear }}
-        </h3>
+        <h3 class="chart-title">📈 Biểu đồ doanh thu theo tháng năm {{ selectedYear }}</h3>
 
         <Line :data="revenueChartData" />
       </div>
 
       <!-- Biểu đồ trạng thái -->
       <div class="chart-card">
-        <h3 class="chart-title">
-          Tỷ lệ trạng thái đơn hàng năm {{ selectedYear }}
-        </h3>
+        <h3 class="chart-title">Tỷ lệ trạng thái đơn hàng năm {{ selectedYear }}</h3>
 
         <div class="pie-chart-container">
-
           <div v-if="tongTrangThai === 0" class="no-data">
             Không có dữ liệu đơn hàng trong năm {{ selectedYear }}
           </div>
 
-          <Pie
-            v-else
-            :data="statusChartData"
-            :options="pieOptions"
-          />
-
+          <Pie v-else :data="statusChartData" :options="pieOptions" />
         </div>
       </div>
-
     </div>
 
     <div class="chart-card top-product mt-4">
-      <h3 class="chart-title">
-        Top 5 sản phẩm bán chạy năm {{ selectedYear }}
-      </h3>
+      <h3 class="chart-title">Top 5 sản phẩm bán chạy năm {{ selectedYear }}</h3>
       <div class="top-product-chart">
-        <Bar
-          :data="topSanPhamChartData"
-          :options="topSanPhamOptions"
-        />
+        <Bar :data="topSanPhamChartData" :options="topSanPhamOptions" />
       </div>
     </div>
-
-
   </div>
 </template>
 <style scoped>
@@ -430,7 +372,7 @@ onMounted(() => {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
 }
 
@@ -438,14 +380,14 @@ onMounted(() => {
   background: #fff;
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.08);
-  transition: all .3s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
   border: none;
 }
 
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0,0,0,.12);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
 }
 
 .card h3 {
@@ -478,12 +420,12 @@ onMounted(() => {
   border-radius: 12px;
   border: 1px solid #dbe1ea;
   padding: 10px 14px;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .year-select:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59,130,246,.15);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
 /* Chart Layout */
@@ -498,7 +440,7 @@ onMounted(() => {
   background: white;
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .chart-title {
@@ -536,7 +478,6 @@ onMounted(() => {
 /* Responsive */
 
 @media (max-width: 992px) {
-
   .chart-grid {
     grid-template-columns: 1fr;
   }
@@ -549,8 +490,6 @@ onMounted(() => {
     height: 450px;
   }
 
-
-
   .top-product-chart {
     height: 350px;
     width: 75%;
@@ -558,4 +497,3 @@ onMounted(() => {
   }
 }
 </style>
-

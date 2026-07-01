@@ -1,113 +1,358 @@
 <script setup>
-import { ref, computed, onMounted } from "vue"
-import { datHang } from "@/services/HoaDonService"
-import { useRouter } from "vue-router"
+import { ref, computed, onMounted } from 'vue'
+import { datHang } from '@/services/HoaDonService'
+import { getByMa, getAll } from '@/services/phieuGiamGiaService'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const product = ref(null)
+const checkoutItems = ref([])
+const isFromCart = ref(false)
 
-const fullName = ref("")
-const phone = ref("")
-const address = ref("")
-const note = ref("")
+const fullName = ref('')
+const phone = ref('')
+const address = ref('')
+const note = ref('')
 
-const paymentMethod = ref("COD")
+const paymentMethod = ref('COD')
 const shipFee = ref(30000)
 const loading = ref(false)
-const qrConfirmed = ref(false)
 
-const bankInfo = {
-  bankId: "MB",
-  accountNo: "2601200488888",
-  accountName: "NGUYEN VAN LUAN",
-}
+const couponCode = ref('')
+const appliedCoupon = ref(null)
+const couponLoading = ref(false)
 
-const transferContent = computed(() => {
-  const phoneText = phone.value.trim() || "KHACHHANG"
-  return `GX${phoneText}`
-})
-
-const qrUrl = computed(() => {
-  const amount = Number(finalTotal.value || 0)
-  const addInfo = encodeURIComponent(transferContent.value)
-  const accountName = encodeURIComponent(bankInfo.accountName)
-
-  return `https://img.vietqr.io/image/${bankInfo.bankId}-${bankInfo.accountNo}-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${accountName}`
-})
+const availableCoupons = ref([])
+const showCoupons = ref(false)
+const couponError = ref('')
+const couponSuccess = ref('')
+const couponPage = ref(1)
+const couponPageSize = 3
 
 const formatMoney = (value) => {
-  return Number(value || 0).toLocaleString("vi-VN") + " đ"
+  return Number(value || 0).toLocaleString('vi-VN') + ' đ'
 }
 
-onMounted(() => {
-  const data = localStorage.getItem("buyNowProduct")
+const normalizeItem = (item) => {
+  return {
+    detailId:
+      item?.detailId ||
+      item?.chiTietSanPhamId ||
+      item?.idChiTietSanPham ||
+      item?.id_chi_tiet_san_pham ||
+      item?.chiTietSanPham?.id ||
+      item?.id,
 
-  if (!data) {
-    alert("Không có sản phẩm để thanh toán")
-    router.push("/products")
-    return
+    productName:
+      item?.productName ||
+      item?.tenSanPham ||
+      item?.name ||
+      item?.chiTietSanPham?.sanPham?.tenSanPham ||
+      'Sản phẩm',
+
+    image:
+      item?.image ||
+      item?.anhDaiDien ||
+      item?.hinhAnh ||
+      item?.chiTietSanPham?.sanPham?.anhDaiDien ||
+      '',
+
+    color:
+      item?.color || item?.mauSac || item?.tenMauSac || item?.chiTietSanPham?.mauSac?.ten || '',
+
+    size:
+      item?.size ||
+      item?.kichThuoc ||
+      item?.tenKichThuoc ||
+      item?.chiTietSanPham?.kichThuoc?.size ||
+      '',
+
+    quantity: Number(item?.quantity || item?.soLuong || 1),
+
+    price: Number(item?.price || item?.giaBan || item?.donGia || item?.chiTietSanPham?.giaBan || 0),
+  }
+}
+
+onMounted(async () => {
+  const userData = localStorage.getItem('user')
+
+  if (userData) {
+    try {
+      const user = JSON.parse(userData)
+      fullName.value = user.hoTen || user.tenKhachHang || ''
+      phone.value = user.soDienThoai || user.phone || ''
+    } catch (e) {
+      console.error('Lỗi parse user:', e)
+    }
   }
 
-  product.value = JSON.parse(data)
+  const cartCheckout = localStorage.getItem('checkoutData')
+  const buyNowData = localStorage.getItem('buyNowProduct')
 
-  console.log("===== BUY NOW PRODUCT =====")
-  console.log(product.value)
+  if (cartCheckout) {
+    const parsed = JSON.parse(cartCheckout)
+
+    const rawItems = Array.isArray(parsed)
+      ? parsed
+      : parsed.items || parsed.selectedItems || parsed.products || []
+
+    checkoutItems.value = rawItems.map(normalizeItem)
+    isFromCart.value = true
+
+    if (parsed.appliedCoupon) {
+      appliedCoupon.value = parsed.appliedCoupon
+      couponCode.value =
+        parsed.appliedCoupon.maPhieuGiamGia ||
+        parsed.appliedCoupon.maPhieu ||
+        parsed.couponCode ||
+        ''
+      discountAmount.value = Number(parsed.appliedCoupon.soTienGiam || parsed.discountAmount || 0)
+    } else if (parsed.couponCode || parsed.maPhieuGiamGia) {
+      couponCode.value = parsed.couponCode || parsed.maPhieuGiamGia
+      appliedCoupon.value = {
+        maPhieuGiamGia: couponCode.value,
+      }
+      discountAmount.value = Number(parsed.discountAmount || parsed.soTienGiam || 0)
+    }
+  } else if (buyNowData) {
+    checkoutItems.value = [normalizeItem(JSON.parse(buyNowData))]
+    isFromCart.value = false
+  } else {
+    alert('Không có sản phẩm để thanh toán')
+    router.push('/products')
+    return
+  }
+  await loadAvailableCoupons()
+  console.log('===== CHECKOUT ITEMS =====')
+  console.log(checkoutItems.value)
 })
 
 const totalMoney = computed(() => {
-  if (!product.value) return 0
+  return checkoutItems.value.reduce((sum, item) => {
+    return sum + Number(item.price || 0) * Number(item.quantity || 1)
+  }, 0)
+})
 
-  return Number(product.value.price || 0) * Number(product.value.quantity || 1)
+const getCouponCode = (coupon) => {
+  return coupon?.maPhieu || coupon?.maPhieuGiamGia || coupon?.ma || ''
+}
+
+const getCouponName = (coupon) => {
+  return coupon?.tenPhieu || coupon?.tenPhieuGiamGia || 'Mã giảm giá'
+}
+
+const getMinOrder = (coupon) => {
+  return Number(coupon?.giaTriDonHangToiThieu || 0)
+}
+
+const formatMoneyCompact = (value) => {
+  const number = Number(value || 0)
+
+  if (number >= 1000000) return (number / 1000000).toFixed(0) + 'M'
+  if (number >= 1000) return (number / 1000).toFixed(0) + 'K'
+
+  return String(number)
+}
+
+const getPotentialDiscount = (coupon, total) => {
+  if (!coupon) return 0
+
+  const totalValue = Number(total || 0)
+  const discountValue = Number(coupon.giaTriGiam || 0)
+  let discount = 0
+
+  if (coupon.loaiGiamGia === true) {
+    discount = (totalValue * discountValue) / 100
+
+    if (coupon.giaTriGiamToiDa && discount > Number(coupon.giaTriGiamToiDa)) {
+      discount = Number(coupon.giaTriGiamToiDa)
+    }
+  } else {
+    discount = discountValue
+  }
+
+  if (discount > totalValue) discount = totalValue
+  if (discount < 0) discount = 0
+
+  return discount
+}
+
+const isCouponEligible = (coupon) => {
+  return totalMoney.value >= getMinOrder(coupon)
+}
+
+const discountAmount = computed(() => {
+  if (!appliedCoupon.value) return 0
+  return getPotentialDiscount(appliedCoupon.value, totalMoney.value)
 })
 
 const finalTotal = computed(() => {
-  return totalMoney.value + shipFee.value
+  return Math.max(totalMoney.value - discountAmount.value + shipFee.value, 0)
 })
 
-const getChiTietSanPhamId = () => {
-  return (
-    product.value?.detailId ||
-    product.value?.chiTietSanPhamId ||
-    product.value?.idChiTietSanPham ||
-    product.value?.id_chi_tiet_san_pham ||
-    product.value?.id
-  )
+const sortedAvailableCoupons = computed(() => {
+  return [...availableCoupons.value].sort((a, b) => {
+    const eligibleA = isCouponEligible(a) ? 1 : 0
+    const eligibleB = isCouponEligible(b) ? 1 : 0
+
+    if (eligibleA !== eligibleB) {
+      return eligibleB - eligibleA
+    }
+
+    return getPotentialDiscount(b, totalMoney.value) - getPotentialDiscount(a, totalMoney.value)
+  })
+})
+
+const totalCouponPages = computed(() => {
+  const count = sortedAvailableCoupons.value.length
+  return count > 0 ? Math.ceil(count / couponPageSize) : 1
+})
+
+const paginatedCoupons = computed(() => {
+  const start = (couponPage.value - 1) * couponPageSize
+  const end = start + couponPageSize
+
+  return sortedAvailableCoupons.value.slice(start, end)
+})
+
+const loadAvailableCoupons = async () => {
+  try {
+    const res = await getAll()
+    const rawData = res.data
+
+    const list = Array.isArray(rawData) ? rawData : rawData?.content || rawData?.data || []
+
+    const now = new Date()
+
+    availableCoupons.value = list.filter((coupon) => {
+      const active = coupon.trangThai === true
+
+      const hasQty =
+        coupon.soLuong === null || coupon.soLuong === undefined || Number(coupon.soLuong) > 0
+
+      const started = !coupon.ngayBatDau || new Date(coupon.ngayBatDau) <= now
+
+      const notExpired = !coupon.ngayKetThuc || new Date(coupon.ngayKetThuc) >= now
+
+      return active && hasQty && started && notExpired
+    })
+  } catch (err) {
+    console.error('Lỗi tải mã giảm giá khả dụng:', err)
+  }
+}
+
+const applyCoupon = async () => {
+  couponError.value = ''
+  couponSuccess.value = ''
+
+  if (!couponCode.value.trim()) {
+    couponError.value = 'Vui lòng nhập mã giảm giá'
+    return
+  }
+
+  try {
+    couponLoading.value = true
+
+    const res = await getByMa(couponCode.value.trim())
+    const coupon = res.data
+
+    if (!coupon || coupon.trangThai !== true) {
+      appliedCoupon.value = null
+      couponError.value = 'Mã giảm giá không hợp lệ hoặc đã ngừng hoạt động'
+      return
+    }
+
+    if (!isCouponEligible(coupon)) {
+      appliedCoupon.value = null
+      couponError.value = `Đơn hàng tối thiểu phải từ ${formatMoney(getMinOrder(coupon))} để sử dụng mã này`
+      return
+    }
+
+    appliedCoupon.value = coupon
+    couponCode.value = getCouponCode(coupon)
+    couponSuccess.value = `Áp dụng mã ${getCouponCode(coupon)} thành công`
+  } catch (err) {
+    appliedCoupon.value = null
+    couponError.value =
+      err.response?.data?.message || err.response?.data || 'Mã giảm giá không tồn tại'
+  } finally {
+    couponLoading.value = false
+  }
+}
+
+const selectCoupon = (coupon) => {
+  couponError.value = ''
+  couponSuccess.value = ''
+
+  if (!isCouponEligible(coupon)) {
+    couponError.value = `Bạn cần mua thêm ${formatMoney(getMinOrder(coupon) - totalMoney.value)} để dùng mã này`
+    return
+  }
+
+  appliedCoupon.value = coupon
+  couponCode.value = getCouponCode(coupon)
+  couponSuccess.value = `Áp dụng mã ${getCouponCode(coupon)} thành công`
+}
+
+const removeCoupon = () => {
+  couponCode.value = ''
+  appliedCoupon.value = null
+  couponError.value = ''
+  couponSuccess.value = ''
+}
+
+const getChiTietSanPhamId = (item) => {
+  return item?.detailId
 }
 
 const getImageUrl = (image) => {
-  if (!image) return "/images/no-image.png"
+  if (!image) return '/images/no-image.png'
 
-  if (image.startsWith("http")) {
-    return image
-  }
-
-  if (image.startsWith("/")) {
-    return image
-  }
+  if (image.startsWith('http')) return image
+  if (image.startsWith('/')) return image
 
   return `/images/${image}`
 }
 
+const getCustomerId = () => {
+  const userData = localStorage.getItem('user')
+
+  if (userData) {
+    try {
+      const user = JSON.parse(userData)
+      return user?.id || user?.idKhachHang || user?.khachHangId
+    } catch (e) {
+      console.error('Lỗi parse user:', e)
+    }
+  }
+
+  return (
+    localStorage.getItem('userId') ||
+    localStorage.getItem('idKhachHang') ||
+    localStorage.getItem('khachHangId') ||
+    1
+  )
+}
+
 const validateForm = () => {
   if (!fullName.value.trim()) {
-    alert("Vui lòng nhập họ tên người nhận")
+    alert('Vui lòng nhập họ tên người nhận')
     return false
   }
 
   if (!phone.value.trim()) {
-    alert("Vui lòng nhập số điện thoại")
+    alert('Vui lòng nhập số điện thoại')
     return false
   }
 
   const phoneRegex = /^(0|\+84)[0-9]{9,10}$/
   if (!phoneRegex.test(phone.value.trim())) {
-    alert("Số điện thoại không hợp lệ")
+    alert('Số điện thoại không hợp lệ')
     return false
   }
 
   if (!address.value.trim()) {
-    alert("Vui lòng nhập địa chỉ nhận hàng")
+    alert('Vui lòng nhập địa chỉ nhận hàng')
     return false
   }
 
@@ -115,72 +360,93 @@ const validateForm = () => {
 }
 
 const placeOrder = async () => {
-  if (!product.value) {
-    alert("Không có sản phẩm")
+  if (!checkoutItems.value.length) {
+    alert('Không có sản phẩm')
     return
   }
 
   if (!validateForm()) {
     return
   }
-  if (paymentMethod.value === "QR" && !qrConfirmed.value) {
-    alert("Vui lòng chuyển khoản và tích xác nhận đã chuyển khoản")
-    return
-  }
 
-  const chiTietSanPhamId = getChiTietSanPhamId()
+  const invalidItem = checkoutItems.value.find((item) => !getChiTietSanPhamId(item))
 
-  if (!chiTietSanPhamId) {
-    alert("Không tìm thấy ID chi tiết sản phẩm")
-    console.log("Product bị thiếu id chi tiết:", product.value)
+  if (invalidItem) {
+    alert('Có sản phẩm bị thiếu ID chi tiết sản phẩm')
+    console.log('Sản phẩm thiếu ID chi tiết:', invalidItem)
     return
   }
 
   try {
     loading.value = true
 
-    const idKhachHang =
-      localStorage.getItem("userId") ||
-      localStorage.getItem("idKhachHang") ||
-      1
+    const idKhachHang = getCustomerId()
 
     const request = {
       idKhachHang: Number(idKhachHang),
       tenNguoiNhan: fullName.value.trim(),
       soDienThoai: phone.value.trim(),
       diaChi: address.value.trim(),
-      ghiChu: note.value.trim(),
-      items: [
-        {
-          chiTietSanPhamId: Number(chiTietSanPhamId),
-          soLuong: Number(product.value.quantity || 1),
-        },
-      ],
+      ghiChu:
+        paymentMethod.value === 'QR'
+          ? `[PAYOS_CHO_THANH_TOAN] ${note.value.trim()}`
+          : `[COD_CHO_XAC_NHAN] ${note.value.trim()}`,
+      phuongThucThanhToan: paymentMethod.value === 'QR' ? 'PAYOS' : 'COD',
+      maPhieuGiamGia: appliedCoupon.value ? getCouponCode(appliedCoupon.value) : null,
+      items: checkoutItems.value.map((item) => ({
+        chiTietSanPhamId: Number(getChiTietSanPhamId(item)),
+        soLuong: Number(item.quantity || 1),
+      })),
     }
 
-    console.log("===== REQUEST DAT HANG =====")
+    console.log('===== REQUEST DAT HANG =====')
     console.log(request)
 
     const res = await datHang(request)
 
-    console.log("===== DAT HANG RESPONSE =====")
+    console.log('===== DAT HANG RESPONSE =====')
     console.log(res.data)
 
-    localStorage.removeItem("buyNowProduct")
+    localStorage.removeItem('buyNowProduct')
+    localStorage.removeItem('checkoutData')
 
-    alert("Đặt hàng thành công!\nMã hóa đơn: " + res.data.maHoaDon)
+    if (paymentMethod.value === 'QR') {
+      if (res.data?.checkoutUrl) {
+        const expiredAt =
+          res.data?.hanThanhToan || new Date(Date.now() + 30 * 60 * 1000).toISOString()
 
-    router.push("/orders")
+        localStorage.setItem(
+          'payosPaymentInfo',
+          JSON.stringify({
+            orderId: res.data.id,
+            maHoaDon: res.data.maHoaDon,
+            checkoutUrl: res.data.checkoutUrl,
+            totalAmount: res.data.tongTienThanhToan,
+            expiredAt,
+          }),
+        )
+
+        router.push(`/payos-waiting/${res.data.id}`)
+        return
+      }
+
+      alert('Không nhận được link thanh toán payOS')
+      return
+    }
+
+    router.push({
+      path: `/order-success/${res.data.id}`,
+      query: {
+        maHoaDon: res.data.maHoaDon,
+        payment: paymentMethod.value,
+      },
+    })
   } catch (e) {
     console.error(e)
     console.log(e.response)
     console.log(e.response?.data)
 
-    alert(
-      e.response?.data?.message ||
-      e.response?.data ||
-      "Đặt hàng thất bại"
-    )
+    alert(e.response?.data?.message || e.response?.data || 'Đặt hàng thất bại')
   } finally {
     loading.value = false
   }
@@ -190,9 +456,7 @@ const placeOrder = async () => {
 <template>
   <div class="checkout-page">
     <div class="checkout-header">
-      <button class="back-btn" @click="router.back()">
-        ← Quay lại
-      </button>
+      <button class="back-btn" @click="router.back()">← Quay lại</button>
 
       <div>
         <h1>Thanh toán</h1>
@@ -216,20 +480,12 @@ const placeOrder = async () => {
           <div class="form-grid">
             <div class="form-group">
               <label>Họ và tên người nhận <span>*</span></label>
-              <input
-                v-model="fullName"
-                type="text"
-                placeholder="Ví dụ: Nguyễn Văn A"
-              >
+              <input v-model="fullName" type="text" placeholder="Ví dụ: Nguyễn Văn A" />
             </div>
 
             <div class="form-group">
               <label>Số điện thoại <span>*</span></label>
-              <input
-                v-model="phone"
-                type="text"
-                placeholder="Ví dụ: 0987654321"
-              >
+              <input v-model="phone" type="text" placeholder="Ví dụ: 0987654321" />
             </div>
           </div>
 
@@ -263,15 +519,8 @@ const placeOrder = async () => {
           </div>
 
           <div class="payment-list">
-            <label
-              class="payment-item"
-              :class="{ active: paymentMethod === 'COD' }"
-            >
-              <input
-                v-model="paymentMethod"
-                type="radio"
-                value="COD"
-              >
+            <label class="payment-item" :class="{ active: paymentMethod === 'COD' }">
+              <input v-model="paymentMethod" type="radio" value="COD" />
               <div class="payment-icon">💵</div>
               <div>
                 <h3>Thanh toán khi nhận hàng</h3>
@@ -279,49 +528,29 @@ const placeOrder = async () => {
               </div>
             </label>
 
-            <label
-              class="payment-item"
-              :class="{ active: paymentMethod === 'QR' }"
-            >
-              <input
-                v-model="paymentMethod"
-                type="radio"
-                value="QR"
-              >
+            <label class="payment-item" :class="{ active: paymentMethod === 'QR' }">
+              <input v-model="paymentMethod" type="radio" value="QR" />
               <div class="payment-icon">🏦</div>
               <div>
-                <h3>Chuyển khoản MB Bank bằng QR</h3>
-                <p>Quét mã bằng app ngân hàng và chuyển khoản thật vào tài khoản shop.</p>
+                <h3>Thanh toán tự động qua payOS</h3>
+                <p>
+                  Hệ thống sẽ chuyển bạn sang trang thanh toán payOS. Sau khi thanh toán thành công,
+                  đơn hàng sẽ tự động cập nhật.
+                </p>
               </div>
             </label>
           </div>
 
           <div v-if="paymentMethod === 'QR'" class="qr-box">
-            <h3>Quét mã VietQR để thanh toán</h3>
-
-            <div class="qr-content">
-              <img
-                :src="qrUrl"
-                alt="QR thanh toán"
-                class="qr-image"
-              >
-
-              <div class="bank-detail">
-                <p>Ngân hàng: <strong>MB Bank</strong></p>
-                <p>Số tài khoản: <strong>{{ bankInfo.accountNo }}</strong></p>
-                <p>Chủ tài khoản: <strong>{{ bankInfo.accountName }}</strong></p>
-                <p>Số tiền: <strong class="money">{{ formatMoney(finalTotal) }}</strong></p>
-                <p>Nội dung CK: <strong>{{ transferContent }}</strong></p>
-              </div>
-            </div>
-
-            <label class="confirm-transfer">
-              <input
-                v-model="qrConfirmed"
-                type="checkbox"
-              >
-              Tôi đã chuyển khoản đúng số tiền và nội dung
-            </label>
+            <h3>Thanh toán tự động qua payOS</h3>
+            <p>Sau khi bấm đặt hàng, hệ thống sẽ chuyển bạn sang trang thanh toán payOS.</p>
+            <p>
+              Sau khi thanh toán thành công, hệ thống sẽ kiểm tra và cập nhật trạng thái thanh toán.
+            </p>
+            <p>
+              Bạn có 30 phút để hoàn tất thanh toán. Sau 30 phút, đơn hàng sẽ tự động bị hủy nếu
+              chưa thanh toán.
+            </p>
           </div>
         </section>
       </div>
@@ -330,23 +559,137 @@ const placeOrder = async () => {
       <aside class="order-summary">
         <h2>Đơn hàng của bạn</h2>
 
-        <div v-if="product" class="product-box">
-          <img
-            :src="getImageUrl(product.image)"
-            alt="Ảnh sản phẩm"
-          >
+        <div v-for="(item, index) in checkoutItems" :key="index" class="product-box">
+          <img :src="getImageUrl(item.image)" alt="Ảnh sản phẩm" />
 
           <div class="product-info">
-            <h3>{{ product.productName }}</h3>
+            <h3>{{ item.productName }}</h3>
 
             <div class="variant">
-              <span>Màu: <b>{{ product.color }}</b></span>
-              <span>Size: <b>{{ product.size }}</b></span>
+              <span v-if="item.color"
+                >Màu: <b>{{ item.color }}</b></span
+              >
+              <span v-if="item.size"
+                >Size: <b>{{ item.size }}</b></span
+              >
             </div>
 
             <div class="quantity-price">
-              <span>x{{ product.quantity }}</span>
-              <strong>{{ formatMoney(product.price) }}</strong>
+              <span>x{{ item.quantity }}</span>
+              <strong>{{ formatMoney(item.price) }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="coupon-box">
+          <h3>🎟️ Mã giảm giá</h3>
+
+          <div class="coupon-input">
+            <input
+              v-model="couponCode"
+              type="text"
+              placeholder="Nhập mã giảm giá"
+              :disabled="!!appliedCoupon"
+              @keyup.enter="applyCoupon"
+            />
+
+            <button
+              v-if="!appliedCoupon"
+              type="button"
+              :disabled="couponLoading"
+              @click="applyCoupon"
+            >
+              {{ couponLoading ? 'Đang kiểm tra...' : 'Áp dụng' }}
+            </button>
+
+            <button v-else type="button" class="btn-remove-coupon" @click="removeCoupon">
+              Hủy
+            </button>
+          </div>
+
+          <p v-if="couponError" class="coupon-error">
+            {{ couponError }}
+          </p>
+
+          <p v-if="couponSuccess" class="coupon-success">
+            {{ couponSuccess }} - giảm {{ formatMoney(discountAmount) }}
+          </p>
+
+          <div
+            v-if="availableCoupons.length > 0"
+            class="coupon-toggle"
+            @click="showCoupons = !showCoupons"
+          >
+            Bạn có <strong>{{ availableCoupons.length }}</strong> mã giảm giá khả dụng.
+            <span>{{ showCoupons ? 'Thu gọn' : 'Xem mã' }}</span>
+          </div>
+
+          <div v-if="showCoupons" class="coupon-list">
+            <div
+              v-for="coupon in paginatedCoupons"
+              :key="coupon.id"
+              class="coupon-card"
+              :class="{
+                eligible: isCouponEligible(coupon),
+                disabled: !isCouponEligible(coupon),
+                applied: appliedCoupon?.id === coupon.id,
+              }"
+            >
+              <div class="coupon-left">
+                <strong>
+                  {{
+                    coupon.loaiGiamGia
+                      ? `${coupon.giaTriGiam}%`
+                      : formatMoneyCompact(coupon.giaTriGiam)
+                  }}
+                </strong>
+                <span>GIẢM</span>
+              </div>
+
+              <div class="coupon-right">
+                <div class="coupon-code">
+                  {{ getCouponCode(coupon) }}
+                </div>
+
+                <p>{{ getCouponName(coupon) }}</p>
+
+                <small> Đơn tối thiểu: {{ formatMoney(getMinOrder(coupon)) }} </small>
+
+                <small v-if="isCouponEligible(coupon)">
+                  Dự kiến giảm: {{ formatMoney(getPotentialDiscount(coupon, totalMoney)) }}
+                </small>
+
+                <small v-if="!isCouponEligible(coupon)" class="coupon-warning">
+                  Mua thêm {{ formatMoney(getMinOrder(coupon) - totalMoney) }} để dùng
+                </small>
+
+                <button
+                  v-if="appliedCoupon?.id !== coupon.id"
+                  type="button"
+                  :disabled="!isCouponEligible(coupon)"
+                  @click="selectCoupon(coupon)"
+                >
+                  Áp dụng
+                </button>
+
+                <button v-else type="button" class="btn-remove-coupon" @click="removeCoupon">
+                  Đang áp dụng
+                </button>
+              </div>
+            </div>
+
+            <div v-if="totalCouponPages > 1" class="coupon-pagination">
+              <button type="button" :disabled="couponPage === 1" @click="couponPage--">◀</button>
+
+              <span>Trang {{ couponPage }} / {{ totalCouponPages }}</span>
+
+              <button
+                type="button"
+                :disabled="couponPage === totalCouponPages"
+                @click="couponPage++"
+              >
+                ▶
+              </button>
             </div>
           </div>
         </div>
@@ -359,13 +702,13 @@ const placeOrder = async () => {
         </div>
 
         <div class="price-row">
-          <span>Phí vận chuyển</span>
-          <strong>{{ formatMoney(shipFee) }}</strong>
+          <span>Giảm giá</span>
+          <strong class="discount-text">-{{ formatMoney(discountAmount) }}</strong>
         </div>
 
         <div class="price-row">
-          <span>Giảm giá</span>
-          <strong>0 đ</strong>
+          <span>Phí vận chuyển</span>
+          <strong>{{ formatMoney(shipFee) }}</strong>
         </div>
 
         <div class="divider"></div>
@@ -375,17 +718,13 @@ const placeOrder = async () => {
           <strong>{{ formatMoney(finalTotal) }}</strong>
         </div>
 
-        <button
-          class="btn-order"
-          :disabled="loading"
-          @click="placeOrder"
-        >
+        <button class="btn-order" :disabled="loading" @click="placeOrder">
           {{
             loading
-              ? "ĐANG XỬ LÝ..."
-              : paymentMethod === "QR"
-                ? "TÔI ĐÃ CHUYỂN KHOẢN - ĐẶT HÀNG"
-                : "ĐẶT HÀNG"
+              ? 'ĐANG XỬ LÝ...'
+              : paymentMethod === 'QR'
+                ? 'THANH TOÁN QUA PAYOS'
+                : 'ĐẶT HÀNG - CHỜ XÁC NHẬN'
           }}
         </button>
 
@@ -788,5 +1127,228 @@ const placeOrder = async () => {
 .confirm-transfer input {
   width: 18px;
   height: 18px;
+}
+
+.coupon-box {
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.coupon-box label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 800;
+  color: #374151;
+}
+
+.coupon-input {
+  display: flex;
+  gap: 10px;
+}
+
+.coupon-input input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  outline: none;
+}
+
+.coupon-input button {
+  border: none;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #111827;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.coupon-input button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-remove-coupon {
+  background: #dc2626 !important;
+}
+
+.coupon-success {
+  margin-top: 10px;
+  color: #166534;
+  font-weight: 700;
+}
+
+.coupon-box {
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.coupon-box h3 {
+  margin: 0 0 14px;
+  color: #111827;
+  font-size: 17px;
+}
+
+.coupon-input {
+  display: flex;
+  gap: 10px;
+}
+
+.coupon-input input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  outline: none;
+}
+
+.coupon-input button,
+.coupon-card button,
+.coupon-pagination button {
+  border: none;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #111827;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.coupon-input button:disabled,
+.coupon-card button:disabled,
+.coupon-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-remove-coupon {
+  background: #dc2626 !important;
+}
+
+.coupon-error {
+  margin-top: 10px;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.coupon-success {
+  margin-top: 10px;
+  color: #166534;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.coupon-toggle {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff7ed;
+  color: #9a3412;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.coupon-toggle span {
+  margin-left: 8px;
+  text-decoration: underline;
+}
+
+.coupon-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.coupon-card {
+  display: flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+}
+
+.coupon-card.eligible {
+  border-color: #22c55e;
+}
+
+.coupon-card.disabled {
+  opacity: 0.65;
+}
+
+.coupon-card.applied {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.coupon-left {
+  width: 90px;
+  background: #111827;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.coupon-left strong {
+  font-size: 18px;
+}
+
+.coupon-left span {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.coupon-right {
+  flex: 1;
+  padding: 12px;
+}
+
+.coupon-code {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.coupon-right p {
+  margin: 8px 0 4px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.coupon-right small {
+  display: block;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.coupon-warning {
+  color: #dc2626 !important;
+}
+
+.coupon-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.discount-text {
+  color: #16a34a;
 }
 </style>

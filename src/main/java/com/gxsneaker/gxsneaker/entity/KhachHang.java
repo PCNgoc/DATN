@@ -1,12 +1,10 @@
 package com.gxsneaker.gxsneaker.entity;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Date;
 
 @Entity
 @Table(name = "khach_hang")
@@ -24,7 +22,7 @@ public class KhachHang {
     @Column(name = "ma_khach_hang")
     private String maKhachHang;
 
-    @Column(name = "ho_ten")
+    @Column(name = "ho_ten", columnDefinition = "NVARCHAR(255)")
     private String hoTen;
 
     private String email;
@@ -48,7 +46,22 @@ public class KhachHang {
 
     @Column(name = "da_xac_thuc")
     private Boolean daXacThuc;
-    @OneToMany(mappedBy = "khachHang")
-    @JsonIgnore
-    private List<HoaDon> hoaDons;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "ngay_tao")
+    private Date ngayTao;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "ngay_cap_nhat")
+    private Date ngayCapNhat;
+
+    @PrePersist
+    public void prePersist() {
+        ngayTao = new Date();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        ngayCapNhat = new Date();
+    }
 }

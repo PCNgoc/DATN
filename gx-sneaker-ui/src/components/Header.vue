@@ -1,43 +1,216 @@
 <script setup>
+
+import {
+  onMounted,
+  watch,
+  ref
+} from "vue"
+
+
 import { useAuth } from "@/composables/useAuth"
 
+import { useCart } from "@/composables/useCart"
+
+
+
 const { user, logout } = useAuth()
+
+
+
+const {
+  cartCount,
+  fetchCartCount
+} = useCart()
+
+
+
+
+
+// =========================
+// YÊU THÍCH
+// =========================
+
+
+const favoriteCount = ref(0)
+
+
+
+
+const loadFavoriteCount = ()=>{
+
+
+  const favorites =
+
+    JSON.parse(
+      localStorage.getItem("favorites")
+    ) || []
+
+
+
+  favoriteCount.value =
+    favorites.length
+
+
+}
+
+
+
+
+
+// =========================
+// CART + FAVORITE
+// =========================
+
+
+onMounted(()=>{
+
+
+  if(
+    user.value &&
+    user.value.id
+  ){
+
+    fetchCartCount(
+      user.value.id
+    )
+
+  }
+
+
+
+  loadFavoriteCount()
+
+
+
+})
+
+
+
+
+
+
+watch(
+
+  ()=>user.value,
+
+
+  (newUser)=>{
+
+
+    if(
+      newUser &&
+      newUser.id
+    ){
+
+      fetchCartCount(
+        newUser.id
+      )
+
+
+    }
+
+    else{
+
+
+      fetchCartCount(null)
+
+
+    }
+
+
+  }
+
+)
+
+
+
+
+
+// nghe thay đổi localStorage
+
+window.addEventListener(
+  "storage",
+  loadFavoriteCount
+)
+
+
+
 </script>
+
+
+
+
+
 
 <template>
 
+
   <!-- ================= TOP BAR ================= -->
+
 
   <div class="top-bar">
 
+
     <div class="marquee">
 
-      <span>🚚 Miễn phí giao hàng toàn quốc</span>
 
-      <span>🔥 Giảm đến 30% cho thành viên GX Club</span>
+<span>
+🚚 Miễn phí giao hàng toàn quốc
+</span>
 
-      <span>⭐ Hơn 10.000 khách hàng tin dùng</span>
 
-      <span>💎 Premium Sneaker Store</span>
+      <span>
+🔥 Giảm đến 30% cho thành viên GX Club
+</span>
 
-      <span>👟 Bộ sưu tập Sneaker 2026 đã cập bến</span>
 
-      <span>🎁 Đổi trả trong 30 ngày</span>
+      <span>
+⭐ Hơn 10.000 khách hàng tin dùng
+</span>
+
+
+      <span>
+💎 Premium Sneaker Store
+</span>
+
+
+      <span>
+👟 Bộ sưu tập Sneaker 2026 đã cập bến
+</span>
+
+
+      <span>
+🎁 Đổi trả trong 30 ngày
+</span>
+
 
     </div>
 
+
   </div>
+
+
+
+
+
 
   <!-- ================= HEADER ================= -->
 
+
   <header class="navbar">
 
-    <!-- Logo -->
+
+
+
+
+    <!-- LOGO -->
+
 
     <router-link
       to="/"
       class="logo"
     >
+
 
       <div class="logo-icon">
 
@@ -45,79 +218,210 @@ const { user, logout } = useAuth()
 
       </div>
 
+
+
       <div class="logo-text">
 
-        <h2>GX SNEAKER</h2>
 
-        <span>PREMIUM SNEAKER STORE</span>
+        <h2>
+
+          GX SNEAKER
+
+        </h2>
+
+
+        <span>
+
+PREMIUM SNEAKER STORE
+
+</span>
+
 
       </div>
 
+
+
     </router-link>
 
-    <!-- Menu -->
+
+
+
+
+
+
+
+    <!-- MENU -->
+
 
     <nav class="menu">
 
+
       <router-link to="/">
+
         Trang chủ
+
       </router-link>
+
+
 
       <router-link to="/products">
+
         Cửa hàng
+
       </router-link>
 
-      <router-link to="/wishlist">
+
+
+
+      <router-link to="/favorites">
         Yêu thích
       </router-link>
 
+
+
+
       <router-link to="/contact">
+
         Liên hệ
+
       </router-link>
+
+
 
     </nav>
 
-    <!-- Right -->
+
+
+
+
+
+
+
+
+    <!-- ACTION -->
+
 
     <div class="actions">
 
-      <!-- USER -->
+
+
+
 
       <template v-if="user">
 
+
+
+
+
+
+        <!-- WISHLIST -->
+
+
         <router-link
-          to="/wishlist"
+          to="/favorites"
           class="circle-btn"
         >
+
 
           <i class="far fa-heart"></i>
 
-          <span class="badge">0</span>
+
+
+          <span
+
+            class="badge"
+
+            v-if="favoriteCount > 0"
+
+          >
+
+{{ favoriteCount }}
+
+</span>
+
+
 
         </router-link>
 
+
+
+
+
+
+
+
+
+        <!-- CART -->
+
+
         <router-link
+
           to="/cart"
+
           class="circle-btn"
+
         >
+
 
           <i class="fas fa-cart-shopping"></i>
 
-          <span class="badge">0</span>
+
+
+          <span
+
+            class="badge"
+
+            v-if="cartCount > 0"
+
+          >
+
+{{ cartCount }}
+
+</span>
+
+
 
         </router-link>
 
+
+
+
+        <!-- USER -->
+
+
         <div class="user-dropdown">
+
+
+
+
 
           <div class="user-trigger">
 
+
+
             <div class="avatar">
 
-              {{ user.hoTen?.charAt(0).toUpperCase() }}
+
+              {{
+
+                user.hoTen
+
+                  ?.charAt(0)
+
+                  .toUpperCase()
+
+              }}
+
+
 
             </div>
 
+
+
+
+
             <div class="user-info">
+
 
               <strong>
 
@@ -125,37 +429,74 @@ const { user, logout } = useAuth()
 
               </strong>
 
+
               <small>
 
                 Thành viên GX Club
 
               </small>
 
+
             </div>
+
+
+
+
 
             <i class="fas fa-chevron-down arrow"></i>
 
+
+
           </div>
+
+
+
+
+
+
+
 
           <div class="user-menu">
 
+
+
+
+
             <router-link to="/profile">
+
 
               <i class="far fa-user"></i>
 
+
               Hồ sơ cá nhân
 
+
             </router-link>
+
+
+
+
+
+
 
             <router-link to="/orders">
 
+
               <i class="fas fa-box"></i>
+
 
               Đơn hàng
 
+
             </router-link>
 
-            <router-link to="/wishlist">
+
+
+
+
+
+
+            <router-link to="/favorites">
 
               <i class="far fa-heart"></i>
 
@@ -163,39 +504,103 @@ const { user, logout } = useAuth()
 
             </router-link>
 
-            <button @click="logout">
+
+
+
+
+
+
+            <button
+              @click="logout"
+            >
+
 
               <i class="fas fa-right-from-bracket"></i>
 
+
               Đăng xuất
+
 
             </button>
 
+
+
+
+
           </div>
+
+
+
+
 
         </div>
 
+
+
+
+
+
+
       </template>
 
-      <!-- LOGIN -->
+
+
+
+
+
+
+
+      <!-- CHƯA ĐĂNG NHẬP -->
+
 
       <router-link
+
         v-else
+
         to="/login"
+
         class="login-btn"
+
       >
+
 
         <i class="far fa-user"></i>
 
+
         Đăng nhập
+
 
       </router-link>
 
+
+
+
+
+
+
     </div>
+
+
+
+
+
+
 
   </header>
 
+
+
+
+
 </template>
+
+
+
+
+
+
+
+
 
 <style scoped>
 /* ==========================================
