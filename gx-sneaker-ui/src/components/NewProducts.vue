@@ -7,257 +7,699 @@ const router = useRouter()
 
 const products = ref([])
 
-onMounted(async () => {
-  try {
+
+const productColors = [
+
+  "#e8f1ff",
+  "#ffe8e8",
+  "#e7f8ed",
+  "#eeeeee",
+  "#f7eadc",
+  "#eee8ff",
+  "#e5f1d8",
+  "#fff2cc"
+
+]
+
+
+
+onMounted(async()=>{
+
+  try{
+
     const res = await getNewestProducts()
-    products.value = res.data
-  } catch (error) {
-    console.error("Lỗi tải sản phẩm:", error)
+
+
+    products.value =
+
+      res.data
+
+        .slice(0,8)
+
+        .map((item,index)=>({
+
+          ...item,
+
+          color:productColors[index]
+
+        }))
+
+
   }
+
+  catch(error){
+
+    console.error(
+      "Lỗi tải sản phẩm:",
+      error
+    )
+
+  }
+
 })
 
-const goDetail = (id) => {
+
+
+const goDetail=(id)=>{
+
   router.push(`/products/${id}`)
+
 }
+
 </script>
 
+
+
+
 <template>
+
+
   <section class="new-products">
+
+
 
     <div class="section-header">
 
+
       <div>
-        <span class="sub-title">
-          GX SNEAKER
-        </span>
+
+
+<span class="sub-title">
+
+GX SNEAKER
+
+</span>
+
+
 
         <h2 class="section-title">
+
           Sản phẩm mới nhất
+
         </h2>
+
+
+
+        <p class="desc">
+
+          Những mẫu giày mới cập nhật
+
+        </p>
+
+
+
       </div>
 
+
     </div>
+
+
+
+
 
     <div class="product-grid">
 
+
+
       <div
+
         v-for="sp in products"
+
         :key="sp.id"
+
         class="product-card"
+
+        :style="{
+
+background:sp.color
+
+}"
+
         @click="goDetail(sp.id)"
+
       >
+
+
 
         <div class="image-wrapper">
 
-          <span class="new-badge">NEW</span>
+
+<span class="new-badge">
+
+NEW
+
+</span>
+
+
 
           <img
+
             :src="`/images/${sp.anhDaiDien}`"
+
             :alt="sp.tenSanPham"
+
           />
 
+
+
         </div>
+
+
+
 
         <div class="info">
 
-          <span class="brand">
-            {{ sp.tenThuongHieu }}
-          </span>
+
+<span class="brand">
+
+{{sp.tenThuongHieu}}
+
+</span>
+
+
 
           <h3 class="product-name">
-            {{ sp.tenSanPham }}
+
+            {{sp.tenSanPham}}
+
           </h3>
 
+
+
+
           <div class="product-footer">
+
             <div class="btn-detail">
+
               Xem chi tiết →
+
             </div>
+
           </div>
+
+
 
         </div>
 
+
+
       </div>
+
+
 
     </div>
 
+
+
   </section>
+
+
 </template>
+
+
+
+
 
 <style scoped>
 
-/* =========================
-   QUAN TRỌNG: BỎ NỀN CỨNG
-========================= */
 
 .new-products{
-  padding:60px 40px;
 
-  /* ❌ trước: #fff */
-  /* background:#ffffff; */
 
-  /* ✅ để lộ background Home */
+  padding:80px 8%;
+
+
   background:transparent;
+
+
 }
+
+
+
+
 
 /* HEADER */
 
+
 .section-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:35px;
+
+
+  margin-bottom:45px;
+
+
 }
+
+
 
 .sub-title{
+
+
   display:block;
-  color:#ff2a3d;
-  font-size:11px;
-  font-weight:800;
+
+
+  font-size:15px;
+
+
+  font-weight:900;
+
+
   letter-spacing:4px;
-  text-transform:uppercase;
-  margin-bottom:8px;
+
+
+  color:#777;
+
+
+  margin-bottom:12px;
+
+
 }
 
+
+
 .section-title{
-  font-size:36px;
+
+
+  font-size:45px;
+
+
   font-weight:900;
+
+
   color:#111;
-  line-height:1.2;
+
+
+  margin:0;
+
+
 }
+
+
+
+.section-title::after{
+
+
+  content:"";
+
+
+  display:block;
+
+
+  width:90px;
+
+
+  height:5px;
+
+
+  background:#111;
+
+
+  margin-top:18px;
+
+
+  border-radius:20px;
+
+
+}
+
+
+
+.desc{
+
+
+  margin-top:15px;
+
+
+  color:#666;
+
+
+}
+
+
+
+
+
 
 /* GRID */
 
+
 .product-grid{
+
+
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:24px;
+
+
+  grid-template-columns:
+
+
+repeat(4,1fr);
+
+
+  gap:28px;
+
+
 }
 
-/* CARD - GLASS STYLE */
+
+
+
+
+
+
+/* CARD */
+
 
 .product-card{
-  background:rgba(255,255,255,.92);
-  backdrop-filter:blur(10px);
 
-  border-radius:20px;
+
+  border-radius:25px;
+
+
   overflow:hidden;
+
+
   cursor:pointer;
 
-  transition:all .3s ease;
 
-  box-shadow:0 5px 20px rgba(0,0,0,.06);
+  transition:.4s;
+
+
+  box-shadow:
+
+
+    0 15px 35px rgba(0,0,0,.12);
+
+
 }
+
+
 
 .product-card:hover{
-  transform:translateY(-8px);
-  box-shadow:0 18px 35px rgba(0,0,0,.12);
+
+
+  transform:
+
+
+    translateY(-12px);
+
+
+  box-shadow:
+
+
+    0 25px 55px rgba(0,0,0,.22);
+
+
 }
 
-/* IMAGE */
+
+
+
+
+/* IMAGE FULL CARD */
+
 
 .image-wrapper{
+
+
+  height:330px;
+
+
   position:relative;
-  height:240px;
+
+
   overflow:hidden;
+
+
 }
+
+
 
 .image-wrapper img{
+
+
   width:100%;
+
+
   height:100%;
+
+
   object-fit:cover;
-  display:block;
-  transition:.4s;
+
+
+  transition:.5s;
+
+
 }
+
+
+
+
 
 .product-card:hover img{
-  transform:scale(1.08);
+
+
+  transform:
+
+
+    scale(1.08);
+
+
 }
+
+
+
+
+
+
+/* BADGE */
+
 
 .new-badge{
+
+
   position:absolute;
-  top:12px;
-  left:12px;
 
-  background:#ff2a3d;
-  color:#fff;
 
-  padding:6px 12px;
-  border-radius:999px;
+  top:18px;
 
-  font-size:10px;
-  font-weight:800;
+
+  left:18px;
+
+
+  z-index:2;
+
+
+  background:#111;
+
+
+  color:white;
+
+
+  padding:7px 15px;
+
+
+  border-radius:30px;
+
+
+  font-size:11px;
+
+
+  font-weight:900;
+
+
+  letter-spacing:1px;
+
+
 }
+
+
+
+
 
 /* INFO */
 
+
 .info{
-  padding:18px;
+
+
+  padding:22px;
+
+
 }
+
+
 
 .brand{
-  display:block;
-  color:#999;
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:2px;
+
+
+  font-size:11px;
+
+
+  font-weight:800;
+
+
+  letter-spacing:3px;
+
+
+  color:#777;
+
+
   text-transform:uppercase;
+
+
 }
+
+
 
 .product-name{
-  margin-top:10px;
-  font-size:17px;
-  font-weight:800;
-  color:#111;
-  line-height:1.5;
 
-  min-height:52px;
+
+  margin:12px 0;
+
+
+  font-size:19px;
+
+
+  font-weight:900;
+
+
+  color:#111;
+
+
+  line-height:1.4;
+
+
+  min-height:55px;
+
 
   display:-webkit-box;
+
+
   -webkit-line-clamp:2;
+
+
   -webkit-box-orient:vertical;
+
+
   overflow:hidden;
+
+
 }
 
-/* BUTTON */
+
+
+
+
+.product-footer{
+
+
+  margin-top:18px;
+
+
+}
+
+
 
 .btn-detail{
-  margin-top:14px;
-  color:#ff2a3d;
-  font-size:13px;
-  font-weight:700;
+
+
+  font-size:14px;
+
+
+  font-weight:800;
+
+
+  color:#111;
+
+
   transition:.3s;
+
+
 }
+
+
 
 .product-card:hover .btn-detail{
-  transform:translateX(4px);
+
+
+  transform:translateX(8px);
+
+
 }
 
-/* RESPONSIVE */
+
+
+
+
 
 @media(max-width:1200px){
+
+
   .product-grid{
-    grid-template-columns:repeat(3,1fr);
+
+
+    grid-template-columns:
+
+
+repeat(3,1fr);
+
+
   }
+
+
 }
 
-@media(max-width:768px){
-  .new-products{
-    padding:50px 20px;
+
+
+
+
+@media(max-width:900px){
+
+
+  .product-grid{
+
+
+    grid-template-columns:
+
+
+repeat(2,1fr);
+
+
   }
+
+
+}
+
+
+
+
+
+@media(max-width:600px){
+
+
+  .product-grid{
+
+
+    grid-template-columns:
+
+
+1fr;
+
+
+  }
+
+
 
   .section-title{
-    font-size:30px;
+
+
+    font-size:32px;
+
+
   }
 
-  .product-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
+
 }
 
-@media(max-width:576px){
-  .product-grid{
-    grid-template-columns:1fr;
-  }
-}
+
 
 </style>

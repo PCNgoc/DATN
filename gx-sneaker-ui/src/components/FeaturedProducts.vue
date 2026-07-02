@@ -1,310 +1,872 @@
 <script setup>
+
 import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { getAll } from "@/services/sanPhamService"
 
+
 const router = useRouter()
+
 
 const products = ref([])
 const loading = ref(true)
 
-const loadProducts = async () => {
-  try {
+
+
+const productColors = [
+
+  "#e8f1ff",
+
+  "#ffe8e8",
+
+  "#e7f8ed",
+
+  "#eeeeee",
+
+  "#f7eadc",
+
+  "#eee8ff",
+
+  "#e5f1d8",
+
+  "#fff2cc"
+
+]
+
+
+
+// lấy sản phẩm nổi bật
+
+const loadProducts = async()=>{
+
+  try{
+
+
     const res = await getAll()
 
-    products.value = res.data
-      .filter(item => item.trangThai === true)
-      .slice(0, 8)
 
-  } catch (error) {
-    console.error("Lỗi tải sản phẩm:", error)
-  } finally {
-    loading.value = false
+    products.value =
+
+      res.data
+
+        .filter(item=>item.trangThai === true)
+
+        .slice(0,8)
+
+        .map((item,index)=>({
+
+          ...item,
+
+          color:productColors[index]
+
+        }))
+
+
   }
+
+  catch(error){
+
+    console.error(
+
+      "Lỗi tải sản phẩm:",
+
+      error
+
+    )
+
+  }
+
+  finally{
+
+    loading.value=false
+
+  }
+
+
 }
 
-const goDetail = (id) => {
+
+
+// chuyển trang chi tiết
+
+const goDetail=(id)=>{
+
   router.push(`/products/${id}`)
+
 }
+
+
 
 onMounted(loadProducts)
+
+
 </script>
 
+
+
+
+
 <template>
+
+
   <section class="featured">
+
+
 
     <div class="section-header">
 
+
       <div>
-        <span class="sub-title">
-          GX SNEAKER
-        </span>
+
+
+<span class="sub-title">
+
+GX SNEAKER
+
+</span>
+
+
 
         <h2 class="section-title">
+
           Sản phẩm nổi bật
+
         </h2>
+
+
+
+        <p class="desc">
+
+          Khám phá những mẫu giày mới nhất
+
+        </p>
+
+
+
       </div>
 
-      <router-link to="/products" class="view-all">
+
+
+
+
+      <router-link
+
+        to="/products"
+
+        class="view-all"
+
+      >
+
         Xem tất cả →
+
       </router-link>
 
+
+
     </div>
 
-    <div v-if="loading" class="loading">
+
+
+
+
+    <div
+
+      v-if="loading"
+
+      class="loading"
+
+    >
+
       Đang tải sản phẩm...
+
     </div>
 
-    <div v-else class="product-grid">
+
+
+
+
+    <div
+
+      v-else
+
+      class="product-grid"
+
+    >
+
+
+
+
 
       <div
+
         v-for="sp in products"
+
         :key="sp.id"
+
         class="product-card"
+
+
+        :style="{
+
+background:
+
+`linear-gradient(
+
+180deg,
+
+${sp.color},
+
+#ffffff
+
+)`
+
+}"
+
+
         @click="goDetail(sp.id)"
+
       >
+
+
+
+
 
         <div class="image-wrapper">
 
-          <span class="product-badge">HOT</span>
+
+
+<span class="product-badge">
+
+HOT
+
+</span>
+
+
 
           <img
+
             :src="`/images/${sp.anhDaiDien}`"
+
             :alt="sp.tenSanPham"
+
           />
 
-        </div>
 
+
+        </div>
         <div class="product-info">
 
+
           <span class="brand">
-            {{ sp.tenThuongHieu }}
+
+            {{sp.tenThuongHieu}}
+
           </span>
 
+
+
+
           <h3 class="product-name">
-            {{ sp.tenSanPham }}
+
+            {{sp.tenSanPham}}
+
           </h3>
 
+
+
+
           <div class="category-tag">
-            {{ sp.tenDanhMuc }}
+
+            {{sp.tenDanhMuc}}
+
           </div>
+
+
+
 
           <div class="product-footer">
+
+
             <div class="btn-detail">
+
               Xem chi tiết →
+
             </div>
+
+
           </div>
 
+
         </div>
+
+
 
       </div>
 
+
+
     </div>
 
+
+
   </section>
+
+
+
 </template>
+
+
+
+
 
 <style scoped>
 
-/* =========================
-   QUAN TRỌNG: BỎ NỀN CỨNG
-========================= */
 
 .featured{
-  padding:60px 40px;
 
-  /* ❌ trước: #f8f9fb */
-  /* background:#f8f9fb; */
+  padding:80px 8%;
 
-  /* ✅ để lộ background Home */
   background:transparent;
+
 }
+
+
+
+
 
 /* HEADER */
 
 .section-header{
+
   display:flex;
+
   justify-content:space-between;
-  align-items:center;
-  margin-bottom:35px;
+
+  align-items:end;
+
+  margin-bottom:45px;
+
 }
+
+
+
+
 
 .sub-title{
+
   display:block;
-  color:#ff2a3d;
-  font-size:11px;
-  font-weight:800;
+
+  font-size:15px;
+
+  font-weight:900;
+
   letter-spacing:4px;
-  text-transform:uppercase;
-  margin-bottom:8px;
+
+  color:#777;
+
+  margin-bottom:12px;
+
 }
+
+
+
+
 
 .section-title{
-  font-size:36px;
+
+  font-size:45px;
+
   font-weight:900;
+
+  margin:0;
+
   color:#111;
+
 }
+
+
+
+
+
+.section-title::after{
+
+  content:"";
+
+  display:block;
+
+  width:90px;
+
+  height:5px;
+
+  background:#111;
+
+  margin-top:18px;
+
+  border-radius:20px;
+
+}
+
+
+
+
+
+.desc{
+
+  margin-top:15px;
+
+  color:#666;
+
+}
+
+
+
+
+
+
 
 .view-all{
+
   text-decoration:none;
-  color:#111;
+
   font-size:15px;
-  font-weight:700;
+
+  font-weight:800;
+
+  color:#111;
+
   transition:.3s;
+
 }
 
+
+
 .view-all:hover{
-  color:#ff2a3d;
+
+  transform:translateX(8px);
+
 }
+
+
+
+
+
+
 
 /* GRID */
 
 .product-grid{
+
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:24px;
+
+  grid-template-columns:
+
+  repeat(4,1fr);
+
+  gap:28px;
+
 }
 
-/* CARD - GLASS EFFECT */
+
+
+
+
+
+
+/* CARD */
 
 .product-card{
-  background:rgba(255,255,255,.92);
-  backdrop-filter:blur(10px);
 
-  border-radius:20px;
+  border-radius:25px;
+
   overflow:hidden;
+
   cursor:pointer;
 
-  transition:all .3s ease;
+  transition:.4s;
 
-  box-shadow:0 5px 20px rgba(0,0,0,.06);
+  box-shadow:
+
+    0 15px 35px rgba(0,0,0,.1);
+
 }
+
+
 
 .product-card:hover{
-  transform:translateY(-8px);
-  box-shadow:0 18px 35px rgba(0,0,0,.12);
+
+  transform:
+
+    translateY(-12px);
+
+
+  box-shadow:
+
+    0 25px 55px rgba(0,0,0,.2);
+
 }
 
-/* IMAGE */
+
+
+
+
+
+
+/* IMAGE FULL KHUNG */
 
 .image-wrapper{
+
+
+  height:300px;
+
+  width:100%;
+
+
   position:relative;
-  height:240px;
+
   overflow:hidden;
+
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+
 }
+
+
+
+
 
 .image-wrapper img{
+
+
   width:100%;
+
   height:100%;
+
+
   object-fit:cover;
-  display:block;
-  transition:.4s;
+
+
+  padding:0;
+
+
+  transition:.5s;
+
+
+  filter:
+
+    drop-shadow(
+
+      0 20px 25px rgba(0,0,0,.18)
+
+    );
+
 }
+
+
+
+
 
 .product-card:hover img{
+
   transform:scale(1.08);
+
 }
+
+
+
+
+
+
+
 
 .product-badge{
+
+
   position:absolute;
-  top:12px;
-  left:12px;
 
-  background:#ff2a3d;
-  color:#fff;
 
-  padding:6px 12px;
-  border-radius:999px;
+  top:18px;
 
-  font-size:10px;
-  font-weight:800;
+  left:18px;
+
+
+  z-index:2;
+
+
+
+  background:#111;
+
+  color:white;
+
+
+  padding:7px 15px;
+
+
+  border-radius:30px;
+
+
+  font-size:11px;
+
+
+  font-weight:900;
+
+
 }
+
+
+
+
+
+
 
 /* INFO */
 
 .product-info{
-  padding:18px;
+
+
+  padding:22px;
+
+
 }
+
+
+
+
 
 .brand{
-  display:block;
-  color:#999;
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:2px;
-  text-transform:uppercase;
-}
 
-.product-name{
-  margin-top:10px;
-  font-size:17px;
-  font-weight:800;
-  color:#111;
-  line-height:1.5;
-
-  min-height:52px;
-
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-}
-
-.category-tag{
-  display:inline-block;
-  margin-top:10px;
-
-  padding:6px 12px;
-  border-radius:999px;
-
-  background:#fff1f2;
-  color:#ff2a3d;
 
   font-size:11px;
-  font-weight:700;
+
+
+  letter-spacing:3px;
+
+
+  font-weight:800;
+
+
+  color:#777;
+
+
 }
+
+
+
+
+
+.product-name{
+
+
+  margin:12px 0;
+
+
+  font-size:19px;
+
+
+  font-weight:900;
+
+
+  line-height:1.4;
+
+
+  color:#111;
+
+
+  min-height:55px;
+
+
+
+  display:-webkit-box;
+
+
+  -webkit-line-clamp:2;
+
+
+  -webkit-box-orient:vertical;
+
+
+  overflow:hidden;
+
+
+}
+
+
+
+
+
+
+
+.category-tag{
+
+
+  display:inline-block;
+
+
+  padding:7px 15px;
+
+
+  border-radius:30px;
+
+
+
+  background:
+
+    rgba(255,255,255,.6);
+
+
+
+  font-size:12px;
+
+
+  font-weight:700;
+
+
+}
+
+
+
+
+
+
+
+.product-footer{
+
+
+  margin-top:18px;
+
+
+}
+
+
+
+
 
 .btn-detail{
-  margin-top:14px;
-  color:#ff2a3d;
-  font-size:13px;
-  font-weight:700;
+
+
+  font-size:14px;
+
+
+  font-weight:800;
+
+
+  color:#111;
+
+
+  transition:.3s;
+
+
 }
 
-/* LOADING */
+
+
+
+
+.product-card:hover .btn-detail{
+
+
+  transform:translateX(8px);
+
+
+}
+
+
+
+
+
+
 
 .loading{
+
+
   text-align:center;
-  padding:50px;
-  color:#666;
+
+
+  padding:60px;
+
+
 }
+
+
+
+
+
+
 
 /* RESPONSIVE */
 
+
 @media(max-width:1200px){
+
+
   .product-grid{
-    grid-template-columns:repeat(3,1fr);
+
+
+    grid-template-columns:
+
+repeat(3,1fr);
+
+
   }
+
+
 }
 
-@media(max-width:768px){
-  .featured{
-    padding:50px 20px;
+
+
+
+
+
+@media(max-width:900px){
+
+
+  .product-grid{
+
+
+    grid-template-columns:
+
+repeat(2,1fr);
+
+
   }
+
+
+}
+
+
+
+
+
+
+@media(max-width:600px){
+
+
+  .product-grid{
+
+
+    grid-template-columns:
+
+1fr;
+
+
+  }
+
+
 
   .section-title{
-    font-size:30px;
+
+
+    font-size:32px;
+
+
   }
 
-  .product-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
+
 }
 
-@media(max-width:576px){
-  .product-grid{
-    grid-template-columns:1fr;
-  }
-}
 
 </style>

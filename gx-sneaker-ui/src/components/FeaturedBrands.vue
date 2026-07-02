@@ -2,186 +2,595 @@
 import { ref, onMounted } from "vue"
 import { getAllThuongHieu } from "@/services/thuongHieuService"
 
+
 const brands = ref([])
 
-const getLogo = (logo) => {
-  if (!logo) {
-    return "https://via.placeholder.com/100"
-  }
-  return `/images/thuong-hieu/${logo}`
+
+
+// link website chính thức của thương hiệu
+
+const brandLinks = {
+
+  "Nike":
+    "https://www.nike.com/vn/",
+
+  "Adidas":
+    "https://www.adidas.com/",
+
+  "Puma":
+    "https://www.puma.com/",
+
+  "New Balance":
+    "https://www.newbalance.com/",
+
+  "Converse":
+    "https://www.converse.com/",
+
+  "Vans":
+    "https://www.vans.com/",
+
+  "Jordan":
+    "https://www.nike.com/jordan/",
+
+  "MLB":
+    "https://www.mlb.com/"
+
 }
 
-onMounted(async () => {
-  const res = await getAllThuongHieu()
-  brands.value = res.data.slice(0, 8)
-})
+
+
+
+
+const getLogo=(logo)=>{
+
+
+  if(!logo){
+
+    return "/images/default-logo.png"
+
+  }
+
+
+  return `/images/thuong-hieu/${logo}`
+
+}
+
+
+
+
+
+const loadBrands=async()=>{
+
+
+  try{
+
+
+    const res = await getAllThuongHieu()
+
+
+    brands.value =
+
+      res.data.slice(0,8)
+
+
+
+  }
+
+  catch(error){
+
+    console.error(
+      "Lỗi tải thương hiệu:",
+      error
+    )
+
+  }
+
+
+}
+
+
+
+
+
+
+const openBrand=(brand)=>{
+
+
+  const link = brandLinks[brand.ten]
+
+
+
+  if(link){
+
+
+    window.open(
+
+      link,
+
+      "_blank"
+
+    )
+
+
+  }
+
+
+}
+
+
+
+
+
+
+onMounted(loadBrands)
+
+
+
 </script>
 
+
+
+
+
 <template>
+
+
   <section class="brand-section">
+
+
 
     <div class="section-header">
 
-      <div>
-        <span class="sub-title">
-          GX SNEAKER
-        </span>
 
-        <h2 class="section-title">
-          Thương hiệu nổi bật
-        </h2>
-      </div>
+<span class="sub-title">
+
+GX SNEAKER
+
+</span>
+
+
+
+      <h2 class="section-title">
+
+        Thương hiệu nổi bật
+
+      </h2>
+
+
+
+      <p class="desc">
+
+        Khám phá những thương hiệu giày hàng đầu thế giới
+
+      </p>
+
 
     </div>
+
+
+
+
+
 
     <div class="brand-grid">
 
+
+
       <div
+
         v-for="item in brands"
+
         :key="item.id"
+
         class="brand-card"
+
+        @click="openBrand(item)"
+
       >
 
-        <div class="logo-wrapper">
 
-          <img
-            :src="getLogo(item.logo)"
-            :alt="item.ten"
-          />
+
+
+        <img
+
+          :src="getLogo(item.logo)"
+
+          :alt="item.ten"
+
+          class="brand-image"
+
+        />
+
+
+
+
+
+        <div class="overlay">
+
+
+          <h3>
+
+            {{item.ten}}
+
+          </h3>
+
+
+
+          <span>
+
+Khám phá thương hiệu →
+
+</span>
+
 
         </div>
 
-        <h4>{{ item.ten }}</h4>
+
 
       </div>
 
+
+
     </div>
 
+
+
   </section>
+
+
 </template>
+
+
+
+
 
 <style scoped>
 
-/* =========================
-   QUAN TRỌNG: BỎ NỀN CỨNG
-========================= */
 
 .brand-section{
-  padding:70px 40px;
 
-  /* ❌ trước: #f8f9fb */
-  /* background:#f8f9fb; */
 
-  /* ✅ để lộ background Home */
+  padding:80px 8%;
+
+
   background:transparent;
+
+
 }
 
-/* HEADER */
+
+
+
 
 .section-header{
-  margin-bottom:40px;
+
+
+  margin-bottom:45px;
+
+
 }
+
+
 
 .sub-title{
-  color:#ff2a3d;
-  font-size:11px;
-  font-weight:800;
+
+
+  display:block;
+
+
+  font-size:15px;
+
+
+  font-weight:900;
+
+
   letter-spacing:4px;
-  text-transform:uppercase;
+
+
+  color:#777;
+
+
+  margin-bottom:12px;
+
+
 }
+
+
 
 .section-title{
-  font-size:38px;
+
+
+  font-size:45px;
+
+
   font-weight:900;
+
+
   color:#111;
+
+
+  margin:0;
+
+
 }
 
-/* GRID */
+
+
+.section-title::after{
+
+
+  content:"";
+
+
+  display:block;
+
+
+  width:90px;
+
+
+  height:5px;
+
+
+  background:#111;
+
+
+  margin-top:18px;
+
+
+  border-radius:20px;
+
+
+}
+
+
+
+.desc{
+
+
+  margin-top:15px;
+
+
+  color:#666;
+
+
+}
+
+
+
+
+
 
 .brand-grid{
+
+
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:24px;
+
+
+  grid-template-columns:
+
+repeat(4,1fr);
+
+
+  gap:28px;
+
+
 }
 
-/* CARD - GLASS STYLE */
+
+
+
+
+
 
 .brand-card{
-  background:rgba(255,255,255,.92);
-  backdrop-filter:blur(10px);
 
-  border-radius:22px;
-  padding:30px;
 
-  text-align:center;
+  height:320px;
+
+
+  position:relative;
+
+
+  overflow:hidden;
+
+
+  border-radius:25px;
+
+
   cursor:pointer;
 
-  transition:.35s;
 
-  box-shadow:0 4px 15px rgba(0,0,0,.05);
+  box-shadow:
+
+    0 15px 35px rgba(0,0,0,.12);
+
+
+  transition:.4s;
+
+
 }
+
+
 
 .brand-card:hover{
-  transform:translateY(-8px);
-  box-shadow:0 18px 35px rgba(0,0,0,.12);
+
+
+  transform:
+
+    translateY(-12px);
+
+
+  box-shadow:
+
+    0 25px 55px rgba(0,0,0,.25);
+
+
 }
 
-/* LOGO */
 
-.logo-wrapper{
-  height:100px;
 
-  display:flex;
-  align-items:center;
-  justify-content:center;
+
+
+.brand-image{
+
+
+  width:100%;
+
+
+  height:100%;
+
+
+  object-fit:cover;
+
+
+  transition:.5s;
+
+
 }
 
-.brand-card img{
-  max-width:120px;
-  max-height:80px;
-  object-fit:contain;
-  transition:.35s;
+
+
+
+
+.brand-card:hover .brand-image{
+
+
+  transform:
+
+    scale(1.1);
+
+
 }
 
-.brand-card:hover img{
-  transform:scale(1.08);
+
+
+
+
+.overlay{
+
+
+  position:absolute;
+
+
+  bottom:0;
+
+
+  left:0;
+
+
+  width:100%;
+
+
+  padding:100px 25px 25px;
+
+
+  background:
+
+    linear-gradient(
+
+      transparent,
+
+      rgba(0,0,0,.75)
+
+    );
+
+
+  color:white;
+
+
 }
 
-/* TEXT */
 
-.brand-card h4{
-  margin-top:18px;
-  font-size:16px;
-  font-weight:800;
-  color:#111;
+
+
+
+.overlay h3{
+
+
+  font-size:28px;
+
+
+  font-weight:900;
+
+
+  margin:0 0 8px;
+
+
 }
 
-/* RESPONSIVE */
+
+
+.overlay span{
+
+
+  font-size:14px;
+
+
+  font-weight:700;
+
+
+}
+
+
+
+
 
 @media(max-width:1200px){
+
+
   .brand-grid{
-    grid-template-columns:repeat(3,1fr);
+
+    grid-template-columns:
+
+repeat(3,1fr);
+
   }
+
+
 }
 
-@media(max-width:768px){
-  .brand-section{
-    padding:50px 20px;
+
+
+
+@media(max-width:900px){
+
+
+  .brand-grid{
+
+    grid-template-columns:
+
+repeat(2,1fr);
+
   }
+
+
+}
+
+
+
+
+
+@media(max-width:600px){
+
+
+  .brand-grid{
+
+    grid-template-columns:
+
+1fr;
+
+  }
+
+
 
   .section-title{
-    font-size:30px;
+
+    font-size:32px;
+
   }
 
-  .brand-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
+
 }
 
-@media(max-width:576px){
-  .brand-grid{
-    grid-template-columns:1fr;
-  }
-}
 
 </style>
