@@ -278,151 +278,351 @@ onMounted(load)
 </template>
 
 <style scoped>
-.container {
-  padding: 20px;
-  font-family: Arial;
-  background: #f4f6f9;
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
-.card {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+.container{
+  padding:28px;
+  min-height:100vh;
+  background:#f4f7fb;
+  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
 }
 
-/* TOP BAR */
-.top-bar {
-  display: flex;
-  gap: 10px;
+/*==================== TITLE ====================*/
+
+h2{
+  font-size:30px;
+  font-weight:700;
+  color:#1f2937;
+  margin-bottom:22px;
+  letter-spacing:.5px;
 }
 
-/* FORM */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+/*==================== CARD ====================*/
+
+.card{
+  background:rgba(255,255,255,.96);
+  border-radius:18px;
+  padding:24px;
+  margin-bottom:22px;
+  border:1px solid #eef2f7;
+  box-shadow:
+    0 12px 35px rgba(15,23,42,.06),
+    0 3px 10px rgba(15,23,42,.04);
+  transition:.3s;
 }
 
-input, textarea, select {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  width: 100%;
+.card:hover{
+  transform:translateY(-2px);
 }
 
-textarea {
-  margin-top: 10px;
+/*==================== SEARCH ====================*/
+
+.top-bar{
+  display:flex;
+  gap:18px;
+  align-items:center;
 }
 
-
-/* BUTTON */
-.actions {
-  margin-top: 10px;
+.top-bar input{
+  flex:1;
 }
 
-.save {
-  background: #28a745;
-  color: white;
-  padding: 8px 12px;
-  border: none;
+/*==================== FORM ====================*/
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
 }
 
-.reset {
-  background: #6c757d;
-  color: white;
-  padding: 8px 12px;
-  border: none;
+input,
+textarea,
+select{
+  width:100%;
+  border:1px solid #dbe2ea;
+  border-radius:12px;
+  padding:12px 15px;
+  font-size:15px;
+  transition:.25s;
+  background:#fff;
 }
 
-/* TABLE */
-table {
-  width: 100%;
-  border-collapse: collapse;
+textarea{
+  margin-top:18px;
+  resize:none;
+  min-height:120px;
 }
 
-th, td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
+input:focus,
+textarea:focus,
+select:focus{
+  outline:none;
+  border-color:#2563eb;
+  box-shadow:0 0 0 4px rgba(37,99,235,.15);
 }
 
-/* STATUS */
-.active {
-  color: green;
-  font-weight: bold;
+/*==================== STATUS ====================*/
+
+.status-box{
+  margin-top:18px;
 }
 
-.inactive {
-  color: red;
-  font-weight: bold;
+.status-box label{
+  display:block;
+  margin-bottom:8px;
+  color:#374151;
+  font-weight:600;
 }
 
-/* BUTTON TABLE */
-.edit {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 5px 8px;
+/*==================== BUTTON ====================*/
+
+.actions{
+  margin-top:24px;
+  display:flex;
+  gap:15px;
 }
 
-.delete {
-  background: red;
-  color: white;
-  border: none;
-  padding: 5px 8px;
+.actions button{
+  border:none;
+  cursor:pointer;
+  padding:12px 28px;
+  border-radius:10px;
+  font-size:15px;
+  font-weight:600;
+  transition:.25s;
 }
 
-/* PAGINATION */
-.pagination {
-  margin-top: 10px;
-  text-align: center;
+.save{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
 }
 
-.pagination button {
-  margin: 2px;
-  padding: 5px 10px;
-  border: none;
-  cursor: pointer;
+.save:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 24px rgba(37,99,235,.3);
 }
 
-.activePage {
-  background: #007bff;
-  color: white;
+.reset{
+  background:#eef2f7;
+  color:#374151;
 }
 
-/* TOAST */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 10px 15px;
-  border-radius: 6px;
-  color: white;
+.reset:hover{
+  background:#dce3ea;
 }
 
-.success {
-  background: #28a745;
+/*==================== TABLE ====================*/
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  overflow:hidden;
+  border-radius:14px;
 }
 
-.error {
-  background: #f10606;
-}
-/* ================= TRẠNG THÁI FORM ================= */
-.status-box {
-  margin-top: 10px;
+thead{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:#fff;
 }
 
-.status-box label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
+th{
+  padding:16px;
+  font-size:15px;
+  font-weight:600;
 }
 
-/* ================= VALIDATE ================= */
-.error-text {
-  color: red;
-  font-size: 12px;
+td{
+  padding:16px;
+  border-bottom:1px solid #edf2f7;
+  color:#374151;
+  transition:.25s;
+}
+
+tbody tr{
+  transition:.25s;
+}
+
+tbody tr:hover{
+  background:#f8fbff;
+  transform:scale(1.002);
+}
+
+/*==================== STATUS BADGE ====================*/
+
+.active{
+  display:inline-block;
+  background:#dcfce7;
+  color:#16a34a;
+  padding:6px 16px;
+  border-radius:30px;
+  font-weight:600;
+  font-size:13px;
+}
+
+.inactive{
+  display:inline-block;
+  background:#fee2e2;
+  color:#dc2626;
+  padding:6px 16px;
+  border-radius:30px;
+  font-weight:600;
+  font-size:13px;
+}
+
+/*==================== ACTION BUTTON ====================*/
+
+.edit,
+.delete{
+  width:40px;
+  height:40px;
+  border:none;
+  border-radius:10px;
+  color:white;
+  cursor:pointer;
+  transition:.25s;
+  font-size:15px;
+}
+
+.edit{
+  background:linear-gradient(135deg,#3b82f6,#2563eb);
+}
+
+.edit:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 18px rgba(37,99,235,.35);
+}
+
+.delete{
+  margin-left:8px;
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+}
+
+.delete:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 18px rgba(220,38,38,.35);
+}
+
+/*==================== PAGINATION ====================*/
+
+.pagination{
+  margin-top:25px;
+  display:flex;
+  justify-content:center;
+  gap:10px;
+}
+
+.pagination button{
+  width:40px;
+  height:40px;
+  border:none;
+  border-radius:10px;
+  background:#fff;
+  color:#374151;
+  cursor:pointer;
+  transition:.25s;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.pagination button:hover{
+  background:#2563eb;
+  color:#fff;
+}
+
+.activePage{
+  background:#2563eb!important;
+  color:white!important;
+}
+
+/*==================== ERROR ====================*/
+
+.error-text{
+  color:#ef4444;
+  font-size:13px;
+  margin-top:6px;
+  display:block;
+}
+
+/*==================== TOAST ====================*/
+
+.toast{
+  position:fixed;
+  right:30px;
+  top:25px;
+  padding:14px 24px;
+  border-radius:12px;
+  color:#fff;
+  font-weight:600;
+  z-index:9999;
+  animation:slide .35s ease;
+  box-shadow:0 15px 35px rgba(0,0,0,.15);
+}
+
+.success{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+}
+
+.error{
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+}
+
+@keyframes slide{
+  from{
+    opacity:0;
+    transform:translateX(80px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+
+/*==================== SCROLL ====================*/
+
+::-webkit-scrollbar{
+  width:8px;
+}
+
+::-webkit-scrollbar-thumb{
+  background:#cfd8e3;
+  border-radius:20px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+  background:#9ca3af;
+}
+
+/*==================== RESPONSIVE ====================*/
+
+@media(max-width:900px){
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .top-bar{
+    flex-direction:column;
+  }
+
+  .actions{
+    flex-direction:column;
+  }
+
+  .actions button{
+    width:100%;
+  }
+
+  table{
+    font-size:13px;
+  }
+
+  th,
+  td{
+    padding:12px;
+  }
+
 }
 </style>

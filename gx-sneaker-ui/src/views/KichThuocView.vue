@@ -294,127 +294,308 @@ onMounted(load)
 </template>
 
 <style scoped>
-.container {
-  padding: 20px;
-  font-family: Arial;
-  background: #f6f7fb;
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
-.card {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+.container{
+  padding:28px;
+  min-height:100vh;
+  background:#f4f7fb;
+  font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+h2{
+  margin-bottom:22px;
+  font-size:30px;
+  font-weight:700;
+  color:#1f2937;
 }
 
-input {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  width: 100%;
+/*================ CARD ================*/
+
+.card{
+  background:#fff;
+  padding:24px;
+  border-radius:18px;
+  margin-bottom:22px;
+  border:1px solid #eef2f7;
+  box-shadow:0 10px 30px rgba(0,0,0,.06);
+  transition:.3s;
 }
 
-.status-box {
-  margin-top: 15px;
-  display: flex;
-  gap: 20px;
+.card:hover{
+  transform:translateY(-2px);
 }
 
-.actions {
-  margin-top: 15px;
+/*================ FORM ================*/
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
 }
 
-.save {
-  background: green;
-  color: white;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
+input[type=text],
+input[type=number]{
+  width:100%;
+  padding:12px 15px;
+  border:1px solid #dbe2ea;
+  border-radius:10px;
+  font-size:15px;
+  transition:.25s;
 }
 
-.reset {
-  background: gray;
-  color: white;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  margin-left: 10px;
+input[type=text]:focus,
+input[type=number]:focus{
+  outline:none;
+  border-color:#2563eb;
+  box-shadow:0 0 0 4px rgba(37,99,235,.15);
 }
 
-.error-text {
-  color: red;
-  font-size: 12px;
+/*================ RADIO ================*/
+
+.status-box{
+  display:flex;
+  gap:30px;
+  margin-top:22px;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+.status-box label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  font-weight:600;
+  color:#374151;
 }
 
-th,
-td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  text-align: center;
+.status-box input[type=radio]{
+  width:18px;
+  height:18px;
+  accent-color:#2563eb;
 }
 
-.active-status {
-  color: green;
-  font-weight: bold;
+/*================ BUTTON ================*/
+
+.actions{
+  display:flex;
+  gap:15px;
+  margin-top:25px;
 }
 
-.inactive-status {
-  color: red;
-  font-weight: bold;
+.actions button{
+  border:none;
+  padding:11px 24px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  transition:.25s;
 }
 
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 10px 15px;
-  border-radius: 6px;
-  color: white;
-  z-index: 999;
+.save{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
 }
 
-.success {
-  background: #28a745;
+.save:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 20px rgba(37,99,235,.3);
 }
 
-.error {
-  background: #dc3545;
+.reset{
+  background:#e5e7eb;
+  color:#374151;
 }
 
-.pagination {
-  margin-top: 15px;
-  display: flex;
-  justify-content: center;
-  gap: 5px;
+.reset:hover{
+  background:#d1d5db;
 }
 
-.pagination button {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background: #e9ecef;
+/*================ ERROR ================*/
+
+.error-text{
+  display:block;
+  margin-top:6px;
+  color:#ef4444;
+  font-size:13px;
 }
 
-.pagination button:hover {
-  background: #d6d8db;
+/*================ TABLE ================*/
+
+table{
+  width:100%;
+  border-collapse:collapse;
 }
 
-.activePage {
-  background: #0d6efd !important;
-  color: white;
+thead{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+}
+
+th{
+  padding:15px;
+  font-weight:600;
+}
+
+td{
+  padding:15px;
+  border-bottom:1px solid #edf2f7;
+  transition:.25s;
+}
+
+tbody tr:hover{
+  background:#f8fbff;
+}
+
+/*================ STATUS ================*/
+
+.active-status{
+  display:inline-block;
+  background:#dcfce7;
+  color:#16a34a;
+  padding:6px 16px;
+  border-radius:30px;
+  font-size:13px;
+  font-weight:600;
+}
+
+.inactive-status{
+  display:inline-block;
+  background:#fee2e2;
+  color:#dc2626;
+  padding:6px 16px;
+  border-radius:30px;
+  font-size:13px;
+  font-weight:600;
+}
+
+/*================ ACTION BUTTON ================*/
+
+td button{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:15px;
+  transition:.25s;
+  color:white;
+}
+
+td button:first-child{
+  background:#2563eb;
+}
+
+td button:first-child:hover{
+  background:#1d4ed8;
+}
+
+td button:last-child{
+  background:#ef4444;
+  margin-left:8px;
+}
+
+td button:last-child:hover{
+  background:#dc2626;
+}
+
+/*================ PAGINATION ================*/
+
+.pagination{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  margin-top:25px;
+}
+
+.pagination button{
+  width:40px;
+  height:40px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  transition:.25s;
+}
+
+.pagination button:hover:not(:disabled){
+  background:#2563eb;
+  color:white;
+}
+
+.pagination button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+.activePage{
+  background:#2563eb!important;
+  color:white!important;
+}
+
+/*================ TOAST ================*/
+
+.toast{
+  position:fixed;
+  top:25px;
+  right:25px;
+  padding:14px 24px;
+  border-radius:10px;
+  color:white;
+  font-weight:600;
+  z-index:9999;
+  animation:slide .3s ease;
+  box-shadow:0 12px 30px rgba(0,0,0,.15);
+}
+
+.success{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+}
+
+.error{
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+}
+
+@keyframes slide{
+  from{
+    opacity:0;
+    transform:translateX(60px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+
+/*================ RESPONSIVE ================*/
+
+@media(max-width:768px){
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .status-box{
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .actions{
+    flex-direction:column;
+  }
+
+  .actions button{
+    width:100%;
+  }
+
+  table{
+    font-size:13px;
+  }
+
 }
 </style>
-```

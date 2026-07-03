@@ -375,39 +375,18 @@ const validate=()=>{
 
 
 }
-
-
-
-
-
-
-
-
 // ================= SAVE =================
-
-
 const save=async()=>{
-
-
   if(!validate()){
-
-
     showToast(
       "Vui lòng kiểm tra dữ liệu",
       "error"
     )
-
-
     return
 
   }
 
-
-
-
   try{
-
-
     const payload={
 
 
@@ -476,32 +455,18 @@ const save=async()=>{
 
       )
 
-
-
       showToast(
         "Thêm mới thành công"
       )
 
-
     }
-
-
-
-
 
     reset()
 
-
     load()
 
-
-
   }catch(error){
-
-
     console.log(error)
-
-
 
     showToast(
       "Có lỗi xảy ra",
@@ -513,10 +478,6 @@ const save=async()=>{
 
 
 }
-
-
-
-
 
 
 

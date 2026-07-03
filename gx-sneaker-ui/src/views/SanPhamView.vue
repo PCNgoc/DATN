@@ -136,7 +136,17 @@ const form = ref({
 
 })
 
-
+const errors = ref({
+  maSanPham: "",
+  tenSanPham: "",
+  idThuongHieu: "",
+  idXuatXu: "",
+  idChatLieu: "",
+  idCoGiay: "",
+  idDeGiay: "",
+  idDanhMuc: "",
+  anhDaiDien: ""
+})
 
 
 
@@ -500,112 +510,131 @@ const editProduct=(item)=>{
 // ================= SAVE =================
 
 
-const saveProduct=async()=>{
+const saveProduct = async () => {
 
-
-  if(
-
-    !form.value.maSanPham
-
-    ||
-
-    !form.value.tenSanPham
-
-  ){
-
-
-    alert(
-      "Vui lòng nhập mã và tên sản phẩm"
-    )
-
-
-    return
-
+  errors.value = {
+    maSanPham: "",
+    tenSanPham: "",
+    idThuongHieu: "",
+    idXuatXu: "",
+    idChatLieu: "",
+    idCoGiay: "",
+    idDeGiay: "",
+    idDanhMuc: "",
+    anhDaiDien: ""
   }
 
-  try{
+  let valid = true
 
+  form.value.maSanPham = form.value.maSanPham.trim()
+  form.value.tenSanPham = form.value.tenSanPham.trim()
 
-    if(isEdit.value){
+  if (form.value.maSanPham === "") {
+    errors.value.maSanPham = "Vui lòng nhập mã sản phẩm"
+    valid = false
+  }
 
+  if (form.value.tenSanPham === "") {
+    errors.value.tenSanPham = "Vui lòng nhập tên sản phẩm"
+    valid = false
+  }
 
+  if (!form.value.idThuongHieu) {
+    errors.value.idThuongHieu = "Vui lòng chọn thương hiệu"
+    valid = false
+  }
+
+  if (!form.value.idXuatXu) {
+    errors.value.idXuatXu = "Vui lòng chọn xuất xứ"
+    valid = false
+  }
+
+  if (!form.value.idChatLieu) {
+    errors.value.idChatLieu = "Vui lòng chọn chất liệu"
+    valid = false
+  }
+
+  if (!form.value.idCoGiay) {
+    errors.value.idCoGiay = "Vui lòng chọn cổ giày"
+    valid = false
+  }
+
+  if (!form.value.idDeGiay) {
+    errors.value.idDeGiay = "Vui lòng chọn đế giày"
+    valid = false
+  }
+
+  if (!form.value.idDanhMuc) {
+    errors.value.idDanhMuc = "Vui lòng chọn danh mục"
+    valid = false
+  }
+
+  if (!form.value.anhDaiDien) {
+    errors.value.anhDaiDien = "Vui lòng tải ảnh sản phẩm"
+    valid = false
+  }
+
+  if (!valid) return
+
+  try {
+
+    if (isEdit.value) {
 
       await update(
-
         form.value.id,
-
         form.value
-
       )
 
-
-
-    }else{
-
-
+    } else {
 
       await create(
-
         form.value
-
       )
-
-
 
     }
 
-    showModal.value=false
-
+    showModal.value = false
 
     await loadData()
 
-
-
-  }catch(e){
-
+  } catch (e) {
 
     console.log(e)
 
-
-    alert(
-      "Lỗi lưu sản phẩm"
-    )
-
+    alert("Lỗi lưu sản phẩm")
 
   }
-
 
 }
 // ================= DELETE =================
 
 
-const deleteProduct=async(id)=>{
+const deleteProduct = async (id) => {
 
+  const confirmDelete = confirm(
+    "Bạn có chắc chắn muốn xóa sản phẩm này không?"
+  )
 
-  if(!confirm(
-    "Bạn chắc chắn muốn xóa?"
-  ))
-
+  if (!confirmDelete) {
     return
+  }
 
-  try{
-
+  try {
 
     await remove(id)
 
+    alert("Xóa sản phẩm thành công")
 
     await loadData()
 
+  } catch (error) {
 
-
-  }catch(e){
-
-
-    console.log(e)
-
+    alert(
+      error.response?.data?.message ||
+      "Không thể xóa sản phẩm"
+    )
 
   }
-
 
 }
 
@@ -671,8 +700,8 @@ const closeModal=()=>{
             class="status"
             :class="item.trangThai?'active':'inactive'"
           >
-          {{item.trangThai?'Đang bán':'Ngừng bán'}}
-        </span>
+            {{item.trangThai?'Đang bán':'Ngừng bán'}}
+          </span>
 
         </div>
 
@@ -719,8 +748,6 @@ const closeModal=()=>{
     </div>
 
 
-
-
     <!-- MODAL -->
     <div v-if="showModal" class="modal">
 
@@ -758,24 +785,24 @@ const closeModal=()=>{
         </div>
 
 
-
         <!-- THÔNG TIN -->
         <input
           v-model="form.maSanPham"
           placeholder="Mã sản phẩm"
-        >
+        />
+        <div class="error">{{ errors.maSanPham }}</div>
 
         <input
           v-model="form.tenSanPham"
           placeholder="Tên sản phẩm"
-        >
+        />
+        <div class="error">{{ errors.tenSanPham }}</div>
 
 
-
-        <!-- THUONG HIEU -->
+        <!-- THƯƠNG HIỆU -->
         <select v-model="form.idThuongHieu">
 
-          <option disabled value="">
+          <option disabled :value="null">
             -- Chọn thương hiệu --
           </option>
 
@@ -784,18 +811,17 @@ const closeModal=()=>{
             :key="item.id"
             :value="item.id"
           >
-            {{item.ten}}
+            {{ item.ten }}
           </option>
 
         </select>
+        <div class="error">{{ errors.idThuongHieu }}</div>
 
 
-
-
-        <!-- XUAT XU -->
+        <!-- XUẤT XỨ -->
         <select v-model="form.idXuatXu">
 
-          <option disabled value="">
+          <option disabled :value="null">
             -- Chọn xuất xứ --
           </option>
 
@@ -804,18 +830,17 @@ const closeModal=()=>{
             :key="item.id"
             :value="item.id"
           >
-            {{item.ten}}
+            {{ item.ten }}
           </option>
 
         </select>
+        <div class="error">{{ errors.idXuatXu }}</div>
 
 
-
-
-        <!-- CHAT LIEU -->
+        <!-- CHẤT LIỆU -->
         <select v-model="form.idChatLieu">
 
-          <option disabled value="">
+          <option disabled :value="null">
             -- Chọn chất liệu --
           </option>
 
@@ -824,18 +849,17 @@ const closeModal=()=>{
             :key="item.id"
             :value="item.id"
           >
-            {{item.ten}}
+            {{ item.ten }}
           </option>
 
         </select>
+        <div class="error">{{ errors.idChatLieu }}</div>
 
 
-
-
-        <!-- CO GIAY -->
+        <!-- CỔ GIÀY -->
         <select v-model="form.idCoGiay">
 
-          <option disabled value="">
+          <option disabled :value="null">
             -- Chọn cổ giày --
           </option>
 
@@ -844,19 +868,17 @@ const closeModal=()=>{
             :key="item.id"
             :value="item.id"
           >
-            {{item.ten}}
+            {{ item.ten }}
           </option>
 
         </select>
+        <div class="error">{{ errors.idCoGiay }}</div>
 
 
-
-
-
-        <!-- DE GIAY -->
+        <!-- ĐẾ GIÀY -->
         <select v-model="form.idDeGiay">
 
-          <option disabled value="">
+          <option disabled :value="null">
             -- Chọn đế giày --
           </option>
 
@@ -865,19 +887,17 @@ const closeModal=()=>{
             :key="item.id"
             :value="item.id"
           >
-            {{item.ten}}
+            {{ item.ten }}
           </option>
 
         </select>
+        <div class="error">{{ errors.idDeGiay }}</div>
 
 
-
-
-
-        <!-- DANH MUC -->
+        <!-- DANH MỤC -->
         <select v-model="form.idDanhMuc">
 
-          <option disabled value="">
+          <option disabled :value="null">
             -- Chọn danh mục --
           </option>
 
@@ -886,33 +906,21 @@ const closeModal=()=>{
             :key="item.id"
             :value="item.id"
           >
-            {{item.ten}}
+            {{ item.ten }}
           </option>
 
         </select>
+        <div class="error">{{ errors.idDanhMuc }}</div>
 
 
-
-
-
-        <!-- GIOI TINH -->
+        <!-- GIỚI TÍNH -->
         <select v-model="form.gioiTinh">
 
-          <option value="Nam">
-            Nam
-          </option>
-
-          <option value="Nữ">
-            Nữ
-          </option>
-
-          <option value="Unisex">
-            Unisex
-          </option>
+          <option value="Nam">Nam</option>
+          <option value="Nữ">Nữ</option>
+          <option value="Unisex">Unisex</option>
 
         </select>
-
-
 
 
         <textarea
@@ -927,7 +935,6 @@ const closeModal=()=>{
         />
 
 
-
         <select v-model="form.trangThai">
 
           <option :value="true">
@@ -940,8 +947,7 @@ const closeModal=()=>{
 
         </select>
 
-
-
+        <div class="error">{{ errors.anhDaiDien }}</div>
 
 
         <!-- BUTTON -->
@@ -953,13 +959,16 @@ const closeModal=()=>{
           >
             💾 Lưu
           </button>
+
           <button
             class="cancel"
             @click="closeModal"
           >
             ❌ Hủy
           </button>
+
         </div>
+
       </div>
 
     </div>
@@ -1402,6 +1411,12 @@ const closeModal=()=>{
     width:95%;
   }
 
+}
+.error{
+  color:#dc3545;
+  font-size:13px;
+  margin-top:4px;
+  margin-bottom:10px;
 }
 
 </style>

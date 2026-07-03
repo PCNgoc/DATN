@@ -66,7 +66,21 @@ const form = ref({
   trangThai:true
 
 })
+const errors = ref({
 
+  maChiTiet: "",
+
+  idMauSac: "",
+
+  idKichThuoc: "",
+
+  soLuongTon: "",
+
+  giaNhap: "",
+
+  giaBan: ""
+
+})
 // =======================
 
 const formatMoney = (value)=>{
@@ -265,24 +279,92 @@ const editItem = (item)=>{
   showModal.value = true
 
 }
+//============================================
+const validateForm = () => {
 
+  errors.value = {
+
+    maChiTiet: "",
+
+    idMauSac: "",
+
+    idKichThuoc: "",
+
+    soLuongTon: "",
+
+    giaNhap: "",
+
+    giaBan: ""
+
+  }
+
+  let valid = true
+
+  if (!form.value.maChiTiet.trim()) {
+
+    errors.value.maChiTiet = "Vui lòng nhập mã chi tiết"
+
+    valid = false
+
+  }
+
+  if (!form.value.idMauSac) {
+
+    errors.value.idMauSac = "Vui lòng chọn màu sắc"
+
+    valid = false
+
+  }
+
+  if (!form.value.idKichThuoc) {
+
+    errors.value.idKichThuoc = "Vui lòng chọn kích thước"
+
+    valid = false
+
+  }
+
+  if (form.value.soLuongTon === "" || form.value.soLuongTon <= 0) {
+    errors.value.soLuongTon = "Số lượng tồn phải lớn hơn 0"
+    valid = false
+  }
+
+  if (form.value.giaNhap === "" || form.value.giaNhap <= 0) {
+
+    errors.value.giaNhap = "Giá nhập phải lớn hơn 0"
+
+    valid = false
+
+  }
+
+  if (form.value.giaBan === "" || form.value.giaBan <= 0) {
+
+    errors.value.giaBan = "Giá bán phải lớn hơn 0"
+
+    valid = false
+
+  }
+
+  if (
+    Number(form.value.giaBan)
+    <
+    Number(form.value.giaNhap)
+  ) {
+
+    errors.value.giaBan = "Giá bán phải lớn hơn hoặc bằng giá nhập"
+
+    valid = false
+
+  }
+
+  return valid
+
+}
 // =======================
 
 const saveItem = async()=>{
 
-  if(
-
-    !form.value.maChiTiet ||
-
-    !form.value.idMauSac ||
-
-    !form.value.idKichThuoc
-
-  ){
-
-    alert(
-      "Vui lòng nhập đầy đủ dữ liệu"
-    )
+  if (!validateForm()) {
 
     return
 
@@ -677,69 +759,74 @@ onMounted(()=>{
 
         <div class="form-grid">
 
+          <!-- MÃ CHI TIẾT -->
           <div>
-
-            <label>
-              Mã chi tiết
-            </label>
+            <label>Mã chi tiết</label>
 
             <input
               v-model="form.maChiTiet"
+              :class="{ 'error-input': errors.maChiTiet }"
             />
 
+            <div class="error">
+              {{ errors.maChiTiet }}
+            </div>
           </div>
 
+          <!-- SỐ LƯỢNG TỒN -->
           <div>
-
-            <label>
-              Số lượng tồn
-            </label>
+            <label>Số lượng tồn</label>
 
             <input
               type="number"
               v-model="form.soLuongTon"
+              :class="{ 'error-input': errors.soLuongTon }"
             />
 
+            <div class="error">
+              {{ errors.soLuongTon }}
+            </div>
           </div>
 
+          <!-- GIÁ NHẬP -->
           <div>
-
-            <label>
-              Giá nhập
-            </label>
+            <label>Giá nhập</label>
 
             <input
               type="number"
               v-model="form.giaNhap"
+              :class="{ 'error-input': errors.giaNhap }"
             />
 
+            <div class="error">
+              {{ errors.giaNhap }}
+            </div>
           </div>
 
+          <!-- GIÁ BÁN -->
           <div>
-
-            <label>
-              Giá bán
-            </label>
+            <label>Giá bán</label>
 
             <input
               type="number"
               v-model="form.giaBan"
+              :class="{ 'error-input': errors.giaBan }"
             />
 
+            <div class="error">
+              {{ errors.giaBan }}
+            </div>
           </div>
 
           <!-- MÀU SẮC -->
-
           <div>
-
-            <label>
-              Màu sắc
-            </label>
+            <label>Màu sắc</label>
 
             <div class="inline-group">
 
               <select
                 v-model="form.idMauSac"
+                :class="{ 'error-input': errors.idMauSac }"
               >
 
                 <option :value="null">
@@ -766,24 +853,24 @@ onMounted(()=>{
 
             </div>
 
+            <div class="error">
+              {{ errors.idMauSac }}
+            </div>
           </div>
 
-          <!-- SIZE -->
-
+          <!-- KÍCH THƯỚC -->
           <div>
-
-            <label>
-              Kích thước
-            </label>
+            <label>Kích thước</label>
 
             <div class="inline-group">
 
               <select
                 v-model="form.idKichThuoc"
+                :class="{ 'error-input': errors.idKichThuoc }"
               >
 
                 <option :value="null">
-                  Chọn size
+                  Chọn kích thước
                 </option>
 
                 <option
@@ -806,34 +893,19 @@ onMounted(()=>{
 
             </div>
 
+            <div class="error">
+              {{ errors.idKichThuoc }}
+            </div>
           </div>
 
-          <!-- STATUS -->
-
+          <!-- TRẠNG THÁI -->
           <div>
+            <label>Trạng thái</label>
 
-            <label>
-              Trạng thái
-            </label>
-
-            <select
-              v-model="form.trangThai"
-            >
-
-              <option
-                :value="true"
-              >
-                Hoạt động
-              </option>
-
-              <option
-                :value="false"
-              >
-                Ngừng
-              </option>
-
+            <select v-model="form.trangThai">
+              <option :value="true">Hoạt động</option>
+              <option :value="false">Ngừng</option>
             </select>
-
           </div>
 
         </div>
@@ -863,6 +935,8 @@ onMounted(()=>{
     </div>
 
   </div>
+
+  <!-- MODAL THÊM MÀU SẮC NHANH -->
   <div
     v-if="showColorModal"
     class="modal"
@@ -898,6 +972,8 @@ onMounted(()=>{
     </div>
 
   </div>
+
+  <!-- MODAL THÊM KÍCH THƯỚC NHANH -->
   <div
     v-if="showSizeModal"
     class="modal"
@@ -933,6 +1009,7 @@ onMounted(()=>{
     </div>
 
   </div>
+
 </template>
 <style scoped>
 
@@ -1275,5 +1352,17 @@ tbody tr:hover{
 
 .modal-content.small{
   width:400px;
+}
+.error{
+  color:#dc2626;
+  font-size:13px;
+  margin-top:4px;
+  margin-left:2px;
+  min-height:18px;
+}
+
+.form-grid input.error-input,
+.form-grid select.error-input{
+  border:1px solid #dc2626;
 }
 </style>

@@ -7,6 +7,14 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
+
 public interface HoaDonChiTietRepository extends JpaRepository<HoaDonChiTiet, Long> {
     List<HoaDonChiTiet> findByHoaDonId(Long id);
+
+public interface HoaDonChiTietRepository
+        extends JpaRepository<HoaDonChiTiet, Long> {
+
+    boolean existsByChiTietSanPham_SanPham_Id(Long id);
+
+
 }

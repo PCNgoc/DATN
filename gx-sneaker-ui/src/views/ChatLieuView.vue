@@ -280,156 +280,298 @@ onMounted(load)
 </template>
 
 <style scoped>
-.container {
-  padding: 20px;
-  font-family: Arial;
-  background: #f4f6f9;
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
-.card {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+.container{
+  padding:25px;
+  background:#f5f7fb;
+  min-height:100vh;
+  font-family:"Segoe UI",sans-serif;
 }
 
-/* TOP BAR */
-.top-bar {
-  display: flex;
-  gap: 10px;
+h2{
+  margin-bottom:20px;
+  color:#2c3e50;
+  font-size:28px;
+  font-weight:700;
 }
 
-/* FORM */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+/* CARD */
+
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 8px 20px rgba(0,0,0,.06);
 }
 
-input, textarea, select {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  width: 100%;
+/* ================= TOP BAR ================= */
+
+.top-bar{
+  display:flex;
+  gap:15px;
 }
 
-textarea {
-  margin-top: 10px;
+.top-bar input{
+  flex:1;
 }
 
-/* ERROR */
-.error {
-  color: #00ff80;
-  font-size: 12px;
+/* ================= FORM ================= */
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:18px;
 }
 
-/* BUTTON */
-.actions {
-  margin-top: 10px;
+input,
+textarea,
+select{
+  width:100%;
+  padding:11px 14px;
+  border:1px solid #dcdfe6;
+  border-radius:8px;
+  outline:none;
+  font-size:15px;
+  transition:.25s;
+  background:#fff;
 }
 
-.save {
-  background: #28a745;
-  color: white;
-  padding: 8px 12px;
-  border: none;
+textarea{
+  margin-top:15px;
+  min-height:100px;
+  resize:vertical;
 }
 
-.reset {
-  background: #6c757d;
-  color: white;
-  padding: 8px 12px;
-  border: none;
-}
-
-/* TABLE */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
+input:focus,
+textarea:focus,
+select:focus{
+  border-color:#409EFF;
+  box-shadow:0 0 0 4px rgba(64,158,255,.15);
 }
 
 /* STATUS */
-.active {
-  color: green;
-  font-weight: bold;
+
+.status-box{
+  margin-top:18px;
 }
 
-.inactive {
-  color: red;
-  font-weight: bold;
+.status-box label{
+  display:block;
+  margin-bottom:8px;
+  font-weight:600;
+  color:#444;
 }
 
-/* BUTTON TABLE */
-.edit {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 5px 8px;
+/* ================= BUTTON ================= */
+
+.actions{
+  margin-top:20px;
+  display:flex;
+  gap:12px;
 }
 
-.delete {
-  background: red;
-  color: white;
-  border: none;
-  padding: 5px 8px;
+button{
+  cursor:pointer;
+  border:none;
+  transition:.25s;
+  border-radius:8px;
 }
 
-/* PAGINATION */
-.pagination {
-  margin-top: 10px;
-  text-align: center;
+.save{
+  background:#1677ff;
+  color:white;
+  padding:10px 20px;
 }
 
-.pagination button {
-  margin: 2px;
-  padding: 5px 10px;
-  border: none;
-  cursor: pointer;
+.save:hover{
+  background:#0958d9;
 }
 
-.activePage {
-  background: #007bff;
-  color: white;
+.reset{
+  background:#6c757d;
+  color:white;
+  padding:10px 20px;
 }
 
-/* TOAST */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 10px 15px;
-  border-radius: 6px;
-  color: white;
+.reset:hover{
+  background:#545b62;
 }
 
-.success {
-  background: #28a745;
+/* ================= TABLE ================= */
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  overflow:hidden;
 }
 
-.error {
-  background: #f10606;
-}
-/* ================= TRẠNG THÁI FORM ================= */
-.status-box {
-  margin-top: 10px;
+thead{
+  background:#1677ff;
+  color:#fff;
 }
 
-.status-box label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
+th{
+  padding:14px;
+  font-weight:600;
 }
 
-/* ================= VALIDATE ================= */
-.error-text {
-  color: red;
-  font-size: 12px;
+td{
+  padding:14px;
+  border-bottom:1px solid #edf2f7;
+}
+
+tbody tr{
+  transition:.25s;
+}
+
+tbody tr:hover{
+  background:#f5f9ff;
+}
+
+/* ================= STATUS ================= */
+
+.active{
+  display:inline-block;
+  background:#e8fff0;
+  color:#1aa053;
+  padding:6px 14px;
+  border-radius:30px;
+  font-size:13px;
+  font-weight:600;
+}
+
+.inactive{
+  display:inline-block;
+  background:#ffe9e9;
+  color:#e53935;
+  padding:6px 14px;
+  border-radius:30px;
+  font-size:13px;
+  font-weight:600;
+}
+
+/* ================= BUTTON TABLE ================= */
+
+.edit,
+.delete{
+  width:38px;
+  height:38px;
+  border-radius:8px;
+  color:white;
+  font-size:15px;
+}
+
+.edit{
+  background:#1677ff;
+}
+
+.edit:hover{
+  background:#0958d9;
+}
+
+.delete{
+  background:#f5222d;
+  margin-left:8px;
+}
+
+.delete:hover{
+  background:#cf1322;
+}
+
+/* ================= PAGINATION ================= */
+
+.pagination{
+  margin-top:25px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+}
+
+.pagination button{
+  width:38px;
+  height:38px;
+  border-radius:8px;
+  background:#fff;
+  border:1px solid #ddd;
+}
+
+.pagination button:hover{
+  background:#1677ff;
+  color:#fff;
+}
+
+.activePage{
+  background:#1677ff !important;
+  color:white;
+}
+
+/* ================= ERROR ================= */
+
+.error-text{
+  display:block;
+  margin-top:6px;
+  color:#f5222d;
+  font-size:13px;
+}
+
+/* ================= TOAST ================= */
+
+.toast{
+  position:fixed;
+  top:25px;
+  right:25px;
+  padding:14px 24px;
+  border-radius:10px;
+  color:#fff;
+  font-weight:600;
+  z-index:999;
+  animation:slide .3s;
+}
+
+.success{
+  background:#52c41a;
+}
+
+.error{
+  background:#f5222d;
+}
+
+@keyframes slide{
+  from{
+    opacity:0;
+    transform:translateX(60px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:768px){
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .top-bar{
+    flex-direction:column;
+  }
+
+  .actions{
+    flex-direction:column;
+  }
+
+  table{
+    font-size:13px;
+  }
+
 }
 </style>
