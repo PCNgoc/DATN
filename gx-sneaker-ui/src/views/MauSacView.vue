@@ -340,137 +340,334 @@ onMounted(load)
 </template>
 
 <style scoped>
-.container{
-  padding:20px;
-  background:#f6f7fb;
-  font-family:Arial, sans-serif;
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
-.card{
-  background:white;
-  padding:15px;
-  border-radius:10px;
-  margin-bottom:15px;
-  box-shadow:0 2px 10px rgba(0,0,0,.1);
+.container{
+  padding:28px;
+  min-height:100vh;
+  background:#f4f7fb;
+  font-family:"Segoe UI",Tahoma,sans-serif;
 }
+
+h2{
+  margin-bottom:22px;
+  font-size:30px;
+  font-weight:700;
+  color:#1f2937;
+}
+
+/*================ CARD ================*/
+
+.card{
+  background:#fff;
+  padding:24px;
+  border-radius:18px;
+  margin-bottom:22px;
+  border:1px solid #eef2f7;
+  box-shadow:0 12px 35px rgba(15,23,42,.06);
+  transition:.3s;
+}
+
+.card:hover{
+  transform:translateY(-2px);
+}
+
+/*================ FORM ================*/
 
 .grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
 }
 
 input{
   width:100%;
-  padding:10px;
-  border:1px solid #ddd;
-  border-radius:6px;
+  padding:12px 15px;
+  border:1px solid #dbe2ea;
+  border-radius:10px;
+  font-size:15px;
+  transition:.25s;
 }
 
-.error-text{
-  color:red;
-  font-size:12px;
+input:focus{
+  outline:none;
+  border-color:#2563eb;
+  box-shadow:0 0 0 4px rgba(37,99,235,.15);
 }
+
+/*================ PREVIEW ================*/
 
 .preview{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:15px;
+  padding:12px 15px;
+  border:1px dashed #dbe2ea;
+  border-radius:12px;
+  background:#fafbfc;
+}
+
+.preview span{
+  font-weight:600;
+  color:#374151;
 }
 
 .color-box{
-  width:35px;
-  height:35px;
-  border-radius:6px;
-  border:1px solid #ccc;
+  width:42px;
+  height:42px;
+  border-radius:10px;
+  border:2px solid #e5e7eb;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
 }
+
+/*================ STATUS ================*/
 
 .status-box{
-  margin-top:15px;
   display:flex;
-  gap:20px;
+  gap:30px;
+  margin-top:22px;
 }
 
+.status-box label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  font-weight:600;
+  color:#374151;
+}
+
+.status-box input[type=radio]{
+  width:18px;
+  height:18px;
+  accent-color:#2563eb;
+}
+
+/*================ BUTTON ================*/
+
 .actions{
-  margin-top:15px;
+  margin-top:25px;
+  display:flex;
+  gap:15px;
+}
+
+.actions button{
+  border:none;
+  padding:11px 24px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  transition:.25s;
 }
 
 .save{
-  background:#198754;
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
   color:white;
-  border:none;
-  padding:8px 12px;
-  border-radius:6px;
-  cursor:pointer;
+}
+
+.save:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 20px rgba(37,99,235,.3);
 }
 
 .reset{
-  background:#6c757d;
-  color:white;
-  border:none;
-  padding:8px 12px;
-  border-radius:6px;
-  margin-left:10px;
-  cursor:pointer;
+  background:#e5e7eb;
+  color:#374151;
 }
+
+.reset:hover{
+  background:#d1d5db;
+}
+
+/*================ ERROR ================*/
+
+.error-text{
+  display:block;
+  margin-top:6px;
+  color:#ef4444;
+  font-size:13px;
+}
+
+/*================ TABLE ================*/
 
 table{
   width:100%;
   border-collapse:collapse;
 }
 
-th,td{
-  padding:10px;
-  border-bottom:1px solid #eee;
+thead{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+}
+
+th{
+  padding:15px;
+  font-weight:600;
+}
+
+td{
+  padding:15px;
+  border-bottom:1px solid #edf2f7;
   text-align:center;
 }
 
+tbody tr{
+  transition:.25s;
+}
+
+tbody tr:hover{
+  background:#f8fbff;
+}
+
+/*================ STATUS BADGE ================*/
+
 .active-status{
-  color:green;
-  font-weight:bold;
+  display:inline-block;
+  background:#dcfce7;
+  color:#16a34a;
+  padding:6px 16px;
+  border-radius:30px;
+  font-size:13px;
+  font-weight:600;
 }
 
 .inactive-status{
-  color:red;
-  font-weight:bold;
+  display:inline-block;
+  background:#fee2e2;
+  color:#dc2626;
+  padding:6px 16px;
+  border-radius:30px;
+  font-size:13px;
+  font-weight:600;
 }
 
-.toast{
-  position:fixed;
-  top:20px;
-  right:20px;
+/*================ ACTION BUTTON ================*/
+
+td button{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:10px;
   color:white;
-  padding:10px 15px;
-  border-radius:6px;
-  z-index:999;
+  cursor:pointer;
+  font-size:15px;
+  transition:.25s;
 }
 
-.success{
-  background:#28a745;
+td button:first-child{
+  background:#2563eb;
 }
 
-.error{
-  background:#dc3545;
+td button:first-child:hover{
+  background:#1d4ed8;
 }
+
+td button:last-child{
+  background:#ef4444;
+  margin-left:8px;
+}
+
+td button:last-child:hover{
+  background:#dc2626;
+}
+
+/*================ PAGINATION ================*/
 
 .pagination{
-  margin-top:15px;
   display:flex;
   justify-content:center;
-  gap:5px;
+  align-items:center;
+  gap:8px;
+  margin-top:25px;
 }
 
 .pagination button{
-  padding:6px 12px;
+  width:40px;
+  height:40px;
   border:none;
-  border-radius:5px;
+  border-radius:10px;
+  background:#fff;
   cursor:pointer;
-  background:#e9ecef;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  transition:.25s;
+}
+
+.pagination button:hover:not(:disabled){
+  background:#2563eb;
+  color:white;
+}
+
+.pagination button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
 }
 
 .activePage{
-  background:#0d6efd !important;
+  background:#2563eb!important;
+  color:white!important;
+}
+
+/*================ TOAST ================*/
+
+.toast{
+  position:fixed;
+  top:25px;
+  right:25px;
+  padding:14px 24px;
+  border-radius:10px;
   color:white;
+  font-weight:600;
+  z-index:9999;
+  animation:slide .3s ease;
+}
+
+.success{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+}
+
+.error{
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+}
+
+@keyframes slide{
+  from{
+    opacity:0;
+    transform:translateX(60px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+
+/*================ RESPONSIVE ================*/
+
+@media(max-width:768px){
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .status-box{
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .actions{
+    flex-direction:column;
+  }
+
+  .actions button{
+    width:100%;
+  }
+
+  table{
+    font-size:13px;
+  }
+
 }
 </style>
-```

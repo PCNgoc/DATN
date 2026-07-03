@@ -19,7 +19,9 @@ public class SanPhamServiceImpl implements SanPhamService {
     private final CoGiayRepository coGiayRepository;
     private final DeGiayRepository deGiayRepository;
     private final DanhMucRepository danhMucRepository;
-
+    private final ChiTietSanPhamRepository chiTietSanPhamRepository;
+    private final GioHangChiTietRepository gioHangChiTietRepository;
+    private final HoaDonChiTietRepository hoaDonChiTietRepository;
     public SanPhamServiceImpl(
             SanPhamRepository sanPhamRepository,
             ThuongHieuRepository thuongHieuRepository,
@@ -27,7 +29,10 @@ public class SanPhamServiceImpl implements SanPhamService {
             ChatLieuRepository chatLieuRepository,
             CoGiayRepository coGiayRepository,
             DeGiayRepository deGiayRepository,
-            DanhMucRepository danhMucRepository
+            DanhMucRepository danhMucRepository,
+            ChiTietSanPhamRepository chiTietSanPhamRepository,
+            GioHangChiTietRepository gioHangChiTietRepository,
+            HoaDonChiTietRepository hoaDonChiTietRepository
     ) {
         this.sanPhamRepository = sanPhamRepository;
         this.thuongHieuRepository = thuongHieuRepository;
@@ -36,6 +41,9 @@ public class SanPhamServiceImpl implements SanPhamService {
         this.coGiayRepository = coGiayRepository;
         this.deGiayRepository = deGiayRepository;
         this.danhMucRepository = danhMucRepository;
+        this.chiTietSanPhamRepository = chiTietSanPhamRepository;
+        this.gioHangChiTietRepository = gioHangChiTietRepository;
+        this.hoaDonChiTietRepository = hoaDonChiTietRepository;
     }
 
     @Override
@@ -150,6 +158,23 @@ public class SanPhamServiceImpl implements SanPhamService {
 
     @Override
     public void delete(Long id) {
+
+        // 1. Kiểm tra đã từng bán chưa
+        boolean daBan = hoaDonChiTietRepository
+                .existsByChiTietSanPham_SanPham_Id(id);
+
+        // 2. Nếu đã bán → KHÔNG cho xóa
+        if (daBan) {
+            throw new RuntimeException("Sản phẩm đã có hóa đơn, không thể xóa");
+        }
+
+        // 3. Xóa giỏ hàng (nếu có)
+        gioHangChiTietRepository.deleteByChiTietSanPham_SanPham_Id(id);
+
+        // 4. Xóa chi tiết sản phẩm
+        chiTietSanPhamRepository.deleteBySanPhamId(id);
+
+        // 5. Xóa sản phẩm
         sanPhamRepository.deleteById(id);
     }
     @Override
