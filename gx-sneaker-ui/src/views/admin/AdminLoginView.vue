@@ -25,6 +25,7 @@ const goHomeByRole = (role) => {
 }
 
 const handleLogin = async () => {
+  if (!validateLoginForm()) return
   errorMessage.value = ''
 
   if (!username.value.trim()) {
@@ -41,8 +42,8 @@ const handleLogin = async () => {
     loading.value = true
 
     const res = await adminLoginApi({
-      username: username.value.trim(),
-      password: password.value.trim(),
+      username: normalizeLoginUsername(username.value),
+      password: String(password.value || '').trim(),
     })
 
     const role = saveAdminSession(res.data)
@@ -65,6 +66,62 @@ onMounted(() => {
   localStorage.removeItem('adminRole')
   localStorage.removeItem('adminUser')
 })
+
+const normalizePhone = (value) => {
+  let phone = String(value || '')
+    .trim()
+    .replaceAll(' ', '')
+    .replaceAll('-', '')
+    .replaceAll('.', '')
+
+  if (phone.startsWith('+84')) {
+    phone = '0' + phone.slice(3)
+  }
+
+  return phone
+}
+
+const normalizeLoginUsername = (value) => {
+  const username = String(value || '').trim()
+
+  if (username.includes('@')) {
+    return username.toLowerCase()
+  }
+
+  return normalizePhone(username)
+}
+
+const validateLoginForm = () => {
+  errorMessage.value = ''
+
+  const usernameValue = normalizeLoginUsername(username.value)
+  const passwordValue = String(password.value || '').trim()
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const phoneRegex = /^0(3|5|7|8|9)[0-9]{8}$/
+
+  if (!usernameValue) {
+    errorMessage.value = 'Vui lòng nhập email hoặc số điện thoại'
+    return false
+  }
+
+  if (!emailRegex.test(usernameValue) && !phoneRegex.test(usernameValue)) {
+    errorMessage.value = 'Email hoặc số điện thoại không đúng định dạng'
+    return false
+  }
+
+  if (!passwordValue) {
+    errorMessage.value = 'Vui lòng nhập mật khẩu'
+    return false
+  }
+
+  if (passwordValue.length < 6) {
+    errorMessage.value = 'Mật khẩu phải có ít nhất 6 ký tự'
+    return false
+  }
+
+  return true
+}
 </script>
 
 <template>

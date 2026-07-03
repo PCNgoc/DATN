@@ -11,7 +11,6 @@ import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.PhieuGiamGiaRepository;
 import com.gxsneaker.gxsneaker.service.HoaDonService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
@@ -20,6 +19,9 @@ import java.util.Calendar;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +33,8 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final PhieuGiamGiaRepository phieuGiamGiaRepository;
     private final PayOSPaymentService payOSPaymentService;
 
+    private static final Pattern PHONE_PATTERN =
+            Pattern.compile("^0(3|5|7|8|9)[0-9]{8}$");
 
     @Override
     public List<DoanhThuTheoThangDTO> getDoanhThuTheoThang(int year) {
@@ -71,9 +75,16 @@ public class HoaDonServiceImpl implements HoaDonService {
     @Override
     @Transactional
     public HoaDon datHang(DatHangRequestDTO request) {
+        validateDatHangRequest(request);
 
-        System.out.println("========== REQUEST ==========");
-        System.out.println(request.getIdKhachHang());
+        request.setTenNguoiNhan(normalizeName(request.getTenNguoiNhan()));
+        request.setSoDienThoai(normalizePhone(request.getSoDienThoai()));
+        request.setDiaChi(clean(request.getDiaChi()));
+        request.setGhiChu(clean(request.getGhiChu()));
+
+        if (request.getMaPhieuGiamGia() != null) {
+            request.setMaPhieuGiamGia(request.getMaPhieuGiamGia().trim().toUpperCase());
+        }
 
         String phuongThucThanhToan = xacDinhPhuongThucThanhToan(request);
 
@@ -185,25 +196,21 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
     private String xacDinhPhuongThucThanhToan(DatHangRequestDTO request) {
-        String value = request.getPhuongThucThanhToan();
+        String value = clean(request.getPhuongThucThanhToan()).toUpperCase();
 
-        if (value == null || value.trim().isEmpty()) {
-            String ghiChu = request.getGhiChu();
-
-            if (ghiChu != null && ghiChu.toUpperCase().contains("QR")) {
-                return "PAYOS";
-            }
-
-            return "COD";
+        if (value.isBlank()) {
+            throw new RuntimeException("Vui lòng chọn phương thức thanh toán");
         }
 
-        value = value.trim().toUpperCase();
+        if ("COD".equals(value)) {
+            return "COD";
+        }
 
         if ("QR".equals(value) || "PAYOS".equals(value) || "BANK".equals(value)) {
             return "PAYOS";
         }
 
-        return "COD";
+        throw new RuntimeException("Phương thức thanh toán không hợp lệ");
     }
 
     private BigDecimal tinhTienGiam(PhieuGiamGia phieu, BigDecimal tongTienHang) {
@@ -476,56 +483,125 @@ public class HoaDonServiceImpl implements HoaDonService {
                 .build();
     }
 
-
-    @Transactional
-    public void huyDon(Long id){
-
-        System.out.println("===== HUY DON =====");
-        System.out.println("ID = " + id);
-
-        HoaDon hoaDon = hoaDonRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
-
-        System.out.println("Trang thai DB = " + hoaDon.getTrangThai());
-
-        if (!hoaDon.getTrangThai().equals("CHO_XAC_NHAN")
-                && !hoaDon.getTrangThai().equals("CHO_THANH_TOAN")) {
-
-            throw new RuntimeException("Đơn hàng không thể hủy");
+    private void validateDatHangRequest(DatHangRequestDTO request) {
+        if (request == null) {
+            throw new RuntimeException("Dữ liệu đặt hàng không hợp lệ");
         }
 
-
-
-        hoaDon.setTrangThai("DA_HUY");
-
-        hoaDonRepository.save(hoaDon);
-
-        // trả lại tồn kho
-
-        List<HoaDonChiTiet> list =
-                hoaDonChiTietRepository.findByHoaDonId(id);
-
-        for(HoaDonChiTiet item : list){
-
-            ChiTietSanPham ctsp = item.getChiTietSanPham();
-
-            ctsp.setSoLuongTon(
-                    ctsp.getSoLuongTon() + item.getSoLuong()
-            );
-
-            chiTietSanPhamRepository.save(ctsp);
+        if (request.getIdKhachHang() == null || request.getIdKhachHang() <= 0) {
+            throw new RuntimeException("Vui lòng đăng nhập trước khi thanh toán");
         }
 
+        String tenNguoiNhan = normalizeName(request.getTenNguoiNhan());
+
+        if (tenNguoiNhan.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập họ tên người nhận");
+        }
+
+        if (tenNguoiNhan.length() < 2 || tenNguoiNhan.length() > 100) {
+            throw new RuntimeException("Họ tên người nhận phải từ 2 đến 100 ký tự");
+        }
+
+        String phone = normalizePhone(request.getSoDienThoai());
+
+        if (phone.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập số điện thoại");
+        }
+
+        if (!PHONE_PATTERN.matcher(phone).matches()) {
+            throw new RuntimeException("Số điện thoại không đúng định dạng Việt Nam");
+        }
+
+        String diaChi = clean(request.getDiaChi());
+
+        if (diaChi.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập địa chỉ nhận hàng");
+        }
+
+        if (diaChi.length() < 10) {
+            throw new RuntimeException("Địa chỉ nhận hàng quá ngắn");
+        }
+
+        if (diaChi.length() > 500) {
+            throw new RuntimeException("Địa chỉ nhận hàng không được vượt quá 500 ký tự");
+        }
+
+        String ghiChu = clean(request.getGhiChu());
+
+        if (ghiChu.length() > 500) {
+            throw new RuntimeException("Ghi chú không được vượt quá 500 ký tự");
+        }
+
+        String payment = clean(request.getPhuongThucThanhToan()).toUpperCase();
+
+        if (payment.isBlank()) {
+            throw new RuntimeException("Vui lòng chọn phương thức thanh toán");
+        }
+
+        if (!"COD".equals(payment)
+                && !"PAYOS".equals(payment)
+                && !"QR".equals(payment)
+                && !"BANK".equals(payment)) {
+            throw new RuntimeException("Phương thức thanh toán không hợp lệ");
+        }
+
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new RuntimeException("Đơn hàng chưa có sản phẩm");
+        }
+
+        if (request.getItems().size() > 50) {
+            throw new RuntimeException("Đơn hàng không được vượt quá 50 sản phẩm");
+        }
+
+        Set<Long> ids = new HashSet<>();
+
+        for (DatHangItemDTO item : request.getItems()) {
+            if (item == null) {
+                throw new RuntimeException("Sản phẩm trong đơn hàng không hợp lệ");
+            }
+
+            if (item.getChiTietSanPhamId() == null || item.getChiTietSanPhamId() <= 0) {
+                throw new RuntimeException("Có sản phẩm bị thiếu ID chi tiết sản phẩm");
+            }
+
+            if (!ids.add(item.getChiTietSanPhamId())) {
+                throw new RuntimeException("Đơn hàng có sản phẩm bị trùng");
+            }
+
+            if (item.getSoLuong() == null || item.getSoLuong() <= 0) {
+                throw new RuntimeException("Số lượng sản phẩm phải lớn hơn 0");
+            }
+
+            if (item.getSoLuong() > 99) {
+                throw new RuntimeException("Số lượng mỗi sản phẩm không được vượt quá 99");
+            }
+        }
+
+        String maPhieu = clean(request.getMaPhieuGiamGia());
+
+        if (maPhieu.length() > 50) {
+            throw new RuntimeException("Mã giảm giá không được vượt quá 50 ký tự");
+        }
     }
 
-    @Override
-    public List<TopTonKhoDTO> getTop5TonKho() {
-
-        return chiTietSanPhamRepository.topTonKho(
-                PageRequest.of(0, 5)
-        );
-
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
     }
 
+    private String normalizeName(String value) {
+        return clean(value).replaceAll("\\s+", " ");
+    }
 
+    private String normalizePhone(String value) {
+        String phone = clean(value)
+                .replace(" ", "")
+                .replace("-", "")
+                .replace(".", "");
+
+        if (phone.startsWith("+84")) {
+            phone = "0" + phone.substring(3);
+        }
+
+        return phone;
+    }
 }

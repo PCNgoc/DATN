@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import com.gxsneaker.gxsneaker.entity.ChiTietSanPham;
+import com.gxsneaker.gxsneaker.entity.HoaDonChiTiet;
+import com.gxsneaker.gxsneaker.repository.ChiTietSanPhamRepository;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -20,6 +23,7 @@ public class PayOSCheckController {
 
     private final HoaDonRepository hoaDonRepository;
     private final PayOSPaymentService payOSPaymentService;
+    private final ChiTietSanPhamRepository chiTietSanPhamRepository;
 
     @GetMapping("/check-order/{hoaDonId}")
     @Transactional
@@ -51,6 +55,23 @@ public class PayOSCheckController {
         boolean donDangChoThanhToan =
                 "CHO_THANH_TOAN".equalsIgnoreCase(String.valueOf(hoaDon.getTrangThaiThanhToan()));
 
+        boolean daHuyPayos =
+                "CANCELLED".equalsIgnoreCase(payosStatus)
+                        || "CANCELED".equalsIgnoreCase(payosStatus)
+                        || "EXPIRED".equalsIgnoreCase(payosStatus);
+
+        if (daHuyPayos && donChuaBiHuy && donDangChoThanhToan) {
+            hoaDon.setTrangThai("DA_HUY");
+            hoaDon.setTrangThaiThanhToan("QUA_HAN");
+            hoaDon.setNgayHuy(new Date());
+            hoaDon.setLyDoHuy("Khách hàng hủy giao dịch payOS");
+            hoaDon.setNgayCapNhat(new Date());
+
+            hoanTraTonKho(hoaDon);
+
+            hoaDonRepository.save(hoaDon);
+        }
+
         if (daThanhToan && dungSoTien && donChuaBiHuy && donDangChoThanhToan) {
             hoaDon.setTrangThaiThanhToan("DA_THANH_TOAN");
             hoaDon.setTrangThai("CHO_XAC_NHAN");
@@ -73,5 +94,25 @@ public class PayOSCheckController {
         result.put("tongTienThanhToan", hoaDon.getTongTienThanhToan());
 
         return ResponseEntity.ok(result);
+    }
+
+    private void hoanTraTonKho(HoaDon hoaDon) {
+        if (hoaDon.getHoaDonChiTiets() == null) {
+            return;
+        }
+
+        for (HoaDonChiTiet ct : hoaDon.getHoaDonChiTiets()) {
+            if (ct.getChiTietSanPham() == null) {
+                continue;
+            }
+
+            ChiTietSanPham ctsp = ct.getChiTietSanPham();
+
+            int tonHienTai = ctsp.getSoLuongTon() == null ? 0 : ctsp.getSoLuongTon();
+            int soLuongHoan = ct.getSoLuong() == null ? 0 : ct.getSoLuong();
+
+            ctsp.setSoLuongTon(tonHienTai + soLuongHoan);
+            chiTietSanPhamRepository.save(ctsp);
+        }
     }
 }

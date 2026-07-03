@@ -91,16 +91,9 @@
 
             <td>
               <img
-                v-if="item.anhDaiDien"
-                :src="`http://localhost:8080/uploads/avatars/${item.anhDaiDien}`"
-                class="avatar"
+                :src="getAvatarUrl(item.anhDaiDien)"
+                class="table-avatar"
                 @error="onImageError"
-              />
-
-              <img
-                v-else
-                src="https://ui-avatars.com/api/?background=dc2626&color=fff&name=GX"
-                class="avatar"
               />
             </td>
 
@@ -120,15 +113,19 @@
               {{ item.soDienThoai }}
             </td>
 
-            <td>
-              <span class="badge role">
-                {{ item.tenQuyen }}
+            <td class="col-role">
+              <span class="nv-badge nv-role">
+                {{ getTenQuyen(item) }}
               </span>
             </td>
 
-            <td>
-              <span :class="item.trangThai ? 'badge active' : 'badge inactive'">
-                {{ item.trangThai ? 'Hoạt động' : 'Ngừng' }}
+            <td class="col-status">
+              <span
+                :class="
+                  isActiveStatus(item.trangThai) ? 'nv-badge nv-active' : 'nv-badge nv-inactive'
+                "
+              >
+                {{ getTrangThaiText(item.trangThai) }}
               </span>
             </td>
 
@@ -203,7 +200,7 @@
         <div class="form-group">
           <label>Quyền</label>
 
-          <select v-model="form.idPhanQuyen">
+          <select v-model.number="form.idPhanQuyen">
             <option :value="1">ADMIN</option>
 
             <option :value="2">STAFF</option>
@@ -227,13 +224,13 @@
 
           <div class="avatar-box">
             <!-- Ảnh vừa chọn -->
-            <img v-if="preview" :src="preview" class="avatar" />
+            <img v-if="preview" :src="preview" class="avatar-preview" />
 
-            <!-- Ảnh đã lưu trong database -->
             <img
               v-else-if="form.anhDaiDien"
-              :src="'http://localhost:8080/avatars/' + form.anhDaiDien"
-              class="avatar"
+              :src="getAvatarUrl(form.anhDaiDien)"
+              class="avatar-preview"
+              @error="onImageError"
             />
           </div>
         </div>
@@ -259,22 +256,12 @@ import uploadService from '@/services/uploadService'
 // ================== DATA ==================
 
 const preview = ref('')
-
 const danhSach = ref([])
-
 const loading = ref(false)
-
 const saving = ref(false)
-
 const keyword = ref('')
-
 const filterTrangThai = ref('')
-
-const onImageError = (e) => {
-  console.log('Không tải được ảnh:', e.target.src)
-
-  e.target.src = 'https://ui-avatars.com/api/?background=dc2626&color=fff&name=GX'
-}
+const errors = ref({})
 
 const form = ref({
   id: null,
@@ -288,31 +275,108 @@ const form = ref({
   soDienThoai: '',
 
   gioiTinh: true,
-
   diaChi: '',
-
   anhDaiDien: '',
-
   trangThai: true,
 })
+
+// ================== HELPER ==================
+
+const isActiveStatus = (value) => {
+  if (value === true || value === 1) return true
+
+  const v = String(value || '')
+    .trim()
+    .toUpperCase()
+
+  return v === 'TRUE' || v === '1' || v === 'HOAT_DONG' || v === 'ACTIVE'
+}
+
+const getTenQuyen = (nv) => {
+  const value =
+    nv?.tenQuyen ||
+    nv?.phanQuyen?.tenQuyen ||
+    nv?.tenQuyenNhanVien ||
+    nv?.maQuyen ||
+    nv?.phanQuyen?.maQuyen ||
+    nv?.role ||
+    ''
+
+  const role = String(value).trim().toUpperCase()
+
+  if (role === 'ADMIN' || role === 'QUAN_TRI') return 'Quản trị viên'
+  if (role === 'STAFF' || role === 'NHAN_VIEN') return 'Nhân viên'
+
+  return value || 'Chưa có quyền'
+}
+
+const getTrangThaiText = (value) => {
+  return isActiveStatus(value) ? 'Hoạt động' : 'Ngừng hoạt động'
+}
+
+const getIdPhanQuyen = (nv) => {
+  return nv?.idPhanQuyen || nv?.phanQuyen?.id || nv?.id_phan_quyen || ''
+}
+
+const normalizePhone = (value) => {
+  let phone = String(value || '')
+    .trim()
+    .replaceAll(' ', '')
+    .replaceAll('-', '')
+    .replaceAll('.', '')
+
+  if (phone.startsWith('+84')) {
+    phone = '0' + phone.slice(3)
+  }
+
+  return phone
+}
+
+const getErrorMessage = (e, fallback) => {
+  const data = e?.response?.data
+
+  if (typeof data === 'string') return data
+
+  if (data?.message) return data.message
+
+  return fallback
+}
+
+const getAvatarUrl = (fileName) => {
+  if (!fileName) {
+    return 'https://ui-avatars.com/api/?background=dc2626&color=fff&name=GX'
+  }
+
+  if (String(fileName).startsWith('http') || String(fileName).startsWith('blob:')) {
+    return fileName
+  }
+
+  return `http://localhost:8080/uploads/avatars/${fileName}`
+}
+
+const onImageError = (e) => {
+  e.target.src = 'https://ui-avatars.com/api/?background=dc2626&color=fff&name=GX'
+}
 
 // ================== THỐNG KÊ ==================
 
 const tongNhanVien = computed(() => danhSach.value.length)
 
-const dangHoatDong = computed(() => danhSach.value.filter((i) => i.trangThai).length)
+const dangHoatDong = computed(
+  () => danhSach.value.filter((i) => isActiveStatus(i.trangThai)).length,
+)
 
-const ngungHoatDong = computed(() => danhSach.value.filter((i) => !i.trangThai).length)
+const ngungHoatDong = computed(
+  () => danhSach.value.filter((i) => !isActiveStatus(i.trangThai)).length,
+)
 
 // ================== SEARCH + FILTER ==================
 
 const filteredNhanVien = computed(() => {
   let data = [...danhSach.value]
 
-  // tìm kiếm
-
   if (keyword.value.trim()) {
-    const key = keyword.value.toLowerCase()
+    const key = keyword.value.trim().toLowerCase()
 
     data = data.filter((item) => {
       return (
@@ -324,10 +388,10 @@ const filteredNhanVien = computed(() => {
     })
   }
 
-  // lọc trạng thái
-
   if (filterTrangThai.value !== '') {
-    data = data.filter((item) => item.trangThai == (filterTrangThai.value === 'true'))
+    data = data.filter((item) => {
+      return isActiveStatus(item.trangThai) === (filterTrangThai.value === 'true')
+    })
   }
 
   return data
@@ -340,11 +404,20 @@ const loadNhanVien = async () => {
 
   try {
     const res = await nhanVienService.getAll()
+
+    console.log('===== NHAN VIEN DATA =====')
     console.log(res.data)
-    danhSach.value = res.data
+
+    const list = Array.isArray(res.data) ? res.data : res.data?.content || []
+
+    danhSach.value = list.map((item) => ({
+      ...item,
+      tenQuyen: getTenQuyen(item),
+      idPhanQuyen: Number(getIdPhanQuyen(item) || 2),
+      trangThai: isActiveStatus(item.trangThai),
+    }))
   } catch (e) {
     console.log(e)
-
     error('Không tải được dữ liệu')
   } finally {
     loading.value = false
@@ -355,6 +428,8 @@ const loadNhanVien = async () => {
 
 const clearForm = () => {
   preview.value = ''
+  errors.value = {}
+
   form.value = {
     id: null,
     idPhanQuyen: 2,
@@ -367,11 +442,8 @@ const clearForm = () => {
     soDienThoai: '',
 
     gioiTinh: true,
-
     diaChi: '',
-
     anhDaiDien: '',
-
     trangThai: true,
   }
 }
@@ -379,9 +451,23 @@ const clearForm = () => {
 // ================== CHỌN ==================
 
 const selectNhanVien = (item) => {
+  preview.value = ''
+
   form.value = {
-    ...item,
+    id: item.id,
+    idPhanQuyen: Number(getIdPhanQuyen(item) || 2),
+    tenQuyen: getTenQuyen(item),
+
+    maNhanVien: item.maNhanVien || '',
+    hoTen: item.hoTen || '',
+    email: item.email || '',
     matKhau: '',
+    soDienThoai: item.soDienThoai || '',
+
+    gioiTinh: item.gioiTinh === true || item.gioiTinh === 1 || item.gioiTinh === 'true',
+    diaChi: item.diaChi || '',
+    anhDaiDien: item.anhDaiDien || '',
+    trangThai: isActiveStatus(item.trangThai),
   }
 
   window.scrollTo({
@@ -392,108 +478,128 @@ const selectNhanVien = (item) => {
 
 // ================== VALIDATE ==================
 
-const validate = () => {
-  if (!form.value.maNhanVien?.trim()) {
-    error('Không được để trống mã nhân viên')
-    return false
-  }
-
-  if (!form.value.hoTen?.trim()) {
-    error('Không được để trống họ tên')
-    return false
-  }
-
-  if (!form.value.email?.trim()) {
-    error('Không được để trống email')
-    return false
-  }
+const validateNhanVienForm = (data, isEdit = false) => {
+  errors.value = {}
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const phoneRegex = /^0(3|5|7|8|9)[0-9]{8}$/
 
-  if (!emailRegex.test(form.value.email)) {
-    error('Email không hợp lệ')
-    return false
+  data.hoTen = String(data.hoTen || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+  data.email = String(data.email || '')
+    .trim()
+    .toLowerCase()
+  data.soDienThoai = normalizePhone(data.soDienThoai)
+  data.diaChi = String(data.diaChi || '').trim()
+
+  if (!data.hoTen) {
+    errors.value.hoTen = 'Vui lòng nhập họ tên'
+  } else if (data.hoTen.length < 2 || data.hoTen.length > 100) {
+    errors.value.hoTen = 'Họ tên phải từ 2 đến 100 ký tự'
   }
 
-  // Chỉ kiểm tra mật khẩu khi THÊM MỚI
-  if (!form.value.id) {
-    if (!form.value.matKhau?.trim()) {
-      error('Không được để trống mật khẩu')
-      return false
+  if (!data.email) {
+    errors.value.email = 'Vui lòng nhập email'
+  } else if (!emailRegex.test(data.email)) {
+    errors.value.email = 'Email không đúng định dạng'
+  }
+
+  if (!data.soDienThoai) {
+    errors.value.soDienThoai = 'Vui lòng nhập số điện thoại'
+  } else if (!phoneRegex.test(data.soDienThoai)) {
+    errors.value.soDienThoai = 'Số điện thoại không đúng định dạng Việt Nam'
+  }
+
+  if (!data.idPhanQuyen) {
+    errors.value.idPhanQuyen = 'Vui lòng chọn quyền'
+  }
+
+  if (!isEdit) {
+    if (!data.matKhau || !String(data.matKhau).trim()) {
+      errors.value.matKhau = 'Vui lòng nhập mật khẩu'
+    } else if (String(data.matKhau).trim().length < 6) {
+      errors.value.matKhau = 'Mật khẩu phải có ít nhất 6 ký tự'
     }
-
-    if (form.value.matKhau.length < 6) {
-      error('Mật khẩu tối thiểu 6 ký tự')
-      return false
-    }
+  } else if (data.matKhau && String(data.matKhau).trim().length < 6) {
+    errors.value.matKhau = 'Mật khẩu phải có ít nhất 6 ký tự'
   }
 
-  if (!form.value.soDienThoai?.trim()) {
-    error('Không được để trống số điện thoại')
-    return false
+  if (data.diaChi && data.diaChi.length > 255) {
+    errors.value.diaChi = 'Địa chỉ không được vượt quá 255 ký tự'
   }
 
-  const phoneRegex = /^[0-9]{10}$/
+  const firstError = Object.values(errors.value)[0]
 
-  if (!phoneRegex.test(form.value.soDienThoai)) {
-    error('Số điện thoại gồm đúng 10 số')
-    return false
-  }
-
-  if (!form.value.diaChi?.trim()) {
-    error('Không được để trống địa chỉ')
+  if (firstError) {
+    error(firstError)
     return false
   }
 
   return true
 }
+
+const buildPayload = () => {
+  return {
+    ...form.value,
+    idPhanQuyen: Number(form.value.idPhanQuyen),
+    trangThai: isActiveStatus(form.value.trangThai),
+    gioiTinh:
+      form.value.gioiTinh === true || form.value.gioiTinh === 1 || form.value.gioiTinh === 'true',
+    matKhau: String(form.value.matKhau || '').trim(),
+  }
+}
+
 // ================== ADD ==================
 
 const addNhanVien = async () => {
-  if (!validate()) return
+  const payload = buildPayload()
+
+  if (!validateNhanVienForm(payload, false)) return
+
+  saving.value = true
 
   try {
-    await nhanVienService.add(form.value)
+    await nhanVienService.add(payload)
 
     success('Thêm nhân viên thành công')
 
     clearForm()
-
     await loadNhanVien()
   } catch (e) {
     console.log(e)
-
-    error('Thêm thất bại')
+    error(getErrorMessage(e, 'Thêm thất bại'))
+  } finally {
+    saving.value = false
   }
 }
 
 // ================== UPDATE ==================
 
 const updateNhanVien = async () => {
-  if (!validate()) return
-
   if (!form.value.id) {
-    error('Chọn nhân viên')
+    error('Vui lòng chọn nhân viên cần cập nhật')
     return
   }
 
-  console.log('===== UPDATE =====')
-  console.log(form.value)
+  const payload = buildPayload()
+
+  if (!validateNhanVienForm(payload, true)) return
+
+  saving.value = true
 
   try {
-    await nhanVienService.update(form.value.id, form.value)
+    await nhanVienService.update(form.value.id, payload)
 
     success('Cập nhật thành công')
 
     clearForm()
-
     await loadNhanVien()
   } catch (e) {
     console.log(e)
-    console.log(e.response)
-    console.log(e.response?.data)
-
-    error('Cập nhật thất bại')
+    error(getErrorMessage(e, 'Cập nhật thất bại'))
+  } finally {
+    saving.value = false
   }
 }
 
@@ -510,14 +616,14 @@ const deleteNhanVien = async (id) => {
     success('Đã xóa nhân viên')
 
     clearForm()
-
     await loadNhanVien()
   } catch (e) {
     console.log(e)
-
-    error('Không thể xóa')
+    error(getErrorMessage(e, 'Không thể xóa'))
   }
 }
+
+// ================== AVATAR ==================
 
 const chooseAvatar = async (event) => {
   const file = event.target.files[0]
@@ -534,7 +640,6 @@ const chooseAvatar = async (event) => {
     success('Upload ảnh thành công')
   } catch (e) {
     console.log(e)
-
     error('Upload thất bại')
   }
 }
@@ -989,5 +1094,56 @@ button:disabled {
   border-radius: 50%;
 
   border: 3px solid #ddd;
+}
+
+.table-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.avatar-preview {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #ddd;
+}
+
+.col-role,
+.col-status {
+  min-width: 130px;
+  text-align: center;
+  overflow: visible;
+}
+
+.nv-badge {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 105px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  color: #ffffff !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.nv-role {
+  background: #2563eb !important;
+}
+
+.nv-active {
+  background: #16a34a !important;
+}
+
+.nv-inactive {
+  background: #ef4444 !important;
 }
 </style>

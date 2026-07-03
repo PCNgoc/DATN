@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -25,26 +26,34 @@ public class AuthService {
     private final EmailService emailService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[\\w.%+-]+@[\\w.-]+\\.[A-Za-z]{2,}$");
+
+    private static final Pattern PHONE_PATTERN =
+            Pattern.compile("^0(3|5|7|8|9)[0-9]{8}$");
 
     public LoginResponse login(LoginRequest request) {
 
+        String username = normalizeUsername(request == null ? null : request.getUsername());
+        String password = clean(request == null ? null : request.getPassword());
+
+        validateLoginInput(username, password);
+
         Optional<KhachHang> kh =
-                khachHangRepository.findByEmail(request.getUsername());
+                isEmail(username)
+                        ? khachHangRepository.findByEmail(username)
+                        : khachHangRepository.findBySoDienThoai(username);
 
         if (kh.isEmpty()) {
-            kh = khachHangRepository.findBySoDienThoai(request.getUsername());
-        }
-
-        if (kh.isEmpty()) {
-            throw new RuntimeException("Tài khoản không tồn tại");
+            throw new RuntimeException("Email/Số điện thoại hoặc mật khẩu không đúng");
         }
 
         if (Boolean.FALSE.equals(kh.get().getTrangThai())) {
             throw new RuntimeException("Tài khoản đã bị khóa");
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), kh.get().getMatKhau())) {
-            throw new RuntimeException("Sai mật khẩu");
+        if (!passwordEncoder.matches(password, kh.get().getMatKhau())) {
+            throw new RuntimeException("Email/Số điện thoại hoặc mật khẩu không đúng");
         }
 
         String token = jwtService.generateToken(
@@ -66,35 +75,29 @@ public class AuthService {
 
     public LoginResponse loginNhanVien(LoginRequest request) {
 
+        String username = normalizeUsername(request == null ? null : request.getUsername());
+        String password = clean(request == null ? null : request.getPassword());
+
+        validateLoginInput(username, password);
+
         Optional<NhanVien> nv =
-                nhanVienRepository.findByEmail(request.getUsername());
+                isEmail(username)
+                        ? nhanVienRepository.findByEmail(username)
+                        : nhanVienRepository.findBySoDienThoai(username);
 
         if (nv.isEmpty()) {
-            nv = nhanVienRepository.findBySoDienThoai(request.getUsername());
-        }
-
-        if (nv.isEmpty()) {
-            throw new RuntimeException("Tài khoản nhân viên không tồn tại");
+            throw new RuntimeException("Email/Số điện thoại hoặc mật khẩu không đúng");
         }
 
         if (Boolean.FALSE.equals(nv.get().getTrangThai())) {
             throw new RuntimeException("Tài khoản nhân viên đã bị khóa");
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), nv.get().getMatKhau())) {
-            throw new RuntimeException("Sai mật khẩu");
+        if (!passwordEncoder.matches(password, nv.get().getMatKhau())) {
+            throw new RuntimeException("Email/Số điện thoại hoặc mật khẩu không đúng");
         }
 
-        String role = nv.get().getPhanQuyen().getMaQuyen();
-
-        role = role.trim().toUpperCase();
-
-        if ("NHAN_VIEN".equals(role)) {
-            role = "STAFF";
-        }
-        if ("QUAN_TRI".equals(role) || "ADMINISTRATOR".equals(role)) {
-            role = "ADMIN";
-        }
+        String role = normalizeRole(nv.get());
 
         String token = jwtService.generateToken(
                 nv.get().getEmail(),
@@ -261,46 +264,29 @@ public class AuthService {
 
     public AdminLoginResponse adminLogin(AdminLoginRequest request) {
 
+        String username = normalizeUsername(request == null ? null : request.getUsername());
+        String password = clean(request == null ? null : request.getPassword());
+
+        validateLoginInput(username, password);
+
         Optional<NhanVien> nv =
-                nhanVienRepository.findByEmail(request.getUsername());
+                isEmail(username)
+                        ? nhanVienRepository.findByEmail(username)
+                        : nhanVienRepository.findBySoDienThoai(username);
 
         if (nv.isEmpty()) {
-            nv = nhanVienRepository.findBySoDienThoai(
-                    request.getUsername()
-            );
+            throw new RuntimeException("Email/Số điện thoại hoặc mật khẩu không đúng");
         }
 
-        if (nv.isEmpty()) {
-            throw new RuntimeException("Tài khoản không tồn tại");
+        if (Boolean.FALSE.equals(nv.get().getTrangThai())) {
+            throw new RuntimeException("Tài khoản nhân viên đã bị khóa");
         }
 
-        if (!passwordEncoder.matches(
-                request.getPassword(),
-                nv.get().getMatKhau()
-        )) {
-
-            throw new RuntimeException("Sai mật khẩu");
+        if (!passwordEncoder.matches(password, nv.get().getMatKhau())) {
+            throw new RuntimeException("Email/Số điện thoại hoặc mật khẩu không đúng");
         }
 
-        String role =
-                nv.get().getPhanQuyen()
-                        .getMaQuyen()
-                        .trim()
-                        .toUpperCase();
-
-        if ("NHAN_VIEN".equals(role)) {
-            role = "STAFF";
-        }
-
-        if ("QUAN_TRI".equals(role) || "ADMINISTRATOR".equals(role)) {
-            role = "ADMIN";
-        }
-
-        System.out.println("TEN QUYEN = "
-                + nv.get().getPhanQuyen().getTenQuyen());
-
-        System.out.println("ROLE LOGIN = "
-                + role);
+        String role = normalizeRole(nv.get());
 
         String token =
                 jwtService.generateToken(
@@ -318,5 +304,83 @@ public class AuthService {
                 .avatar(nv.get().getAnhDaiDien())
                 .message("Đăng nhập thành công")
                 .build();
+    }
+
+    private void validateLoginInput(String username, String password) {
+        if (username.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập email hoặc số điện thoại");
+        }
+
+        if (!isEmail(username) && !isPhone(username)) {
+            throw new RuntimeException("Email hoặc số điện thoại không đúng định dạng");
+        }
+
+        if (password.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập mật khẩu");
+        }
+
+        if (password.length() < 6) {
+            throw new RuntimeException("Mật khẩu phải có ít nhất 6 ký tự");
+        }
+    }
+
+    private String normalizeRole(NhanVien nv) {
+        if (nv.getPhanQuyen() == null || nv.getPhanQuyen().getMaQuyen() == null) {
+            throw new RuntimeException("Tài khoản chưa được phân quyền");
+        }
+
+        String role = nv.getPhanQuyen()
+                .getMaQuyen()
+                .trim()
+                .toUpperCase();
+
+        if ("NHAN_VIEN".equals(role)) {
+            role = "STAFF";
+        }
+
+        if ("QUAN_TRI".equals(role) || "ADMINISTRATOR".equals(role)) {
+            role = "ADMIN";
+        }
+
+        if (!"ADMIN".equals(role) && !"STAFF".equals(role)) {
+            throw new RuntimeException("Tài khoản chưa được phân quyền quản trị");
+        }
+
+        return role;
+    }
+
+    private String normalizeUsername(String value) {
+        String cleaned = clean(value);
+
+        if (cleaned.contains("@")) {
+            return cleaned.toLowerCase();
+        }
+
+        return normalizePhone(cleaned);
+    }
+
+    private String normalizePhone(String value) {
+        String phone = clean(value)
+                .replace(" ", "")
+                .replace("-", "")
+                .replace(".", "");
+
+        if (phone.startsWith("+84")) {
+            phone = "0" + phone.substring(3);
+        }
+
+        return phone;
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private boolean isEmail(String value) {
+        return value != null && EMAIL_PATTERN.matcher(value).matches();
+    }
+
+    private boolean isPhone(String value) {
+        return value != null && PHONE_PATTERN.matcher(normalizePhone(value)).matches();
     }
 }

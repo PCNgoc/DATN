@@ -14,9 +14,11 @@ const totalAmount = ref(0)
 const expiredAt = ref(null)
 
 const remainingSeconds = ref(0)
-const timer = ref(null)
+const countdownInterval = ref(null)
+const checkInterval = ref(null)
 const checking = ref(false)
 const expired = ref(false)
+const redirected = ref(false)
 
 const formatMoney = (value) => {
   return Number(value || 0).toLocaleString('vi-VN') + ' đ'
@@ -34,28 +36,82 @@ const percent = computed(() => {
   return Math.max((remainingSeconds.value / max) * 100, 0)
 })
 
+const clearAllTimers = () => {
+  if (countdownInterval.value) {
+    clearInterval(countdownInterval.value)
+    countdownInterval.value = null
+  }
+
+  if (checkInterval.value) {
+    clearInterval(checkInterval.value)
+    checkInterval.value = null
+  }
+}
+
+const redirectWhenCancelled = () => {
+  if (redirected.value) return
+
+  redirected.value = true
+  clearAllTimers()
+  localStorage.removeItem('payosPaymentInfo')
+
+  alert('Đơn hàng đã bị hủy')
+
+  router.replace({
+    path: '/orders',
+    query: {
+      cancelled: 'true',
+      orderId,
+    },
+  })
+}
+
+const redirectWhenPaid = () => {
+  if (redirected.value) return
+
+  redirected.value = true
+  clearAllTimers()
+  localStorage.removeItem('payosPaymentInfo')
+
+  router.replace({
+    path: `/order-success/${orderId}`,
+    query: {
+      maHoaDon: maHoaDon.value,
+      payment: 'QR',
+    },
+  })
+}
+
 const loadPaymentInfo = () => {
   const raw = localStorage.getItem('payosPaymentInfo')
 
   if (!raw) {
     alert('Không tìm thấy thông tin thanh toán')
-    router.push('/orders')
-    return
+    router.replace('/orders')
+    return false
   }
 
-  const data = JSON.parse(raw)
+  try {
+    const data = JSON.parse(raw)
 
-  checkoutUrl.value = data.checkoutUrl || ''
-  maHoaDon.value = data.maHoaDon || ''
-  totalAmount.value = Number(data.totalAmount || 0)
+    checkoutUrl.value = data.checkoutUrl || ''
+    maHoaDon.value = data.maHoaDon || ''
+    totalAmount.value = Number(data.totalAmount || 0)
 
-  if (data.expiredAt) {
-    expiredAt.value = new Date(data.expiredAt)
-  } else {
-    expiredAt.value = new Date(Date.now() + 30 * 60 * 1000)
+    if (data.expiredAt) {
+      expiredAt.value = new Date(data.expiredAt)
+    } else {
+      expiredAt.value = new Date(Date.now() + 30 * 60 * 1000)
+    }
+
+    calculateRemaining()
+    return true
+  } catch (e) {
+    console.error(e)
+    alert('Thông tin thanh toán không hợp lệ')
+    router.replace('/orders')
+    return false
   }
-
-  calculateRemaining()
 }
 
 const calculateRemaining = () => {
@@ -67,14 +123,14 @@ const calculateRemaining = () => {
 
   if (remainingSeconds.value <= 0) {
     expired.value = true
-    clearInterval(timer.value)
+    clearAllTimers()
   }
 }
 
 const startCountdown = () => {
   calculateRemaining()
 
-  timer.value = setInterval(() => {
+  countdownInterval.value = setInterval(() => {
     calculateRemaining()
   }, 1000)
 }
@@ -91,49 +147,82 @@ const goPayOSSameTab = () => {
   window.location.href = checkoutUrl.value
 }
 
-const checkPaymentStatus = async () => {
-  if (!orderId) return
+const checkPaymentStatus = async (showAlert = false) => {
+  if (!orderId || redirected.value) return
 
   try {
     checking.value = true
 
     const res = await axios.get(`http://localhost:8080/api/payos/check-order/${orderId}`)
 
-    const data = res.data
+    const data = res.data || {}
+
+    const payosStatus = String(
+      data.payosStatus || data.paymentStatus || data.status || '',
+    ).toUpperCase()
+    const trangThai = String(data.trangThai || '').toUpperCase()
+    const trangThaiThanhToan = String(data.trangThaiThanhToan || '').toUpperCase()
 
     if (
-      data?.trangThaiThanhToan === 'DA_THANH_TOAN' ||
-      data?.paymentStatus === 'PAID' ||
-      data?.status === 'PAID'
+      payosStatus === 'CANCELLED' ||
+      payosStatus === 'CANCELED' ||
+      payosStatus === 'EXPIRED' ||
+      trangThai === 'DA_HUY'
     ) {
-      localStorage.removeItem('payosPaymentInfo')
-
-      router.push({
-        path: `/order-success/${orderId}`,
-        query: {
-          maHoaDon: maHoaDon.value,
-          payment: 'QR',
-        },
-      })
+      redirectWhenCancelled()
       return
     }
 
-    alert('Đơn hàng chưa được thanh toán. Vui lòng hoàn tất thanh toán trên payOS.')
+    if (payosStatus === 'PAID' || trangThaiThanhToan === 'DA_THANH_TOAN') {
+      redirectWhenPaid()
+      return
+    }
+
+    if (showAlert) {
+      alert('Đơn hàng chưa được thanh toán. Vui lòng hoàn tất thanh toán trên payOS.')
+    }
   } catch (err) {
     console.error(err)
-    alert('Chưa kiểm tra được trạng thái thanh toán')
+
+    if (showAlert) {
+      alert('Chưa kiểm tra được trạng thái thanh toán')
+    }
   } finally {
     checking.value = false
   }
 }
 
-onMounted(() => {
-  loadPaymentInfo()
+const handlePayOSCancelled = async () => {
+  try {
+    await checkPaymentStatus(false)
+  } catch (e) {
+    console.error(e)
+  }
+
+  redirectWhenCancelled()
+}
+
+onMounted(async () => {
+  if (route.query.cancel === 'true') {
+    await handlePayOSCancelled()
+    return
+  }
+
+  const loaded = loadPaymentInfo()
+
+  if (!loaded) return
+
   startCountdown()
+
+  await checkPaymentStatus(false)
+
+  checkInterval.value = setInterval(() => {
+    checkPaymentStatus(false)
+  }, 5000)
 })
 
 onBeforeUnmount(() => {
-  clearInterval(timer.value)
+  clearAllTimers()
 })
 </script>
 
@@ -185,7 +274,7 @@ onBeforeUnmount(() => {
           Mở payOS tab mới
         </button>
 
-        <button class="btn-check" :disabled="checking" @click="checkPaymentStatus">
+        <button class="btn-check" :disabled="checking" @click="checkPaymentStatus(true)">
           {{ checking ? 'Đang kiểm tra...' : 'Tôi đã thanh toán' }}
         </button>
       </div>

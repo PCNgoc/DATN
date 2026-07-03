@@ -36,12 +36,14 @@ const formatMoney = (value) => {
 const normalizeItem = (item) => {
   return {
     detailId:
-      item?.detailId ||
-      item?.chiTietSanPhamId ||
-      item?.idChiTietSanPham ||
-      item?.id_chi_tiet_san_pham ||
-      item?.chiTietSanPham?.id ||
-      item?.id,
+        item?.detailId ||
+        item?.chiTietSanPhamId ||
+        item?.idChiTietSanPham ||
+        item?.id_chi_tiet_san_pham ||
+        item?.chiTietSanPham?.id ||
+        item?.chi_tiet_san_pham_id ||
+        item?.idCTSP ||
+        null,
 
     productName:
       item?.productName ||

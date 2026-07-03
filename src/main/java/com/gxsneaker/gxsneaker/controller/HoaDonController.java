@@ -288,12 +288,17 @@ public class HoaDonController {
     }
 
     @PostMapping("/dat-hang")
-    public ResponseEntity<HoaDon> datHang(
+    public ResponseEntity<?> datHang(
             @RequestBody DatHangRequestDTO request
     ) {
-        HoaDon hoaDon = hoaDonService.datHang(request);
-
-        return ResponseEntity.ok(hoaDon);
+        try {
+            HoaDon hoaDon = hoaDonService.datHang(request);
+            return ResponseEntity.ok(hoaDon);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", e.getMessage())
+            );
+        }
     }
 
     @GetMapping("/khach-hang/{id}")
@@ -395,7 +400,9 @@ public class HoaDonController {
             );
 
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", e.getMessage())
+            );
         }
     }
 

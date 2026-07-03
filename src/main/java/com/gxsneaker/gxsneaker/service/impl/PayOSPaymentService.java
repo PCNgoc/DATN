@@ -39,7 +39,7 @@ public class PayOSPaymentService {
                 .amount(hoaDon.getTongTienThanhToan().longValue())
                 .description("GX" + hoaDon.getId())
                 .returnUrl(frontendUrl + "/order-success/" + hoaDon.getId())
-                .cancelUrl(frontendUrl + "/checkout?cancel=true&orderId=" + hoaDon.getId())
+                .cancelUrl(frontendUrl + "/payos-waiting/" + hoaDon.getId() + "?cancel=true")
                 .expiredAt(expiredAt)
                 .buyerName(hoaDon.getTenNguoiNhan())
                 .buyerPhone(hoaDon.getSoDienThoaiNguoiNhan())

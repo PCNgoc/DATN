@@ -16,13 +16,10 @@ const login = async () => {
 
     const data = {
       username: username.value,
-      password: password.value
+      password: password.value,
     }
 
-    const response =
-      loginType.value === 'STAFF'
-        ? await staffLoginApi(data)
-        : await loginApi(data)
+    const response = loginType.value === 'STAFF' ? await staffLoginApi(data) : await loginApi(data)
 
     setLogin(response.data)
 
@@ -34,9 +31,64 @@ const login = async () => {
       window.location.href = '/'
     }
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message || 'Đăng nhập thất bại'
+    errorMessage.value = error.response?.data?.message || 'Đăng nhập thất bại'
   }
+}
+
+const normalizePhone = (value) => {
+  let phone = String(value || '')
+    .trim()
+    .replaceAll(' ', '')
+    .replaceAll('-', '')
+    .replaceAll('.', '')
+
+  if (phone.startsWith('+84')) {
+    phone = '0' + phone.slice(3)
+  }
+
+  return phone
+}
+
+const normalizeLoginUsername = (value) => {
+  const username = String(value || '').trim()
+
+  if (username.includes('@')) {
+    return username.toLowerCase()
+  }
+
+  return normalizePhone(username)
+}
+
+const validateLoginForm = () => {
+  errorMessage.value = ''
+
+  const usernameValue = normalizeLoginUsername(username.value)
+  const passwordValue = String(password.value || '').trim()
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const phoneRegex = /^0(3|5|7|8|9)[0-9]{8}$/
+
+  if (!usernameValue) {
+    errorMessage.value = 'Vui lòng nhập email hoặc số điện thoại'
+    return false
+  }
+
+  if (!emailRegex.test(usernameValue) && !phoneRegex.test(usernameValue)) {
+    errorMessage.value = 'Email hoặc số điện thoại không đúng định dạng'
+    return false
+  }
+
+  if (!passwordValue) {
+    errorMessage.value = 'Vui lòng nhập mật khẩu'
+    return false
+  }
+
+  if (passwordValue.length < 6) {
+    errorMessage.value = 'Mật khẩu phải có ít nhất 6 ký tự'
+    return false
+  }
+
+  return true
 }
 </script>
 
@@ -64,29 +116,13 @@ const login = async () => {
           <div class="qr-box">GX</div>
         </div>
 
-        <select v-model="loginType" class="input">
-          <option value="CUSTOMER">Khách hàng</option>
-          <option value="STAFF">Nhân viên / Admin</option>
-        </select>
+        <input v-model="username" class="input" placeholder="Số điện thoại / Email" />
 
-        <input
-          v-model="username"
-          class="input"
-          placeholder="Số điện thoại / Email"
-        />
-
-        <input
-          v-model="password"
-          class="input"
-          type="password"
-          placeholder="Mật khẩu"
-        />
+        <input v-model="password" class="input" type="password" placeholder="Mật khẩu" />
 
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
 
-        <button class="login-btn" @click="login">
-          ĐĂNG NHẬP
-        </button>
+        <button class="login-btn" @click="login">ĐĂNG NHẬP</button>
 
         <div class="forgot-row">
           <router-link to="/forgot-password">Quên mật khẩu</router-link>

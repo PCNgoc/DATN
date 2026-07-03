@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,13 @@ public class NhanVienServiceImpl implements NhanVienService {
     private final PhanQuyenRepository phanQuyenRepository;
 
     private final PasswordEncoder passwordEncoder;
+
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[\\w.%+-]+@[\\w.-]+\\.[A-Za-z]{2,}$");
+
+    private static final Pattern PHONE_PATTERN =
+            Pattern.compile("^0(3|5|7|8|9)[0-9]{8}$");
+
 
     // ================= DTO =================
 
@@ -123,18 +131,7 @@ public class NhanVienServiceImpl implements NhanVienService {
     @Override
     @Transactional
     public NhanVienDTO create(NhanVienDTO dto) {
-
-        if(nhanVienRepository.existsByEmail(dto.getEmail())){
-
-            throw new RuntimeException("Email đã tồn tại");
-
-        }
-
-        if(nhanVienRepository.existsBySoDienThoai(dto.getSoDienThoai())){
-
-            throw new RuntimeException("Số điện thoại đã tồn tại");
-
-        }
+        validateCreate(dto);
 
         PhanQuyen pq =
                 phanQuyenRepository.findById(dto.getIdPhanQuyen())
@@ -192,27 +189,8 @@ public class NhanVienServiceImpl implements NhanVienService {
                                 ()->new RuntimeException("Không tìm thấy nhân viên")
                         );
 
-        if(
-                nhanVienRepository.existsByEmailAndIdNot(
-                        dto.getEmail(),
-                        id
-                )
-        ){
+        validateUpdate(id, dto);
 
-            throw new RuntimeException("Email đã tồn tại");
-
-        }
-
-        if(
-                nhanVienRepository.existsBySoDienThoaiAndIdNot(
-                        dto.getSoDienThoai(),
-                        id
-                )
-        ){
-
-            throw new RuntimeException("Số điện thoại đã tồn tại");
-
-        }
 
         PhanQuyen pq =
                 phanQuyenRepository.findById(dto.getIdPhanQuyen())
@@ -270,6 +248,134 @@ public class NhanVienServiceImpl implements NhanVienService {
 
         nhanVienRepository.save(nv);
 
+    }
+
+    private void validateCreate(NhanVienDTO dto) {
+        normalizeNhanVienDTO(dto);
+
+        validateCommon(dto, true);
+
+        if (nhanVienRepository.existsByEmail(dto.getEmail())) {
+            throw new RuntimeException("Email đã tồn tại");
+        }
+
+        if (nhanVienRepository.existsBySoDienThoai(dto.getSoDienThoai())) {
+            throw new RuntimeException("Số điện thoại đã tồn tại");
+        }
+    }
+
+    private void validateUpdate(Integer id, NhanVienDTO dto) {
+        if (id == null) {
+            throw new RuntimeException("ID nhân viên không hợp lệ");
+        }
+
+        normalizeNhanVienDTO(dto);
+
+        validateCommon(dto, false);
+
+        if (nhanVienRepository.existsByEmailAndIdNot(dto.getEmail(), id)) {
+            throw new RuntimeException("Email đã tồn tại");
+        }
+
+        if (nhanVienRepository.existsBySoDienThoaiAndIdNot(dto.getSoDienThoai(), id)) {
+            throw new RuntimeException("Số điện thoại đã tồn tại");
+        }
+    }
+
+    private void validateCommon(NhanVienDTO dto, boolean isCreate) {
+        if (dto == null) {
+            throw new RuntimeException("Dữ liệu nhân viên không hợp lệ");
+        }
+
+        if (isBlank(dto.getHoTen())) {
+            throw new RuntimeException("Họ tên không được để trống");
+        }
+
+        if (dto.getHoTen().length() < 2 || dto.getHoTen().length() > 100) {
+            throw new RuntimeException("Họ tên phải từ 2 đến 100 ký tự");
+        }
+
+        if (isBlank(dto.getEmail())) {
+            throw new RuntimeException("Email không được để trống");
+        }
+
+        if (!EMAIL_PATTERN.matcher(dto.getEmail()).matches()) {
+            throw new RuntimeException("Email không đúng định dạng");
+        }
+
+        if (isBlank(dto.getSoDienThoai())) {
+            throw new RuntimeException("Số điện thoại không được để trống");
+        }
+
+        if (!PHONE_PATTERN.matcher(dto.getSoDienThoai()).matches()) {
+            throw new RuntimeException("Số điện thoại không đúng định dạng Việt Nam");
+        }
+
+        if (dto.getIdPhanQuyen() == null) {
+            throw new RuntimeException("Vui lòng chọn quyền nhân viên");
+        }
+
+        if (dto.getDiaChi() != null && dto.getDiaChi().length() > 255) {
+            throw new RuntimeException("Địa chỉ không được vượt quá 255 ký tự");
+        }
+
+        if (isCreate) {
+            if (isBlank(dto.getMatKhau())) {
+                throw new RuntimeException("Mật khẩu không được để trống");
+            }
+
+            if (dto.getMatKhau().length() < 6) {
+                throw new RuntimeException("Mật khẩu phải có ít nhất 6 ký tự");
+            }
+        } else {
+            if (dto.getMatKhau() != null && !dto.getMatKhau().isBlank()
+                    && dto.getMatKhau().length() < 6) {
+                throw new RuntimeException("Mật khẩu phải có ít nhất 6 ký tự");
+            }
+        }
+    }
+
+    private void normalizeNhanVienDTO(NhanVienDTO dto) {
+        if (dto == null) {
+            throw new RuntimeException("Dữ liệu nhân viên không hợp lệ");
+        }
+
+        dto.setHoTen(clean(dto.getHoTen()).replaceAll("\\s+", " "));
+        dto.setEmail(clean(dto.getEmail()).toLowerCase());
+        dto.setSoDienThoai(normalizePhone(dto.getSoDienThoai()));
+
+        if (dto.getMatKhau() != null) {
+            dto.setMatKhau(dto.getMatKhau().trim());
+        }
+
+        if (dto.getDiaChi() != null) {
+            dto.setDiaChi(dto.getDiaChi().trim());
+        }
+
+        if (dto.getAnhDaiDien() != null) {
+            dto.setAnhDaiDien(dto.getAnhDaiDien().trim());
+        }
+    }
+
+    private String normalizePhone(String value) {
+        String phone = clean(value)
+                .replace(" ", "")
+                .replace("-", "")
+                .replace(".", "");
+
+        if (phone.startsWith("+84")) {
+            phone = "0" + phone.substring(3);
+        }
+
+        return phone;
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
 }
