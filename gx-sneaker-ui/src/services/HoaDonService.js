@@ -30,9 +30,14 @@ export const apDungMaGiamGia = (data) => {
   return axios.post(`${API_URL}/ap-dung-ma-giam-gia`, data)
 }
 
+export const huyHoaDon = (id) => {
+  return axios.put(`${API_URL}/${id}/huy`, {}, getAuthHeader())
+}
+
 export default {
   datHang,
   getHoaDonByKhachHang,
   getHoaDonById,
   apDungMaGiamGia,
+  huyHoaDon,
 }

@@ -56,6 +56,7 @@ const chartOptions = {
     },
   },
 
+
   scales: {
     y: {
       ticks: {
@@ -66,10 +67,14 @@ const chartOptions = {
     },
   },
 }
+const currentYear = new Date().getFullYear()
 
-const xemTatCaDonHang = () => {
-  router.push('/hoa-don')
-}
+const years = Array.from(
+  { length: 7 },
+  (_, i) => currentYear - 3 + i
+)
+
+const selectedYear = ref(currentYear)
 
 const loadDashboard = async () => {
   try {
@@ -80,7 +85,7 @@ const loadDashboard = async () => {
     console.error('Lỗi tải dashboard:', error)
   }
 }
-const selectedYear = ref(new Date().getFullYear())
+
 
 const loadRevenueChart = async () => {
   try {
@@ -126,6 +131,7 @@ const pieOptions = {
 const handleYearChange = () => {
   loadRevenueChart()
   loadStatusChart()
+  loadTopSanPham()
 }
 
 const loadStatusChart = async () => {
@@ -266,10 +272,59 @@ const topSanPhamOptions = {
   },
 }
 
+const tonKhoData = ref([])
+const loadTopTonKho = async () => {
+
+  try {
+
+    const res = await axios.get(
+      "http://localhost:8080/api/hoa-don/thong-ke/top-ton-kho"
+    )
+
+    tonKhoData.value = res.data
+
+  } catch (e) {
+
+    console.log(e)
+
+  }
+
+}
+
+const tonKhoChartData = computed(() => ({
+
+  labels: tonKhoData.value.map(item => item.tenSanPham),
+
+  datasets: [
+    {
+
+      label: "Số lượng tồn",
+
+      data: tonKhoData.value.map(item => item.soLuongTon),
+
+      backgroundColor: [
+        "#3b82f6",
+        "#22c55e",
+        "#f59e0b",
+        "#ef4444",
+        "#8b5cf6"
+      ],
+
+      borderRadius: 12,
+
+      barThickness: 30
+
+    }
+  ]
+
+}))
+
 onMounted(() => {
   loadDashboard()
   loadRevenueChart()
+  loadStatusChart()
   loadTopSanPham()
+  loadTopTonKho()
 })
 </script>
 
@@ -317,10 +372,18 @@ onMounted(() => {
     <div class="year-filter mt-4 mb-4">
       <label class="form-label">Chọn năm</label>
 
-      <select class="form-select year-select" v-model="selectedYear" @change="handleYearChange">
-        <option :value="2024">2024</option>
-        <option :value="2025">2025</option>
-        <option :value="2026">2026</option>
+      <select
+        class="form-select year-select"
+        v-model="selectedYear"
+        @change="handleYearChange"
+      >
+        <option
+          v-for="year in years"
+          :key="year"
+          :value="year"
+        >
+          {{ year }}
+        </option>
       </select>
     </div>
 
@@ -347,11 +410,51 @@ onMounted(() => {
     </div>
 
     <div class="chart-card top-product mt-4">
-      <h3 class="chart-title">Top 5 sản phẩm bán chạy năm {{ selectedYear }}</h3>
-      <div class="top-product-chart">
-        <Bar :data="topSanPhamChartData" :options="topSanPhamOptions" />
+      <h3 class="chart-title">
+        Top 5 sản phẩm bán chạy năm {{ selectedYear }}
+      </h3>
+
+      <div
+        v-if="topSanPhamData.length === 0"
+        class="empty-chart"
+      >
+        <i class="bi bi-box-seam-fill empty-icon"></i>
+
+        <h5>Chưa có dữ liệu</h5>
+
+        <p>
+          Không có sản phẩm nào được bán trong năm {{ selectedYear }}
+        </p>
+      </div>
+
+      <div
+        v-else
+        class="top-product-chart"
+      >
+        <Bar
+          :data="topSanPhamChartData"
+          :options="topSanPhamOptions"
+        />
       </div>
     </div>
+
+    <div class="chart-card top-product mt-4">
+
+      <h3 class="chart-title">
+        Top 5 sản phẩm tồn kho nhiều
+      </h3>
+
+      <div class="top-product-chart">
+
+        <Bar
+          :data="tonKhoChartData"
+          :options="topSanPhamOptions"
+        />
+
+      </div>
+
+    </div>
+
   </div>
 </template>
 <style scoped>
@@ -496,4 +599,32 @@ onMounted(() => {
     margin: 0 auto;
   }
 }
+
+.empty-chart{
+  height:350px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  color:#9ca3af;
+}
+
+.empty-icon{
+  font-size:60px;
+  color:#d1d5db;
+  margin-bottom:15px;
+}
+
+.empty-chart h5{
+  color:#374151;
+  font-weight:700;
+  margin-bottom:8px;
+}
+
+.empty-chart p{
+  margin:0;
+  font-size:15px;
+}
+
 </style>

@@ -20,4 +20,7 @@ public interface HoaDonService {
     List<TopSanPhamBanChayDTO> getTop5SanPhamBanChay(int year);
 
     HoaDon capNhatTrangThai(Long idHoaDon, UpdateTrangThaiRequest request);
+
+    void huyDon(Long id);
+    List<TopTonKhoDTO> getTop5TonKho();
 }

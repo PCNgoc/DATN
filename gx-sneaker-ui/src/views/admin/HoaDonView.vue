@@ -93,10 +93,17 @@
               <td class="text-secondary">{{ hd.soDienThoaiNguoiNhan }}</td>
               <td><span class="tien">{{ formatMoney(hd.tongTienThanhToan) }}</span></td>
               <td>
-                  <span class="status-pill" :class="getStatusClass(hd.trangThai)">
-                    <i :class="getStatusIcon(hd.trangThai)" class="me-1"></i>
-                    {{ getStatusText(hd.trangThai) }}
-                  </span>
+  <span
+    class="status-pill"
+    :class="getStatusClass(hd.trangThai)"
+  >
+    <i
+      :class="getStatusIcon(hd.trangThai)"
+      class="me-1"
+    ></i>
+
+    {{ getStatusText(hd.trangThai) }}
+  </span>
               </td>
               <td>
                 <div class="date-time">
@@ -373,6 +380,7 @@
 import axios from 'axios'
 import { ref, onMounted } from 'vue'
 
+
 const hoaDons = ref([])
 const searchMaHD = ref('')
 const searchStatus = ref('')
@@ -393,26 +401,54 @@ const loadHoaDon = async (maHD = '', status = '') => {
 }
 
 const updateStatus = async (id, trangThaiMoi) => {
+
   try {
+
+    let ghiChu = "";
+
+    // Nếu hủy đơn thì bắt nhập lý do
+    if (trangThaiMoi === "DA_HUY") {
+
+      ghiChu = prompt("Nhập lý do hủy đơn:");
+
+      if (ghiChu === null) {
+        return; // Người dùng bấm Cancel
+      }
+
+      if (!ghiChu.trim()) {
+        alert("Vui lòng nhập lý do hủy đơn!");
+        return;
+      }
+    }
+
     await axios.put(
       `http://localhost:8080/api/hoa-don/${id}/status`,
       {
         trangThaiMoi,
         nguoiThucHien: "Admin",
-        ghiChu: ""
+        ghiChu
       }
-    )
+    );
 
     await loadHoaDon(
       searchMaHD.value,
       searchStatus.value
-    )
+    );
 
-    alert("Cập nhật trạng thái thành công!")
+    alert("Cập nhật trạng thái thành công!");
+
   } catch (error) {
-    console.error(error)
-    alert("Cập nhật trạng thái thất bại!")
+
+    console.error(error);
+
+    alert(
+      error.response?.data ||
+      error.response?.data?.message ||
+      "Cập nhật trạng thái thất bại!"
+    );
+
   }
+
 }
 
 
@@ -464,10 +500,17 @@ const formatMoney = (v) => v ? Number(v).toLocaleString('vi-VN') + ' đ' : '0 đ
 const formatDate = (s) => s ? `${String(new Date(s).getDate()).padStart(2,'0')}/${String(new Date(s).getMonth()+1).padStart(2,'0')}/${new Date(s).getFullYear()}` : ''
 const formatTime = (s) => s ? `${String(new Date(s).getHours()).padStart(2,'0')}:${String(new Date(s).getMinutes()).padStart(2,'0')}` : ''
 
-const getStatusText = (s) => {
-  const m = { 'CHO_XAC_NHAN': 'CHỜ XÁC NHẬN', 'DA_XAC_NHAN': 'ĐÃ XÁC NHẬN', 'DANG_GIAO': 'ĐANG GIAO', 'HOAN_THANH': 'HOÀN THÀNH', 'DA_HUY': 'ĐÃ HỦY' }
-  return m[s] || s
-}
+const getStatusText = (status) =>
+  ({
+    CHO_XAC_NHAN: "Chờ xác nhận",
+    DA_XAC_NHAN: "Đã xác nhận",
+    CHO_THANH_TOAN: "Chờ thanh toán",
+    CHUA_THANH_TOAN: "Chưa thanh toán",
+    DA_THANH_TOAN: "Đã thanh toán",
+    DANG_GIAO: "Đang giao",
+    HOAN_THANH: "Hoàn thành",
+    DA_HUY: "Đã hủy",
+  })[status] || status
 const getStatusClass = (s) => {
   switch (s) {
     case 'CHO_XAC_NHAN': return 'bg-warning-custom'

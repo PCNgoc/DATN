@@ -11,6 +11,7 @@ import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.PhieuGiamGiaRepository;
 import com.gxsneaker.gxsneaker.service.HoaDonService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
@@ -29,6 +30,7 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final ChiTietSanPhamRepository chiTietSanPhamRepository;
     private final PhieuGiamGiaRepository phieuGiamGiaRepository;
     private final PayOSPaymentService payOSPaymentService;
+
 
     @Override
     public List<DoanhThuTheoThangDTO> getDoanhThuTheoThang(int year) {
@@ -69,6 +71,9 @@ public class HoaDonServiceImpl implements HoaDonService {
     @Override
     @Transactional
     public HoaDon datHang(DatHangRequestDTO request) {
+
+        System.out.println("========== REQUEST ==========");
+        System.out.println(request.getIdKhachHang());
 
         String phuongThucThanhToan = xacDinhPhuongThucThanhToan(request);
 
@@ -470,4 +475,57 @@ public class HoaDonServiceImpl implements HoaDonService {
                 .items(items)
                 .build();
     }
+
+
+    @Transactional
+    public void huyDon(Long id){
+
+        System.out.println("===== HUY DON =====");
+        System.out.println("ID = " + id);
+
+        HoaDon hoaDon = hoaDonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+
+        System.out.println("Trang thai DB = " + hoaDon.getTrangThai());
+
+        if (!hoaDon.getTrangThai().equals("CHO_XAC_NHAN")
+                && !hoaDon.getTrangThai().equals("CHO_THANH_TOAN")) {
+
+            throw new RuntimeException("Đơn hàng không thể hủy");
+        }
+
+
+
+        hoaDon.setTrangThai("DA_HUY");
+
+        hoaDonRepository.save(hoaDon);
+
+        // trả lại tồn kho
+
+        List<HoaDonChiTiet> list =
+                hoaDonChiTietRepository.findByHoaDonId(id);
+
+        for(HoaDonChiTiet item : list){
+
+            ChiTietSanPham ctsp = item.getChiTietSanPham();
+
+            ctsp.setSoLuongTon(
+                    ctsp.getSoLuongTon() + item.getSoLuong()
+            );
+
+            chiTietSanPhamRepository.save(ctsp);
+        }
+
+    }
+
+    @Override
+    public List<TopTonKhoDTO> getTop5TonKho() {
+
+        return chiTietSanPhamRepository.topTonKho(
+                PageRequest.of(0, 5)
+        );
+
+    }
+
+
 }

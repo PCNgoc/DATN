@@ -3,12 +3,57 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { getHoaDonById } from "@/services/HoaDonService";
 
+
+
 const route = useRoute();
 
 const order = ref(null);
 
 const loading = ref(true);
+const getStatusText = (status) => {
+  const map = {
+    CHO_XAC_NHAN: "Chờ xác nhận",
+    DA_XAC_NHAN: "Đã xác nhận",
+    CHO_THANH_TOAN: "Chờ thanh toán",
+    CHUA_THANH_TOAN: "Chưa thanh toán",
+    DA_THANH_TOAN: "Đã thanh toán",
+    DANG_GIAO: "Đang giao",
+    HOAN_THANH: "Hoàn thành",
+    DA_HUY: "Đã hủy",
+  }
 
+  return map[status] || status
+}
+
+const getStatusClass = (status) => {
+  const map = {
+    CHO_XAC_NHAN: "warning",
+    DA_XAC_NHAN: "primary",
+    CHO_THANH_TOAN: "secondary",
+    CHUA_THANH_TOAN: "dark",
+    DA_THANH_TOAN: "info",
+    DANG_GIAO: "success",
+    HOAN_THANH: "completed",
+    DA_HUY: "danger",
+  }
+
+  return map[status] || "secondary"
+}
+
+const getStatusIcon = (status) => {
+  const map = {
+    CHO_XAC_NHAN: "bi bi-hourglass-split",
+    DA_XAC_NHAN: "bi bi-check2-circle",
+    CHO_THANH_TOAN: "bi bi-wallet2",
+    CHUA_THANH_TOAN: "bi bi-cash-stack",
+    DA_THANH_TOAN: "bi bi-credit-card-2-front",
+    DANG_GIAO: "bi bi-truck",
+    HOAN_THANH: "bi bi-patch-check-fill",
+    DA_HUY: "bi bi-x-circle-fill",
+  }
+
+  return map[status] || "bi bi-circle"
+}
 const formatMoney = (money) => {
   return Number(money).toLocaleString("vi-VN");
 };
@@ -60,7 +105,18 @@ onMounted(async () => {
 
         <p>
           <b>Trạng thái:</b>
-          {{ order.trangThai }}
+
+          <span
+            class="status-pill"
+            :class="getStatusClass(order.trangThai)"
+          >
+        <i
+          :class="getStatusIcon(order.trangThai)"
+          class="me-1"
+        ></i>
+
+        {{ getStatusText(order.trangThai) }}
+    </span>
         </p>
 
         <p>
@@ -203,6 +259,57 @@ onMounted(async () => {
 
 img{
   border-radius:8px;
+}
+
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:13px;
+  font-weight:600;
+}
+
+.status-pill.warning{
+  background:#fff3cd;
+  color:#856404;
+}
+
+.status-pill.primary{
+  background:#cfe2ff;
+  color:#084298;
+}
+
+.status-pill.secondary{
+  background:#e2e3e5;
+  color:#41464b;
+}
+
+.status-pill.dark{
+  background:#d3d3d4;
+  color:#1f1f1f;
+}
+
+.status-pill.info{
+  background:#cff4fc;
+  color:#055160;
+}
+
+.status-pill.success{
+  background:#d1e7dd;
+  color:#0f5132;
+}
+
+.status-pill.completed{
+  background:#198754;
+  color:white;
+}
+
+.status-pill.danger{
+  background:#f8d7da;
+  color:#842029;
 }
 
 </style>

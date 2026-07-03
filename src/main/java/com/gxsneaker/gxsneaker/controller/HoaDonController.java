@@ -398,4 +398,21 @@ public class HoaDonController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/huy")
+    public ResponseEntity<?> huyDon(@PathVariable Long id) {
+
+        hoaDonService.huyDon(id);
+
+        return ResponseEntity.ok("Hủy đơn thành công");
+    }
+
+    @GetMapping("/thong-ke/top-ton-kho")
+    public ResponseEntity<?> getTopTonKho() {
+
+        return ResponseEntity.ok(
+                hoaDonService.getTop5TonKho()
+        );
+
+    }
 }
