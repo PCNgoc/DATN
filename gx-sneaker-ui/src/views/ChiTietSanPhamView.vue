@@ -43,6 +43,8 @@ const showSizeModal = ref(false)
 const newColor = ref("")
 
 const newSize = ref("")
+
+const showGenerateModal = ref(false)
 // =======================
 
 const form = ref({
@@ -56,6 +58,8 @@ const form = ref({
   idKichThuoc:null,
 
   maChiTiet:"",
+
+  sku: "",
 
   soLuongTon:0,
 
@@ -240,6 +244,8 @@ const resetForm = ()=>{
 
     maChiTiet:"",
 
+    sku:"",
+
     soLuongTon:0,
 
     giaNhap:0,
@@ -261,6 +267,27 @@ const openCreate = ()=>{
   resetForm()
 
   showModal.value = true
+
+}
+const openGenerate = () => {
+
+  generateForm.value = {
+
+    mauSacIds: [],
+
+    kichThuocIds: [],
+
+    giaNhap: null,
+
+    giaBan: null,
+
+    soLuongTon: 0,
+
+    trangThai: true
+
+  }
+
+  showGenerateModal.value = true
 
 }
 
@@ -391,16 +418,67 @@ const saveItem = async()=>{
 
   }catch(e){
 
+
+    console.log(e)
+
+    if (e.response) {
+
+      alert(
+        e.response.data.message ||
+        e.response.data.error ||
+        "Lỗi lưu dữ liệu"
+      )
+
+    } else {
+
+      alert("Không kết nối được server")
+
+    }
+
+  }
+
+}
+const generateVariants = async () => {
+
+  try {
+
+    await axios.post(
+
+      "http://localhost:8080/api/chi-tiet-san-pham/generate",
+
+      {
+
+        idSanPham: Number(route.params.id),
+
+        ...generateForm.value
+
+      }
+
+    )
+
+    showGenerateModal.value = false
+
+    await loadDetails()
+
+    alert("Sinh biến thể thành công")
+
+  }
+
+  catch (e) {
+
     console.log(e)
 
     alert(
-      "Lỗi lưu dữ liệu"
+
+      e.response?.data ||
+
+      "Không thể sinh biến thể"
+
     )
 
   }
 
 }
-
 // =======================
 
 const deleteItem = async(id)=>{
@@ -494,6 +572,14 @@ const addSize = async () => {
   }
 
 }
+const generateForm = ref({
+  mauSacIds: [],
+  kichThuocIds: [],
+  giaNhap: null,
+  giaBan: null,
+  soLuongTon: 0,
+  trangThai: true
+})
 
 // =======================
 
@@ -589,7 +675,12 @@ onMounted(()=>{
       >
         + Thêm biến thể
       </button>
-
+      <button
+        class="btn-add"
+        @click="openGenerate"
+      >
+        ⚡ Sinh biến thể
+      </button>
     </div>
 
     <!-- TABLE -->
@@ -603,6 +694,7 @@ onMounted(()=>{
         <tr>
 
           <th>Mã CT</th>
+          <th>SKU</th>
 
           <th>Màu sắc</th>
 
@@ -629,7 +721,7 @@ onMounted(()=>{
         <tr
           v-if="loading"
         >
-          <td colspan="8">
+          <td colspan="9">
             Đang tải dữ liệu...
           </td>
         </tr>
@@ -641,6 +733,10 @@ onMounted(()=>{
 
           <td>
             {{ item.maChiTiet }}
+          </td>
+
+          <td>
+            {{ item.sku }}
           </td>
 
           <td>
@@ -714,7 +810,7 @@ onMounted(()=>{
             filteredDetails.length === 0
           "
         >
-          <td colspan="8">
+          <td colspan="9">
             Không có dữ liệu
           </td>
         </tr>
@@ -751,7 +847,15 @@ onMounted(()=>{
         <!-- FORM -->
 
         <div class="form-grid">
+          <div>
+            <label>SKU</label>
 
+            <input
+              v-model="form.sku"
+              readonly
+              placeholder="SKU sẽ tự sinh"
+            />
+          </div>
           <!-- SỐ LƯỢNG TỒN -->
           <div>
             <label>Số lượng tồn</label>
@@ -905,6 +1009,119 @@ onMounted(()=>{
             @click="closeModal"
           >
             ✖ Hủy
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+    <div
+      v-if="showGenerateModal"
+      class="modal"
+    >
+
+      <div class="modal-content">
+
+        <h2>Sinh biến thể</h2>
+
+        <div class="checkbox-group">
+
+          <label
+            class="checkbox-item"
+            v-for="m in mauSacList"
+            :key="m.id"
+          >
+
+            <input
+              type="checkbox"
+              :value="m.id"
+              v-model="generateForm.mauSacIds"
+            >
+
+            {{ m.ten }}
+
+          </label>
+
+        </div>
+
+        <div class="checkbox-group">
+
+          <label
+            class="checkbox-item"
+            v-for="k in kichThuocList"
+            :key="k.id"
+          >
+
+            <input
+              type="checkbox"
+              :value="k.id"
+              v-model="generateForm.kichThuocIds"
+            >
+
+            {{ k.size }}
+
+          </label>
+
+        </div>
+
+        <label>Giá nhập</label>
+
+        <input
+
+          type="number"
+
+          v-model="generateForm.giaNhap"
+
+        >
+
+        <label>Giá bán</label>
+
+        <input
+
+          type="number"
+
+          v-model="generateForm.giaBan"
+
+        >
+
+        <label>Số lượng</label>
+
+        <input
+
+          type="number"
+
+          v-model="generateForm.soLuongTon"
+
+        >
+        <label>Trạng thái</label>
+
+        <select v-model="generateForm.trangThai">
+
+          <option :value="true">
+            Hoạt động
+          </option>
+
+          <option :value="false">
+            Ngừng
+          </option>
+
+        </select>
+
+        <div class="modal-footer">
+
+          <button
+            class="btn-save"
+            @click="generateVariants"
+          >
+            Sinh
+          </button>
+
+          <button
+            class="btn-cancel"
+            @click="showGenerateModal=false"
+          >
+            Hủy
           </button>
 
         </div>
@@ -1343,5 +1560,73 @@ tbody tr:hover{
 .form-grid input.error-input,
 .form-grid select.error-input{
   border:1px solid #dc2626;
+}
+.sku{
+  display:inline-block;
+  background:#f3f4f6;
+  padding:5px 12px;
+  border-radius:6px;
+  font-weight:600;
+  color:#2563eb;
+}
+/* ==================== GENERATE VARIANT MODAL ==================== */
+
+.modal-content {
+  width: 650px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content label {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: 600;
+}
+
+.modal-content input[type="number"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  outline: none;
+  transition: .2s;
+}
+
+.modal-content input[type="number"]:focus {
+  border-color: #409EFF;
+}
+
+.checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.checkbox-item:hover {
+  background: #f5f7fa;
+}
+
+.checkbox-item input {
+  cursor: pointer;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
 }
 </style>

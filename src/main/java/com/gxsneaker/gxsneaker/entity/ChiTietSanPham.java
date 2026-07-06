@@ -42,6 +42,9 @@ public class ChiTietSanPham {
     @Column(name = "ma_chi_tiet")
     private String maChiTiet;
 
+    @Column(name = "sku")
+    private String sku;
+
     @Column(name = "so_luong_ton")
     private Integer soLuongTon;
 

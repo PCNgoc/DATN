@@ -16,6 +16,7 @@ public class ChiTietSanPhamMapper {
         dto.setIdMauSac(ctsp.getMauSac() != null ? ctsp.getMauSac().getId() : null);
         dto.setIdKichThuoc(ctsp.getKichThuoc() != null ? ctsp.getKichThuoc().getId() : null);
         dto.setMaChiTiet(ctsp.getMaChiTiet());
+        dto.setSku(ctsp.getSku());
         dto.setSoLuongTon(ctsp.getSoLuongTon());
         dto.setGiaNhap(ctsp.getGiaNhap());
         dto.setGiaBan(ctsp.getGiaBan());

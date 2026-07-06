@@ -11,6 +11,7 @@ public class ChiTietSanPhamDTO {
     private Long idMauSac;
     private Long idKichThuoc;
     private String maChiTiet;
+    private String sku;
     private Integer soLuongTon;
     private BigDecimal giaNhap;
     private BigDecimal giaBan;

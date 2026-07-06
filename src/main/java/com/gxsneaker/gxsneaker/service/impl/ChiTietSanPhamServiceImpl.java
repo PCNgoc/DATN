@@ -1,6 +1,7 @@
 package com.gxsneaker.gxsneaker.service.impl;
 
 import com.gxsneaker.gxsneaker.dto.ChiTietSanPhamDTO;
+import com.gxsneaker.gxsneaker.dto.GenerateVariantDTO;
 import com.gxsneaker.gxsneaker.entity.*;
 import com.gxsneaker.gxsneaker.mapper.ChiTietSanPhamMapper;
 import com.gxsneaker.gxsneaker.repository.*;
@@ -8,7 +9,8 @@ import com.gxsneaker.gxsneaker.service.ChiTietSanPhamService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 @Service
 public class ChiTietSanPhamServiceImpl
         implements ChiTietSanPhamService {
@@ -104,6 +106,19 @@ public class ChiTietSanPhamServiceImpl
 
         ctsp.setMaChiTiet(maMoi);
 
+        String sku =
+                sanPham.getMaSanPham()
+                        + "-"
+                        + mauSac.getMa()
+                        + "-"
+                        + kichThuoc.getMa();
+
+        if(repository.existsBySku(sku)){
+            throw new RuntimeException("Biến thể này đã tồn tại");
+        }
+
+        ctsp.setSku(sku);
+
         ctsp.setSoLuongTon(
                 dto.getSoLuongTon()
         );
@@ -119,7 +134,18 @@ public class ChiTietSanPhamServiceImpl
         ctsp.setTrangThai(
                 dto.getTrangThai()
         );
+        boolean tonTai = repository.existsBySanPhamIdAndMauSacIdAndKichThuocId(
+                dto.getIdSanPham(),
+                dto.getIdMauSac(),
+                dto.getIdKichThuoc()
+        );
 
+        if (tonTai) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Biến thể này đã tồn tại."
+            );
+        }
         repository.save(ctsp);
 
         return ChiTietSanPhamMapper
@@ -158,7 +184,14 @@ public class ChiTietSanPhamServiceImpl
                         .orElse(null)
         );
 
+        String sku =
+                old.getSanPham().getMaSanPham()
+                        + "-"
+                        + old.getMauSac().getMa()
+                        + "-"
+                        + old.getKichThuoc().getMa();
 
+        old.setSku(sku);
         old.setSoLuongTon(
                 dto.getSoLuongTon()
         );
@@ -174,7 +207,14 @@ public class ChiTietSanPhamServiceImpl
         old.setTrangThai(
                 dto.getTrangThai()
         );
-
+        if(repository.existsWhenUpdate(
+                id,
+                dto.getIdSanPham(),
+                dto.getIdMauSac(),
+                dto.getIdKichThuoc()
+        )){
+            throw new RuntimeException("Biến thể đã tồn tại");
+        }
         return ChiTietSanPhamMapper.toDTO(
                 repository.save(old)
         );
@@ -183,5 +223,96 @@ public class ChiTietSanPhamServiceImpl
     @Override
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    @Override
+    public void generateVariants(GenerateVariantDTO dto) {
+
+        SanPham sanPham = sanPhamRepository
+                .findById(dto.getIdSanPham())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+        for (Long mauId : dto.getMauSacIds()) {
+
+            MauSac mauSac = mauSacRepository
+                    .findById(mauId)
+                    .orElse(null);
+
+            for (Long sizeId : dto.getKichThuocIds()) {
+
+                KichThuoc kichThuoc = kichThuocRepository
+                        .findById(sizeId)
+                        .orElse(null);
+
+                // kiểm tra đã tồn tại chưa
+                boolean tonTai = repository
+                        .existsBySanPhamIdAndMauSacIdAndKichThuocId(
+                                dto.getIdSanPham(),
+                                mauId,
+                                sizeId
+                        );
+
+                if (tonTai) {
+                    continue;
+                }
+
+                ChiTietSanPham ct = new ChiTietSanPham();
+
+                ct.setSanPham(sanPham);
+
+                ct.setMauSac(mauSac);
+
+                ct.setKichThuoc(kichThuoc);
+
+                //-----------------------------------
+                // Mã chi tiết
+                //-----------------------------------
+
+                String maxMa = repository.getMaxMaChiTiet();
+
+                String maMoi;
+
+                if (maxMa == null) {
+
+                    maMoi = "CT001";
+
+                } else {
+
+                    int so = Integer.parseInt(maxMa.substring(2));
+
+                    maMoi = String.format("CT%03d", so + 1);
+                }
+
+                ct.setMaChiTiet(maMoi);
+
+                //-----------------------------------
+                // SKU
+                //-----------------------------------
+
+                String sku =
+                        sanPham.getMaSanPham()
+                                + "-"
+                                + mauSac.getMa()
+                                + "-"
+                                + kichThuoc.getMa();
+
+                ct.setSku(sku);
+
+                //-----------------------------------
+
+                ct.setGiaNhap(dto.getGiaNhap());
+
+                ct.setGiaBan(dto.getGiaBan());
+
+                ct.setSoLuongTon(dto.getSoLuongTon());
+
+                ct.setTrangThai(dto.getTrangThai());
+
+                repository.save(ct);
+
+            }
+
+        }
+
     }
 }

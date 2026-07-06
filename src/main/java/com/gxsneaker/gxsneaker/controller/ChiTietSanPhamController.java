@@ -1,6 +1,7 @@
 package com.gxsneaker.gxsneaker.controller;
 
 import com.gxsneaker.gxsneaker.dto.ChiTietSanPhamDTO;
+import com.gxsneaker.gxsneaker.dto.GenerateVariantDTO;
 import com.gxsneaker.gxsneaker.service.ChiTietSanPhamService;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,5 +60,11 @@ public class ChiTietSanPhamController {
             @PathVariable Long id
     ){
         service.delete(id);
+    }
+    @PostMapping("/generate")
+    public void generateVariants(
+            @RequestBody GenerateVariantDTO dto
+    ){
+        service.generateVariants(dto);
     }
 }
