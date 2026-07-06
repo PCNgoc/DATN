@@ -91,7 +91,19 @@ public class SanPhamServiceImpl implements SanPhamService {
         sp.setDeGiay(deGiay);
         sp.setDanhMuc(danhMuc);
 
-        sp.setMaSanPham(dto.getMaSanPham());
+        String maxMa = sanPhamRepository.getMaxMaSanPham();
+
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "SP001";
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = String.format("SP%03d", so + 1);
+        }
+
+        sp.setMaSanPham(maMoi);
+
         sp.setTenSanPham(dto.getTenSanPham());
 
         sp.setGioiTinh(dto.getGioiTinh());
@@ -139,7 +151,6 @@ public class SanPhamServiceImpl implements SanPhamService {
                 danhMucRepository.findById(dto.getIdDanhMuc()).orElse(null)
         );
 
-        sp.setMaSanPham(dto.getMaSanPham());
         sp.setTenSanPham(dto.getTenSanPham());
 
         sp.setGioiTinh(dto.getGioiTinh());

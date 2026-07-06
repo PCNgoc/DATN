@@ -529,11 +529,6 @@ const saveProduct = async () => {
   form.value.maSanPham = form.value.maSanPham.trim()
   form.value.tenSanPham = form.value.tenSanPham.trim()
 
-  if (form.value.maSanPham === "") {
-    errors.value.maSanPham = "Vui lòng nhập mã sản phẩm"
-    valid = false
-  }
-
   if (form.value.tenSanPham === "") {
     errors.value.tenSanPham = "Vui lòng nhập tên sản phẩm"
     valid = false
@@ -786,12 +781,6 @@ const closeModal=()=>{
 
 
         <!-- THÔNG TIN -->
-        <input
-          v-model="form.maSanPham"
-          placeholder="Mã sản phẩm"
-        />
-        <div class="error">{{ errors.maSanPham }}</div>
-
         <input
           v-model="form.tenSanPham"
           placeholder="Tên sản phẩm"

@@ -77,8 +77,6 @@ const form = ref({
 
 const errors = ref({
 
-  ma:"",
-
   ten:""
 
 })
@@ -329,8 +327,6 @@ const validate=()=>{
 
   errors.value={
 
-    ma:"",
-
     ten:""
 
   }
@@ -338,24 +334,6 @@ const validate=()=>{
 
 
   let ok=true
-
-
-
-
-  if(!form.value.ma.trim()){
-
-
-    errors.value.ma =
-      "Mã thương hiệu không được để trống"
-
-
-    ok=false
-
-  }
-
-
-
-
 
   if(!form.value.ten.trim()){
 
@@ -367,9 +345,6 @@ const validate=()=>{
     ok=false
 
   }
-
-
-
 
   return ok
 
@@ -725,35 +700,6 @@ onMounted(load)
 
 
       <div class="grid">
-
-
-
-        <!-- MÃ -->
-
-        <div>
-
-          <label>
-            Mã thương hiệu *
-          </label>
-
-
-          <input
-            v-model="form.ma"
-          >
-
-
-          <small class="error">
-            {{errors.ma}}
-          </small>
-
-
-        </div>
-
-
-
-
-
-
         <!-- TÊN -->
 
 

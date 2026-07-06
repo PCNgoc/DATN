@@ -37,6 +37,19 @@ public class XuatXuServiceImpl implements XuatXuService {
     @Override
     public XuatXuDTO create(XuatXuDTO dto) {
         XuatXu xuatXu = XuatXuMapper.toEntity(dto);
+        // Sinh mã tự động
+        String maxMa = xuatXuRepository.getMaxMa();
+
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "XX001";
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = String.format("XX%03d", so + 1);
+        }
+
+        xuatXu.setMa(maMoi);
         xuatXuRepository.save(xuatXu);
         return XuatXuMapper.toDTO(xuatXu);
     }

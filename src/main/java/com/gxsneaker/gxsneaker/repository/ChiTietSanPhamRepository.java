@@ -19,7 +19,12 @@ public interface ChiTietSanPhamRepository
 
     @Transactional
     void deleteBySanPhamId(Long idSanPham);
-
+    @Query("""
+    SELECT MAX(ct.maChiTiet)
+    FROM ChiTietSanPham ct
+    WHERE ct.maChiTiet LIKE 'CT%'
+    """)
+    String getMaxMaChiTiet();
     @Query("""
 SELECT new com.gxsneaker.gxsneaker.dto.TopTonKhoDTO(
 sp.tenSanPham,

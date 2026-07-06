@@ -300,13 +300,6 @@ const validateForm = () => {
 
   let valid = true
 
-  if (!form.value.maChiTiet.trim()) {
-
-    errors.value.maChiTiet = "Vui lòng nhập mã chi tiết"
-
-    valid = false
-
-  }
 
   if (!form.value.idMauSac) {
 
@@ -758,20 +751,6 @@ onMounted(()=>{
         <!-- FORM -->
 
         <div class="form-grid">
-
-          <!-- MÃ CHI TIẾT -->
-          <div>
-            <label>Mã chi tiết</label>
-
-            <input
-              v-model="form.maChiTiet"
-              :class="{ 'error-input': errors.maChiTiet }"
-            />
-
-            <div class="error">
-              {{ errors.maChiTiet }}
-            </div>
-          </div>
 
           <!-- SỐ LƯỢNG TỒN -->
           <div>

@@ -36,6 +36,18 @@ public class KichThuocServiceImpl implements KichThuocService {
     public KichThuocDTO create(KichThuocDTO dto) {
 
         KichThuoc kichThuoc = KichThuocMapper.toEntity(dto);
+        String maxMa = kichThuocRepository.getMaxMa();
+
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "KT35";   // hoặc KT01 nếu muốn bắt đầu từ 1
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = "KT" + (so + 1);
+        }
+
+        kichThuoc.setMa(maMoi);
 
         kichThuocRepository.save(kichThuoc);
 

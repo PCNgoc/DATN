@@ -8,6 +8,14 @@ import java.util.List;
 
 public interface SanPhamRepository extends JpaRepository<SanPham, Long> {
     boolean existsByMaSanPham(String maSanPham);
+    @Query("SELECT COALESCE(MAX(sp.id),0) FROM SanPham sp")
+    Long getMaxId();
+    @Query("""
+    SELECT MAX(sp.maSanPham)
+    FROM SanPham sp
+    WHERE sp.maSanPham LIKE 'SP%'
+    """)
+    String getMaxMaSanPham();
     @Query("""
     SELECT sp
     FROM SanPham sp

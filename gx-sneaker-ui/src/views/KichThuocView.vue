@@ -21,7 +21,6 @@ const form = ref({
 
 // ERROR
 const errors = ref({
-  ma: "",
   size: ""
 })
 
@@ -49,14 +48,10 @@ const validate = () => {
   let ok = true
 
   errors.value = {
-    ma: "",
     size: ""
   }
 
-  if (!form.value.ma.trim()) {
-    errors.value.ma = "⚠ Mã không được để trống"
-    ok = false
-  }
+
 
   if (!form.value.size) {
     errors.value.size = "⚠ Size không được để trống"
@@ -155,16 +150,6 @@ onMounted(load)
     <div class="card form">
 
       <div class="grid">
-
-        <div>
-          <input
-            v-model="form.ma"
-            placeholder="Mã kích thước"
-          />
-          <small class="error-text">
-            {{ errors.ma }}
-          </small>
-        </div>
 
         <div>
           <input

@@ -22,7 +22,6 @@ const form = ref({
 
 // ERROR
 const errors = ref({
-  ma: "",
   ten: "",
   maHex: ""
 })
@@ -51,15 +50,10 @@ const validate = () => {
   let ok = true
 
   errors.value = {
-    ma: "",
     ten: "",
     maHex: ""
   }
 
-  if (!form.value.ma.trim()) {
-    errors.value.ma = "⚠ Mã không được để trống"
-    ok = false
-  }
 
   if (!form.value.ten.trim()) {
     errors.value.ten = "⚠ Tên không được để trống"
@@ -165,15 +159,6 @@ onMounted(load)
 
       <div class="grid">
 
-        <div>
-          <input
-            v-model="form.ma"
-            placeholder="Mã màu"
-          />
-          <small class="error-text">
-            {{ errors.ma }}
-          </small>
-        </div>
 
         <div>
           <input

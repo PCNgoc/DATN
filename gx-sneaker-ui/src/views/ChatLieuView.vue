@@ -49,12 +49,7 @@ const load = async () => {
 // ================= VALIDATE =================
 const validate = () => {
   let ok = true
-  errors.value = { ma: "", ten: "" }
-
-  if (!form.value.ma.trim()) {
-    errors.value.ma = "Mã không được để trống"
-    ok = false
-  }
+  errors.value = {  ten: "" }
 
   if (!form.value.ten.trim()) {
     errors.value.ten = "Tên không được để trống"
@@ -178,11 +173,6 @@ onMounted(load)
 
       <div class="grid">
 
-        <!-- Mã chất liệu -->
-        <div>
-          <input v-model="form.ma" placeholder="Mã chất liệu" />
-          <small class="error-text">{{ errors.ma }}</small>
-        </div>
 
         <!-- Tên chất liệu -->
         <div>

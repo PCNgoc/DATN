@@ -104,18 +104,12 @@ const validate = () => {
   let ok = true
 
   errors.value = {
-    ma: "",
     ten: "",
     moTa: "",
     thuTuHienThi: ""
   }
 
-  // MÃ
 
-  if (!form.value.ma.trim()) {
-    errors.value.ma = "⚠ Mã danh mục không được để trống"
-    ok = false
-  }
 
   // TÊN
 
@@ -303,18 +297,6 @@ const changePage = (p) => {
 
         <!-- Mã -->
 
-        <div class="form-group">
-          <label>Mã danh mục</label>
-
-          <input
-            v-model="form.ma"
-            placeholder="Nhập mã..."
-          />
-
-          <small class="error-text">
-            {{ errors.ma }}
-          </small>
-        </div>
 
         <!-- Tên -->
 

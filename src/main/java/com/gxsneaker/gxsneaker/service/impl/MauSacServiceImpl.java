@@ -32,6 +32,19 @@ public class MauSacServiceImpl implements MauSacService {
     @Override
     public MauSacDTO create(MauSacDTO dto) {
         MauSac mauSac = MauSacMapper.toEntity(dto);
+        // Sinh mã tự động
+        String maxMa = mauSacRepository.getMaxMa();
+
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "MS001";
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = String.format("MS%03d", so + 1);
+        }
+
+        mauSac.setMa(maMoi);
         mauSacRepository.save(mauSac);
         return MauSacMapper.toDTO(mauSac);
     }

@@ -36,6 +36,19 @@ public class ChatLieuServiceImpl implements ChatLieuService {
     @Override
     public ChatLieuDTO create(ChatLieuDTO dto) {
         ChatLieu chatLieu = ChatLieuMapper.toEntity(dto);
+        // Sinh mã tự động
+        String maxMa = chatLieuRepository.getMaxMa();
+
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "CL001";
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = String.format("CL%03d", so + 1);
+        }
+
+        chatLieu.setMa(maMoi);
         chatLieuRepository.save(chatLieu);
         return ChatLieuMapper.toDTO(chatLieu);
     }

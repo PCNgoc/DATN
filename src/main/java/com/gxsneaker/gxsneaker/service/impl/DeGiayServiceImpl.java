@@ -35,6 +35,19 @@ public class DeGiayServiceImpl implements DeGiayService {
     @Override
     public DeGiayDTO create(DeGiayDTO dto) {
         DeGiay  deGiay = DeGiayMapper.toEntity(dto);
+        // Sinh mã tự động
+        String maxMa = deGiayRepository.getMaxMa();
+
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "DG001";
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = String.format("DG%03d", so + 1);
+        }
+
+        deGiay.setMa(maMoi);
         deGiayRepository.save(deGiay);
         return DeGiayMapper.toDTO(deGiay);
     }

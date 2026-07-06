@@ -91,9 +91,18 @@ public class ChiTietSanPhamServiceImpl
 
         ctsp.setKichThuoc(kichThuoc);
 
-        ctsp.setMaChiTiet(
-                dto.getMaChiTiet()
-        );
+        String maxMa = repository.getMaxMaChiTiet();
+
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "CT001";
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = String.format("CT%03d", so + 1);
+        }
+
+        ctsp.setMaChiTiet(maMoi);
 
         ctsp.setSoLuongTon(
                 dto.getSoLuongTon()
@@ -149,9 +158,6 @@ public class ChiTietSanPhamServiceImpl
                         .orElse(null)
         );
 
-        old.setMaChiTiet(
-                dto.getMaChiTiet()
-        );
 
         old.setSoLuongTon(
                 dto.getSoLuongTon()

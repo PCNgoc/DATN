@@ -36,6 +36,19 @@ public class ThuongHieuServiceImpl implements ThuongHieuService {
     @Override
     public ThuongHieuDTO create(ThuongHieuDTO dto) {
         ThuongHieu e = ThuongHieuMapper.toEntity(dto);
+        // Sinh mã tự động
+        String maxMa = repo.getMaxMa();
+
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "TH001";
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = String.format("TH%03d", so + 1);
+        }
+
+        e.setMa(maMoi);
         return ThuongHieuMapper.toDTO(repo.save(e));
     }
 

@@ -38,7 +38,19 @@ public class DanhMucServiceImpl implements DanhMucService {
     @Override
     public DanhMucDTO create(DanhMucDTO dto) {
         DanhMuc entity = DanhMucMapper.toEntity(dto);
+        // Sinh mã tự động
+        String maxMa = danhMucRepository.getMaxMa();
 
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "DM001";
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = String.format("DM%03d", so + 1);
+        }
+
+        entity.setMa(maMoi);
         entity.setNgayTao(new Date());
 
         return DanhMucMapper.toDTO(
@@ -51,8 +63,6 @@ public class DanhMucServiceImpl implements DanhMucService {
         DanhMuc old = danhMucRepository.findById(id).orElse(null);
 
         if (old == null) return null;
-
-        old.setMa(dto.getMa());
         old.setTen(dto.getTen());
         old.setMoTa(dto.getMoTa());
         old.setThuTuHienThi(dto.getThuTuHienThi());

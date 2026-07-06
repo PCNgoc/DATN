@@ -36,6 +36,19 @@ public class CoGiayServiceImpl implements CoGiayService {
     @Override
     public CoGiayDTO create(CoGiayDTO dto) {
         CoGiay coGiay = CoGiayMapper.toEntity(dto);
+        // Sinh mã tự động
+        String maxMa = coGiayRepository.getMaxMa();
+
+        String maMoi;
+
+        if (maxMa == null) {
+            maMoi = "CG001";
+        } else {
+            int so = Integer.parseInt(maxMa.substring(2));
+            maMoi = String.format("CG%03d", so + 1);
+        }
+
+        coGiay.setMa(maMoi);
         coGiayRepository.save(coGiay);
         return CoGiayMapper.toDTO(coGiay);
     }
