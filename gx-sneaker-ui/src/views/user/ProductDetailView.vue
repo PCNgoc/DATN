@@ -6,8 +6,12 @@ import {
   getById as getProductById
 } from "@/services/sanPhamService"
 
+// import {
+//   getBySanPham
+// } from "@/services/chiTietSanPhamService"
+
 import {
-  getBySanPham
+  getBySanPhamUser
 } from "@/services/chiTietSanPhamService"
 
 import {
@@ -73,7 +77,7 @@ const loadProduct = async () => {
         `/images/${product.value.anhDaiDien}`
     }
 
-    const detailRes = await getBySanPham(id)
+    const detailRes = await getBySanPhamUser(id)
 
     details.value = detailRes.data || []
 

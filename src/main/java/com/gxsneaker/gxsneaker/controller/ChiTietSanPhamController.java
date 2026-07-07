@@ -40,6 +40,13 @@ public class ChiTietSanPhamController {
         return service.getBySanPham(id);
     }
 
+    @GetMapping("/user/san-pham/{id}")
+    public List<ChiTietSanPhamDTO> getBySanPhamUser(
+            @PathVariable Long id
+    ){
+        return service.getBySanPhamUser(id);
+    }
+
     @PostMapping
     public ChiTietSanPhamDTO create(
             @RequestBody ChiTietSanPhamDTO dto

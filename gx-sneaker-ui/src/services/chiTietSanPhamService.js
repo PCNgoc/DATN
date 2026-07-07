@@ -14,3 +14,6 @@ export const update = (id, data) =>
 
 export const remove = (id) =>
   axios.delete(`${API}/${id}`)
+
+export const getBySanPhamUser = (id) =>
+  axios.get(`${API}/user/san-pham/${id}`)

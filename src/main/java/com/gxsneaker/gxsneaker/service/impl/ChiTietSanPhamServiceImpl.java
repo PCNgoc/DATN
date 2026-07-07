@@ -55,6 +55,15 @@ public class ChiTietSanPhamServiceImpl
                 .map(ChiTietSanPhamMapper::toDTO)
                 .toList();
     }
+    @Override
+    public List<ChiTietSanPhamDTO> getBySanPhamUser(Long idSanPham) {
+
+        return repository
+                .findBySanPhamIdAndTrangThaiTrue(idSanPham)
+                .stream()
+                .map(ChiTietSanPhamMapper::toDTO)
+                .toList();
+    }
 
     @Override
     public ChiTietSanPhamDTO getById(Long id) {
@@ -315,4 +324,6 @@ public class ChiTietSanPhamServiceImpl
         }
 
     }
+
+
 }

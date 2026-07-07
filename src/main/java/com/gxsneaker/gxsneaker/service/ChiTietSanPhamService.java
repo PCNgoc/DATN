@@ -12,6 +12,8 @@ public interface ChiTietSanPhamService {
     List<ChiTietSanPhamDTO>
     getBySanPham(Long idSanPham);
 
+    List<ChiTietSanPhamDTO> getBySanPhamUser(Long idSanPham);
+
     ChiTietSanPhamDTO getById(Long id);
 
     ChiTietSanPhamDTO create(

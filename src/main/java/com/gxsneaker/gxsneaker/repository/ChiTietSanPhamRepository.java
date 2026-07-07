@@ -16,7 +16,8 @@ public interface ChiTietSanPhamRepository
         extends JpaRepository<ChiTietSanPham, Long> {
 
     List<ChiTietSanPham> findBySanPhamId(Long idSanPham);
-
+    // User chỉ lấy biến thể đang hoạt động
+    List<ChiTietSanPham> findBySanPhamIdAndTrangThaiTrue(Long idSanPham);
     @Transactional
     void deleteBySanPhamId(Long idSanPham);
     @Query("""
