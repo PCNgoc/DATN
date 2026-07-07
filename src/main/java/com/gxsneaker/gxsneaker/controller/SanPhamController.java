@@ -52,5 +52,10 @@ public class SanPhamController {
     public List<SanPhamDTO> getFeaturedProducts() {
         return sanPhamService.getFeaturedProducts();
     }
-
+    @PutMapping("/{id}/stop-selling")
+    public void stopSelling(
+            @PathVariable Long id
+    ){
+        sanPhamService.stopSelling(id);
+    }
 }

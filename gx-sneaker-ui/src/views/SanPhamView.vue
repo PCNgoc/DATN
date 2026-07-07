@@ -633,6 +633,36 @@ const deleteProduct = async (id) => {
 
 }
 
+const stopSelling = async (id) => {
+
+  if (
+    !confirm(
+      "Bạn có chắc muốn ngừng bán sản phẩm này?"
+    )
+  ) {
+    return
+  }
+
+  try {
+
+    await axios.put(
+      `http://localhost:8080/api/san-pham/${id}/stop-selling`
+    )
+
+    alert("Ngừng bán thành công")
+
+    await loadData()
+
+  } catch (e) {
+
+    console.log(e)
+
+    alert("Không thể ngừng bán sản phẩm")
+
+  }
+
+}
+
 // ================= CLOSE =================
 
 
@@ -727,11 +757,17 @@ const closeModal=()=>{
               ✏ Sửa
             </button>
 
+<!--            <button-->
+<!--              class="delete"-->
+<!--              @click.stop="deleteProduct(item.id)"-->
+<!--            >-->
+<!--              🗑 Xóa-->
+<!--            </button>-->
             <button
               class="delete"
-              @click.stop="deleteProduct(item.id)"
+              @click.stop="stopSelling(item.id)"
             >
-              🗑 Xóa
+              ⛔ Ngừng bán
             </button>
 
           </div>

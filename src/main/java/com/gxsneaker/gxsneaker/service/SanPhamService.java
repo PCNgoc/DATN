@@ -20,4 +20,6 @@ public interface SanPhamService {
 
     List<SanPhamDTO> getFeaturedProducts();
     List<SanPhamDTO> getNewestProducts();
+    void stopSelling(Long id);
+    List<SanPhamDTO> getAllActive();
 }

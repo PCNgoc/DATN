@@ -17,11 +17,12 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Long> {
     """)
     String getMaxMaSanPham();
     @Query("""
-    SELECT sp
-    FROM SanPham sp
-    WHERE LOWER(sp.tenSanPham)
-    LIKE LOWER(CONCAT('%',:keyword,'%'))
-    """)
+SELECT sp
+FROM SanPham sp
+WHERE sp.trangThai = true
+AND LOWER(sp.tenSanPham)
+LIKE LOWER(CONCAT('%',:keyword,'%'))
+""")
     List<SanPham> search(String keyword);
 
     @Query("""
@@ -32,4 +33,6 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Long> {
     List<SanPham> findNewestProducts();
     List<SanPham> findTop8ByTrangThaiTrueOrderByNgayTaoDesc();
     List<SanPham> findTop12ByTrangThaiTrue();
+
+    List<SanPham> findByTrangThaiTrue();
 }

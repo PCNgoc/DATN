@@ -19,7 +19,7 @@ public class ProductController {
 
     @GetMapping
     public List<SanPhamDTO> getAll() {
-        return sanPhamService.getAll();
+        return sanPhamService.getAllActive();
     }
 
     @GetMapping("/{id}")

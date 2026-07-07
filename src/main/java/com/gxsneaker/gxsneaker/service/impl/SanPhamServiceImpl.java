@@ -56,9 +56,14 @@ public class SanPhamServiceImpl implements SanPhamService {
 
     @Override
     public SanPhamDTO getById(Long id) {
-        return sanPhamRepository.findById(id)
-                .map(SanPhamMapper::toDTO)
-                .orElse(null);
+
+        SanPham sp = sanPhamRepository.findById(id).orElse(null);
+
+        if (sp == null || !sp.getTrangThai()) {
+            return null;
+        }
+
+        return SanPhamMapper.toDTO(sp);
     }
 
     @Override
@@ -226,5 +231,29 @@ public class SanPhamServiceImpl implements SanPhamService {
                 .limit(5)
                 .map(SanPhamMapper::toDTO)
                 .toList();
+    }
+    @Override
+    public void stopSelling(Long id){
+
+        SanPham sp =
+                sanPhamRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException("Không tìm thấy sản phẩm"));
+
+        sp.setTrangThai(false);
+
+        sanPhamRepository.save(sp);
+
+    }
+    @Override
+    public List<SanPhamDTO> getAllActive() {
+
+        return sanPhamRepository
+                .findByTrangThaiTrue()
+                .stream()
+                .map(SanPhamMapper::toDTO)
+                .toList();
+
     }
 }
