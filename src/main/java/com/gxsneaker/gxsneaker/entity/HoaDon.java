@@ -35,7 +35,17 @@ public class HoaDon {
 
     private Long idNhanVien;
 
+    @Column(name = "id_phieu_giam_gia")
     private Long idPhieuGiamGia;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(
+            name = "id_phieu_giam_gia",
+            insertable = false,
+            updatable = false
+    )
+    @JsonIgnore
+    private PhieuGiamGia phieuGiamGia;
 
     private Long idDonViVanChuyen;
 

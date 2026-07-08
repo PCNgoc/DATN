@@ -21,6 +21,6 @@ public interface HoaDonService {
 
     HoaDon capNhatTrangThai(Long idHoaDon, UpdateTrangThaiRequest request);
 
-    void huyDon(Long id);
+    void huyDon(Long id, String ghiChu, String nguoiThucHien);
     List<TopTonKhoDTO> getTop5TonKho();
 }

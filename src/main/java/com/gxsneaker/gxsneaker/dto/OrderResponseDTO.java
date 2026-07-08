@@ -28,5 +28,39 @@ public class OrderResponseDTO {
 
     private BigDecimal tongTien;
 
+    private String maVanDon;
+
+    private String loaiDon;
+
+    private String phuongThucThanhToan;
+
+    private String trangThaiThanhToan;
+
+    private String ghiChu;
+
+    private BigDecimal tongTienHang;
+
+    private BigDecimal phiVanChuyen;
+
+    private BigDecimal soTienGiam;
+
+    private String maPhieuGiamGia;
+
+    private String tenPhieuGiamGia;
+
+
+    //admin
+    private String emailNguoiNhan;
+
+    private Date ngayXacNhan;
+
+    private Date ngayGiaoHang;
+
+    private Date ngayHoanThanh;
+
+    private Date ngayHuy;
+
+    private String lyDoHuy;
+
     private List<OrderItemResponseDTO> items;
 }

@@ -25,4 +25,5 @@ public class OrderItemResponseDTO {
     private BigDecimal price;
 
     private BigDecimal total;
+    private String sku;
 }

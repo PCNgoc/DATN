@@ -99,6 +99,36 @@ onMounted(async () => {
         </p>
 
         <p>
+          <b>Mã vận đơn:</b>
+          {{ order.maVanDon || "Chưa có" }}
+        </p>
+
+        <p>
+          <b>Loại đơn:</b>
+          {{ order.loaiDon }}
+        </p>
+
+        <p>
+          <b>Phương thức thanh toán:</b>
+          {{ order.phuongThucThanhToan }}
+        </p>
+
+        <p>
+          <b>Trạng thái thanh toán:</b>
+          {{ getStatusText(order.trangThaiThanhToan) }}
+        </p>
+
+        <p v-if="order.maPhieuGiamGia">
+          <b>Mã giảm giá:</b>
+          {{ order.maPhieuGiamGia }}
+        </p>
+
+        <p v-if="order.tenPhieuGiamGia">
+          <b>Tên phiếu:</b>
+          {{ order.tenPhieuGiamGia }}
+        </p>
+
+        <p>
           <b>Ngày đặt:</b>
           {{ formatDate(order.ngayDatHang) }}
         </p>
@@ -194,14 +224,48 @@ onMounted(async () => {
 
       </table>
 
-      <div class="total">
+      <div class="invoice-summary">
 
-        <h3>
+        <div class="summary-row">
+          <span>Tổng tiền hàng</span>
+          <span>{{ formatMoney(order.tongTienHang) }} đ</span>
+        </div>
 
-          Tổng thanh toán:
-          {{ formatMoney(order.tongTien) }} đ
+        <div
+          class="summary-row"
+          v-if="order.maPhieuGiamGia"
+        >
+    <span>
+      Giảm giá ({{ order.maPhieuGiamGia }})
+    </span>
 
-        </h3>
+          <span class="discount">
+      - {{ formatMoney(order.soTienGiam) }} đ
+    </span>
+        </div>
+
+        <div
+          class="summary-row"
+          v-else
+        >
+          <span>Giảm giá</span>
+          <span>0 đ</span>
+        </div>
+
+        <div class="summary-row">
+          <span>Phí vận chuyển</span>
+          <span>{{ formatMoney(order.phiVanChuyen) }} đ</span>
+        </div>
+
+        <hr>
+
+        <div class="summary-total">
+          <span>Tổng thanh toán</span>
+
+          <span>
+      {{ formatMoney(order.tongTien) }} đ
+    </span>
+        </div>
 
       </div>
 
@@ -312,4 +376,50 @@ img{
   color:#842029;
 }
 
+
+.invoice-summary {
+  width: 420px;
+  margin-left: auto;
+  margin-top: 25px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.summary-row span:first-child {
+  color: #666;
+}
+
+.summary-row span:last-child {
+  font-weight: 600;
+}
+
+.discount {
+  color: #e53935;
+}
+
+.invoice-summary hr {
+  margin: 18px 0;
+  border: none;
+  border-top: 1px dashed #ccc;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 28px;
+  font-weight: bold;
+  color: #e60023;
+}
 </style>

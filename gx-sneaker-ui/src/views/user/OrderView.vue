@@ -62,15 +62,30 @@ const huyDon = async (id) => {
     return;
   }
 
+  // Nhập lý do
+  const lyDo = prompt("Vui lòng nhập lý do hủy đơn:");
+
+  if (lyDo === null) {
+    return; // bấm Cancel
+  }
+
+  if (!lyDo.trim()) {
+    alert("Vui lòng nhập lý do hủy đơn!");
+    return;
+  }
+
   try {
 
     // Gọi API hủy đơn
-    await huyHoaDon(id);
+    await huyHoaDon(id, {
+      nguoiThucHien: "Khách hàng",
+      ghiChu: lyDo
+    });
 
-    // Lấy user đang đăng nhập từ localStorage
+    // Lấy user đang đăng nhập
     const currentUser = JSON.parse(localStorage.getItem("user"));
 
-    // Load lại danh sách đơn hàng
+    // Load lại danh sách đơn
     const res = await getHoaDonByKhachHang(currentUser.id);
 
     orders.value = res.data;

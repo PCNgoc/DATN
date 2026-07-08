@@ -407,9 +407,16 @@ public class HoaDonController {
     }
 
     @PutMapping("/{id}/huy")
-    public ResponseEntity<?> huyDon(@PathVariable Long id) {
+    public ResponseEntity<?> huyDon(
+            @PathVariable Long id,
+            @RequestBody UpdateTrangThaiRequest request
+    ) {
 
-        hoaDonService.huyDon(id);
+        hoaDonService.huyDon(
+                id,
+                request.getGhiChu(),
+                request.getNguoiThucHien()
+        );
 
         return ResponseEntity.ok("Hủy đơn thành công");
     }

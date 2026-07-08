@@ -324,27 +324,55 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     @Override
     @Transactional
-    public void huyDon(Long id) {
+    public void huyDon(Long id, String ghiChu, String nguoiThucHien) {
+
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
 
         String trangThaiCu = upper(hoaDon.getTrangThai());
-        if (!"CHO_XAC_NHAN".equals(trangThaiCu) && !"CHO_THANH_TOAN".equals(trangThaiCu)) {
+
+        if (!"CHO_XAC_NHAN".equals(trangThaiCu)
+                && !"CHO_THANH_TOAN".equals(trangThaiCu)) {
+
             throw new RuntimeException("Đơn hàng đã được xử lý hoặc giao đi, không thể tự hủy.");
+        }
+
+        // Bắt nhập lý do
+        if (ghiChu == null || ghiChu.trim().isEmpty()) {
+            throw new RuntimeException("Vui lòng nhập lý do hủy đơn.");
         }
 
         hoaDon.setTrangThai("DA_HUY");
         hoaDon.setNgayHuy(new Date());
-        hoaDon.setLyDoHuy("Khách hàng chủ động hủy đơn");
-        hoaDon.setNguoiCapNhat("CUSTOMER");
+
+        // Lưu đúng lý do khách nhập
+        String nguoi = "Khách hàng";
+
+        if ("Admin".equalsIgnoreCase(nguoiThucHien)) {
+            nguoi = "Admin";
+        }
+
+        hoaDon.setLyDoHuy(
+                "[" + nguoi + "] " + ghiChu
+        );
+
+        hoaDon.setNguoiCapNhat(
+                nguoiThucHien == null || nguoiThucHien.isBlank()
+                        ? "CUSTOMER"
+                        : nguoiThucHien
+        );
+
         hoaDon.setNgayCapNhat(new Date());
 
-        // Sử dụng hàm dùng chung để code ngắn sạch
+        // Hoàn kho
         hoanTraTonKho(hoaDon);
+
+        // Hoàn voucher
         hoanTraLuotVoucher(hoaDon);
 
         if ("PAYOS".equalsIgnoreCase(String.valueOf(hoaDon.getPhuongThucThanhToan()))
                 && !"DA_THANH_TOAN".equalsIgnoreCase(String.valueOf(hoaDon.getTrangThaiThanhToan()))) {
+
             hoaDon.setTrangThaiThanhToan("QUA_HAN");
         }
 
@@ -370,9 +398,11 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
     private OrderResponseDTO convertToDTO(HoaDon hd) {
+
         List<OrderItemResponseDTO> items = hd.getHoaDonChiTiets().stream()
                 .map(ct -> OrderItemResponseDTO.builder()
                         .chiTietSanPhamId(ct.getChiTietSanPham().getId())
+                        .sku(ct.getChiTietSanPham().getSku())
                         .productName(ct.getChiTietSanPham().getSanPham().getTenSanPham())
                         .image(ct.getChiTietSanPham().getSanPham().getAnhDaiDien())
                         .color(ct.getChiTietSanPham().getMauSac().getTen())
@@ -386,12 +416,48 @@ public class HoaDonServiceImpl implements HoaDonService {
         return OrderResponseDTO.builder()
                 .id(hd.getId())
                 .maHoaDon(hd.getMaHoaDon())
+                .maVanDon(hd.getMaVanDon())
+                .loaiDon(hd.getLoaiDon())
+
                 .ngayDatHang(hd.getNgayDatHang())
+                .ngayXacNhan(hd.getNgayXacNhan())
+                .ngayGiaoHang(hd.getNgayGiaoHang())
+                .ngayHoanThanh(hd.getNgayHoanThanh())
+                .ngayHuy(hd.getNgayHuy())
+
                 .trangThai(hd.getTrangThai())
+                .trangThaiThanhToan(hd.getTrangThaiThanhToan())
+                .phuongThucThanhToan(hd.getPhuongThucThanhToan())
+
                 .tenNguoiNhan(hd.getTenNguoiNhan())
                 .soDienThoai(hd.getSoDienThoaiNguoiNhan())
                 .diaChi(hd.getDiaChiNguoiNhan())
+
+                .emailNguoiNhan(hd.getEmailNguoiNhan())
+
+
+
+
+                .ghiChu(hd.getGhiChu())
+
+                .lyDoHuy(hd.getLyDoHuy())
+                .tongTienHang(hd.getTongTienHang())
+                .phiVanChuyen(hd.getPhiVanChuyen())
+                .soTienGiam(hd.getSoTienGiam())
                 .tongTien(hd.getTongTienThanhToan())
+
+                .maPhieuGiamGia(
+                        hd.getPhieuGiamGia() != null
+                                ? hd.getPhieuGiamGia().getMaPhieu()
+                                : null
+                )
+
+                .tenPhieuGiamGia(
+                        hd.getPhieuGiamGia() != null
+                                ? hd.getPhieuGiamGia().getTenPhieu()
+                                : null
+                )
+
                 .items(items)
                 .build();
     }

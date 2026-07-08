@@ -181,27 +181,145 @@
 
         <div class="modal-body-pro">
           <div class="info-grid mb-4">
+
+            <div class="info-item">
+              <label>Mã hóa đơn</label>
+              <span>{{ selectedHoaDon?.maHoaDon }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Mã vận đơn</label>
+              <span>{{ selectedHoaDon?.maVanDon || 'Chưa có' }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Loại đơn</label>
+              <span>{{ selectedHoaDon?.loaiDon }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Trạng thái</label>
+
+              <span
+                class="status-pill"
+                :class="getStatusClass(selectedHoaDon?.trangThai)"
+              >
+      {{ getStatusText(selectedHoaDon?.trangThai) }}
+    </span>
+
+            </div>
+
+            <div class="info-item">
+              <label>Phương thức thanh toán</label>
+              <span>{{ selectedHoaDon?.phuongThucThanhToan }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Trạng thái thanh toán</label>
+              <span>{{ getStatusText(selectedHoaDon?.trangThaiThanhToan) }}</span>
+            </div>
+
+          </div>
+
+          <div class="info-grid mb-4">
+
             <div class="info-item">
               <label>Người nhận</label>
               <span>{{ selectedHoaDon?.tenNguoiNhan }}</span>
             </div>
+
             <div class="info-item">
               <label>Số điện thoại</label>
-              <span>{{ selectedHoaDon?.soDienThoaiNguoiNhan }}</span>
+              <span>{{ selectedHoaDon?.soDienThoai }}</span>
             </div>
+
+            <div class="info-item">
+              <label>Email</label>
+              <span>{{ selectedHoaDon?.emailNguoiNhan || '-' }}</span>
+            </div>
+
+            <div class="info-item" style="grid-column: span 3;">
+              <label>Địa chỉ</label>
+              <span>{{ selectedHoaDon?.diaChi }}</span>
+            </div>
+
+          </div>
+
+          <div class="info-grid mb-4">
+
             <div class="info-item">
               <label>Ngày đặt</label>
-              <span>{{ formatDate(selectedHoaDon?.ngayDatHang) }} {{ formatTime(selectedHoaDon?.ngayDatHang) }}</span>
+              <span>{{ formatDateTime(selectedHoaDon?.ngayDatHang) }}</span>
             </div>
+
             <div class="info-item">
-              <label>Trạng thái</label>
-              <div>
-                <span class="status-pill m-0" :class="getStatusClass(selectedHoaDon?.trangThai)">
-                  {{ getStatusText(selectedHoaDon?.trangThai) }}
-                </span>
-              </div>
+              <label>Ngày xác nhận</label>
+              <span>{{ formatDateTime(selectedHoaDon?.ngayXacNhan) }}</span>
             </div>
+
+            <div class="info-item">
+              <label>Ngày giao</label>
+              <span>{{ formatDateTime(selectedHoaDon?.ngayGiaoHang) }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Ngày hoàn thành</label>
+              <span>{{ formatDateTime(selectedHoaDon?.ngayHoanThanh) }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Ngày hủy</label>
+              <span>{{ formatDateTime(selectedHoaDon?.ngayHuy) }}</span>
+            </div>
+
           </div>
+
+          <div class="info-grid mb-4">
+
+            <div class="info-item">
+              <label>Mã phiếu</label>
+              <span>{{ selectedHoaDon?.maPhieuGiamGia || '-' }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Tên phiếu</label>
+              <span>{{ selectedHoaDon?.tenPhieuGiamGia || '-' }}</span>
+            </div>
+
+          </div>
+
+          <div class="mb-4">
+
+            <label class="fw-bold mb-2">
+              Ghi chú
+            </label>
+
+            <div class="border rounded p-3 bg-light">
+
+              {{ selectedHoaDon?.ghiChu || 'Không có ghi chú' }}
+
+            </div>
+
+          </div>
+
+          <div
+            v-if="selectedHoaDon?.trangThai==='DA_HUY'"
+            class="mb-4"
+          >
+
+            <label class="fw-bold text-danger mb-2">
+              Lý do hủy
+            </label>
+
+            <div class="border border-danger rounded p-3">
+
+              {{ selectedHoaDon?.lyDoHuy }}
+
+            </div>
+
+          </div>
+
+
 
           <div class="product-table-wrapper">
 
@@ -242,7 +360,7 @@
                       </div>
 
                       <div class="text-muted small">
-                        SKU #{{ item.chiTietSanPhamId }}
+                        SKU: {{ item.sku }}
                       </div>
 
                     </div>
@@ -275,9 +393,9 @@
                 <!-- Thành tiền -->
                 <td class="text-end">
 
-        <span class="fw-bold text-danger fs-5">
-          {{ formatMoney(item.total) }}
-        </span>
+                <span class="fw-bold text-danger fs-5">
+                {{ formatMoney(item.total) }}
+                 </span>
 
                 </td>
 
@@ -292,28 +410,52 @@
               </tbody>
 
               <!-- Footer -->
-              <tfoot
-                v-if="chiTietList.length"
-                class="table-light"
-              >
-              <tr>
+            </table>
 
-                <td colspan="4" class="text-end fw-bold fs-5">
-                  Tổng tiền hàng
-                </td>
+            <div
+              v-if="chiTietList.length"
+              class="invoice-summary"
+            >
 
-                <td class="text-end">
+              <div class="summary-row">
+                <span>Tổng tiền hàng</span>
+                <span>{{ formatMoney(selectedHoaDon?.tongTienHang) }}</span>
+              </div>
 
-        <span class="text-danger fw-bold fs-4">
-          {{ formatMoney(selectedHoaDon?.tongTien) }}
+              <div class="summary-row">
+        <span>
+            Giảm giá
+            <small
+              v-if="selectedHoaDon?.maPhieuGiamGia"
+              class="text-muted"
+            >
+                ({{ selectedHoaDon.maPhieuGiamGia }})
+            </small>
         </span>
 
-                </td>
+                <span class="text-success fw-bold">
+            - {{ formatMoney(selectedHoaDon?.soTienGiam) }}
+        </span>
+              </div>
 
-              </tr>
-              </tfoot>
+              <div class="summary-row">
+                <span>Phí vận chuyển</span>
+                <span>{{ formatMoney(selectedHoaDon?.phiVanChuyen) }}</span>
+              </div>
 
-            </table>
+              <hr>
+
+              <div class="summary-total">
+                <span>Tổng thanh toán</span>
+
+                <span>
+            {{ formatMoney(selectedHoaDon?.tongTien) }}
+        </span>
+              </div>
+
+            </div>
+
+
 
           </div>
 
@@ -329,7 +471,7 @@
                 <th>Từ</th>
                 <th>Sang</th>
                 <th>Người thực hiện</th>
-                <th>Ghi chú</th>
+                <th>Lý do hủy</th>
               </tr>
               </thead>
 
@@ -359,21 +501,15 @@
         <div class="modal-footer-pro">
           <div class="total-section">
             <span class="text-muted me-2">TỔNG CỘNG:</span>
-            <span class="total-price">
-      {{ formatMoney(selectedHoaDon?.tongTien) }}
-    </span>
+            <span class="total-price"> {{ formatMoney(selectedHoaDon?.tongTien) }} </span>
           </div>
-
-          <button
-            @click="closeModal"
-            class="btn btn-dark px-5 fw-bold rounded-3">
-            ĐÓNG
-          </button>
+          <button @click="closeModal" class="btn btn-dark px-5 fw-bold rounded-3"> ĐÓNG </button>
         </div>
 
       </div>
     </div>
   </div>
+
 </template>
 
 <script setup>
@@ -709,7 +845,7 @@ tfoot td{
 }
 
 .modal-footer-pro {
-  padding: 24px 32px;
+  padding: 25px 35px;
   border-top: 1px solid #f0f0f0;
   display: flex;
   justify-content: space-between;
@@ -885,6 +1021,98 @@ tfoot td{
   border-radius:8px;
   font-weight:600;
 }
+
+.invoice-summary{
+  width:420px;
+  margin-left:auto;
+  margin-bottom:15px;
+  margin-top: 25px;
+}
+
+.summary-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 0;
+  border-bottom:1px dashed #ddd;
+  font-size:15px;
+}
+
+.summary-row:last-child{
+  border-bottom:none;
+}
+
+.summary-row.total{
+  margin-top:10px;
+  padding-top:15px;
+  border-top:2px solid #e5e5e5;
+  font-size:22px;
+  font-weight:700;
+}
+
+.summary-row.total span:last-child{
+  color:#dc3545;
+  font-size:30px;
+  font-weight:800;
+}
+
+
+.invoice-summary{
+  width:420px;
+  margin-left:auto;
+  margin-top:25px;
+
+  background:#fff;
+  border-radius:12px;
+  padding:22px;
+
+  border:1px solid #ececec;
+
+  box-shadow:0 5px 20px rgba(0,0,0,.05);
+}
+
+.summary-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  padding:10px 0;
+
+  font-size:15px;
+
+  border-bottom:1px dashed #ddd;
+}
+
+.summary-row:last-child{
+  border:none;
+}
+
+.summary-total{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  margin-top:18px;
+
+  font-size:28px;
+  font-weight:700;
+  color:#dc3545;
+}
+
+.summary-total span:first-child{
+  font-size:18px;
+  color:#222;
+  font-weight:700;
+}
+
+.summary-row span:last-child{
+  font-weight:600;
+}
+
+.summary-row small{
+  font-size:12px;
+}
+
 
 .btn-export-lg {
   padding: 10px 22px;
