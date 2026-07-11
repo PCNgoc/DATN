@@ -8,13 +8,14 @@ import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.LichSuTrangThaiHoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.PhieuGiamGiaRepository;
 import com.gxsneaker.gxsneaker.service.HoaDonService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.data.domain.Sort;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -39,7 +40,16 @@ public class HoaDonController {
 
     @GetMapping
     public List<HoaDon> getAll() {
-        return repository.findAll();
+        return repository.findAll(
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> exportPdf(@PathVariable Long id) {
+
+        return hoaDonService.exportPdf(id);
+
     }
 
     @GetMapping("/{id}")

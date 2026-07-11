@@ -13,6 +13,14 @@ const getAuthHeader = () => {
       : {},
   }
 }
+export const exportPdf = (id) => {
+  return axios.get(
+    `${API_URL}/${id}/pdf`,
+    {
+      responseType: "blob"
+    }
+  );
+}
 
 export const datHang = (data) => {
   return axios.post(`${API_URL}/dat-hang`, data, getAuthHeader())

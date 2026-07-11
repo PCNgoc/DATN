@@ -1,25 +1,32 @@
 package com.gxsneaker.gxsneaker.service.impl;
 
 import com.gxsneaker.gxsneaker.dto.*;
-import com.gxsneaker.gxsneaker.entity.ChiTietSanPham;
-import com.gxsneaker.gxsneaker.entity.HoaDon;
-import com.gxsneaker.gxsneaker.entity.HoaDonChiTiet;
-import com.gxsneaker.gxsneaker.entity.PhieuGiamGia;
-import com.gxsneaker.gxsneaker.repository.ChiTietSanPhamRepository;
-import com.gxsneaker.gxsneaker.repository.HoaDonChiTietRepository;
-import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
-import com.gxsneaker.gxsneaker.repository.PhieuGiamGiaRepository;
+import com.gxsneaker.gxsneaker.entity.*;
+import com.gxsneaker.gxsneaker.repository.*;
 import com.gxsneaker.gxsneaker.service.HoaDonService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
-
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import com.itextpdf.text.pdf.BaseFont;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Pattern;
-
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 @Service
 @RequiredArgsConstructor
 public class HoaDonServiceImpl implements HoaDonService {
@@ -29,6 +36,8 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final ChiTietSanPhamRepository chiTietSanPhamRepository;
     private final PhieuGiamGiaRepository phieuGiamGiaRepository;
     private final PayOSPaymentService payOSPaymentService;
+
+
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0(3|5|7|8|9)[0-9]{8}$");
 
@@ -386,7 +395,8 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     @Override
     public List<OrderResponseDTO> getOrdersByCustomer(Long customerId) {
-        List<HoaDon> hoaDons = hoaDonRepository.findByIdKhachHang(customerId);
+        List<HoaDon> hoaDons =
+                hoaDonRepository.findByIdKhachHangOrderByNgayDatHangDesc(customerId);
         return hoaDons.stream().map(this::convertToDTO).toList();
     }
 
@@ -398,6 +408,8 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
     private OrderResponseDTO convertToDTO(HoaDon hd) {
+
+
 
         List<OrderItemResponseDTO> items = hd.getHoaDonChiTiets().stream()
                 .map(ct -> OrderItemResponseDTO.builder()
@@ -433,7 +445,11 @@ public class HoaDonServiceImpl implements HoaDonService {
                 .soDienThoai(hd.getSoDienThoaiNguoiNhan())
                 .diaChi(hd.getDiaChiNguoiNhan())
 
-                .emailNguoiNhan(hd.getEmailNguoiNhan())
+                .emailNguoiNhan(
+                        hd.getKhachHang() != null
+                                ? hd.getKhachHang().getEmail()
+                                : null
+                )
 
 
 
@@ -512,5 +528,123 @@ public class HoaDonServiceImpl implements HoaDonService {
             phone = "0" + phone.substring(3);
         }
         return phone;
+    }
+
+
+    @Override
+    public ResponseEntity<byte[]> exportPdf(Long id) {
+
+        HoaDon hoaDon = hoaDonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+
+            Document document = new Document(PageSize.A4);
+
+            PdfWriter.getInstance(document, out);
+
+            document.open();
+
+            BaseFont bf = getBaseFont();
+
+            Font title = new Font(bf, 20, Font.BOLD);
+
+            Font normal = new Font(bf, 12);
+
+            Font bold = new Font(bf, 12, Font.BOLD);
+
+            Paragraph p = new Paragraph("GX SNEAKER\n HÓA ĐƠN BÁN HÀNG", title);
+            p.setAlignment(Element.ALIGN_CENTER);
+            document.add(p);
+
+            document.add(new Paragraph(" "));
+
+            document.add(new Paragraph("Mã hóa đơn: " + hoaDon.getMaHoaDon(), normal));
+            document.add(new Paragraph("Ngày đặt: " + formatDate(hoaDon.getNgayDatHang()), normal));
+            document.add(new Paragraph("Khách hàng: " + hoaDon.getTenNguoiNhan(), normal));
+            document.add(new Paragraph("Email: " + hoaDon.getKhachHang().getEmail(), normal));
+            document.add(new Paragraph("SĐT: " + hoaDon.getSoDienThoaiNguoiNhan(), normal));
+            document.add(new Paragraph("Địa chỉ: " + hoaDon.getDiaChiNguoiNhan(), normal));
+
+            document.add(new Paragraph(" "));
+
+            PdfPTable table = new PdfPTable(5);
+            table.setWidthPercentage(100);
+
+            table.addCell(new PdfPCell(new Phrase("Sản phẩm", bold)));
+            table.addCell(new PdfPCell(new Phrase("Size", bold)));
+            table.addCell(new PdfPCell(new Phrase("Màu", bold)));
+            table.addCell(new PdfPCell(new Phrase("SL", bold)));
+            table.addCell(new PdfPCell(new Phrase("Thành tiền", bold)));
+
+            for (HoaDonChiTiet ct : hoaDon.getHoaDonChiTiets()) {
+
+                table.addCell(ct.getChiTietSanPham().getSanPham().getTenSanPham());
+                table.addCell(String.valueOf(ct.getChiTietSanPham().getKichThuoc().getSize()));
+                table.addCell(ct.getChiTietSanPham().getMauSac().getTen());
+                table.addCell(String.valueOf(ct.getSoLuong()));
+                table.addCell(formatMoney(ct.getThanhTien()));
+
+            }
+
+            document.add(table);
+
+            document.add(new Paragraph(" "));
+
+            document.add(new Paragraph("Tổng tiền hàng: " + formatMoney(hoaDon.getTongTienHang()), bold));
+            document.add(new Paragraph("Giảm giá: -" + formatMoney(hoaDon.getSoTienGiam()), bold));
+            document.add(new Paragraph("Phí vận chuyển: " + formatMoney(hoaDon.getPhiVanChuyen()), bold));
+            document.add(new Paragraph("Tổng thanh toán: " + formatMoney(hoaDon.getTongTienThanhToan()), bold));
+
+            document.add(new Paragraph(" "));
+
+            document.add(new Paragraph("Phương thức thanh toán: " + hoaDon.getPhuongThucThanhToan(), normal));
+            document.add(new Paragraph("Trạng thái đơn: " + hoaDon.getTrangThai(), normal));
+            document.add(new Paragraph("Trạng thái thanh toán: " + hoaDon.getTrangThaiThanhToan(), normal));
+
+            document.close();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=HoaDon_" + hoaDon.getMaHoaDon() + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(out.toByteArray());
+    }
+
+    private String formatDate(Date date) {
+        if (date == null) {
+            return "";
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        return sdf.format(date);
+    }
+
+    private String formatMoney(BigDecimal money) {
+
+        if (money == null) {
+            return "0";
+        }
+
+        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+
+        return nf.format(money) + " đ";
+    }
+
+
+    private BaseFont getBaseFont() throws Exception {
+
+        return BaseFont.createFont(
+                "D:\\DATN2\\src\\main\\resources\\ fonts\\arial.ttf",
+                BaseFont.IDENTITY_H,
+                BaseFont.EMBEDDED
+        );
+
     }
 }

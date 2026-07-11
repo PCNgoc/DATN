@@ -2,6 +2,8 @@ package com.gxsneaker.gxsneaker.service;
 
 import com.gxsneaker.gxsneaker.dto.*;
 import com.gxsneaker.gxsneaker.entity.HoaDon;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -23,4 +25,6 @@ public interface HoaDonService {
 
     void huyDon(Long id, String ghiChu, String nguoiThucHien);
     List<TopTonKhoDTO> getTop5TonKho();
+
+    ResponseEntity<byte[]> exportPdf(Long id);
 }

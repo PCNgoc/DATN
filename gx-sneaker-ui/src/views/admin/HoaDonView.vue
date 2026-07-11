@@ -61,12 +61,12 @@
             </div>
           </div>
 
-          <div class="invoice-action">
-            <button class="btn btn-export-lg d-inline-flex align-items-center gap-2">
-              <i class="bi bi-download"></i>
-              In hóa đơn
-            </button>
-          </div>
+<!--          <div class="invoice-action">-->
+<!--            <button class="btn btn-export-lg d-inline-flex align-items-center gap-2">-->
+<!--              <i class="bi bi-download"></i>-->
+<!--              In hóa đơn-->
+<!--            </button>-->
+<!--          </div>-->
         </div>
       </div>
 
@@ -506,6 +506,28 @@
           <button @click="closeModal" class="btn btn-dark px-5 fw-bold rounded-3"> ĐÓNG </button>
         </div>
 
+        <div class="modal-footer-pro">
+
+          <div class="total-section">
+            ...
+          </div>
+
+          <div class="d-flex gap-2">
+
+            <button
+              class="btn btn-success"
+              @click="exportPDF(selectedHoaDon.id)"
+            >
+              <i class="bi bi-file-earmark-pdf"></i>
+              Xuất PDF
+            </button>
+
+
+
+          </div>
+
+        </div>
+
       </div>
     </div>
   </div>
@@ -674,6 +696,17 @@ const formatDateTime = (date) => {
   if (!date) return '-'
 
   return new Date(date).toLocaleString('vi-VN')
+}
+
+const exportPDF = async (id) => {
+  try {
+    window.open(
+      `http://localhost:8080/api/hoa-don/${id}/pdf`,
+      "_blank"
+    );
+  } catch (e) {
+    alert("Không thể xuất hóa đơn");
+  }
 }
 
 onMounted(() => { loadHoaDon() })

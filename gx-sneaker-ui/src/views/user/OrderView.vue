@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { getHoaDonByKhachHang } from "@/services/HoaDonService";
 import { huyHoaDon } from "@/services/HoaDonService";
-
+import Swal from "sweetalert2";
 
 const orders = ref([]);
 
@@ -58,57 +58,94 @@ const getStatusIcon = (status) => {
 }
 const huyDon = async (id) => {
 
-  if (!confirm("Bạn có chắc muốn hủy đơn này?")) {
-    return;
-  }
+  const { value: lyDo } = await Swal.fire({
+    title: "Lý do hủy đơn",
+    input: "select",
+    inputOptions: cancelReasons.reduce((obj, item) => {
+      obj[item] = item;
+      return obj;
+    }, {}),
+    inputPlaceholder: "Chọn lý do",
+    showCancelButton: true,
+    confirmButtonText: "Tiếp tục",
+    cancelButtonText: "Đóng"
+  });
 
-  // Nhập lý do
-  const lyDo = prompt("Vui lòng nhập lý do hủy đơn:");
+  if (!lyDo) return;
 
-  if (lyDo === null) {
-    return; // bấm Cancel
-  }
+  let finalReason = lyDo;
 
-  if (!lyDo.trim()) {
-    alert("Vui lòng nhập lý do hủy đơn!");
-    return;
+  // Nếu chọn lý do khác thì nhập thêm
+  if (lyDo === "Lý do khác") {
+
+    const { value: text } = await Swal.fire({
+      title: "Nhập lý do hủy đơn",
+      input: "textarea",
+      inputPlaceholder: "Vui lòng nhập lý do...",
+      showCancelButton: true,
+      confirmButtonText: "Xác nhận",
+      cancelButtonText: "Đóng"
+    });
+
+    if (!text || !text.trim()) {
+      Swal.fire(
+        "Thông báo",
+        "Vui lòng nhập lý do hủy đơn!",
+        "warning"
+      );
+      return;
+    }
+
+    finalReason = text.trim();
   }
 
   try {
 
-    // Gọi API hủy đơn
     await huyHoaDon(id, {
       nguoiThucHien: "Khách hàng",
-      ghiChu: lyDo
+      ghiChu: finalReason
     });
 
-    // Lấy user đang đăng nhập
     const currentUser = JSON.parse(localStorage.getItem("user"));
 
-    // Load lại danh sách đơn
     const res = await getHoaDonByKhachHang(currentUser.id);
 
     orders.value = res.data;
 
-    alert("Hủy đơn thành công");
+    Swal.fire({
+      icon: "success",
+      title: "Thành công",
+      text: "Đơn hàng đã được hủy.",
+      timer: 1500,
+      showConfirmButton: false
+    });
 
   } catch (e) {
 
-    console.log("===== ERROR =====");
-    console.log(e);
-    console.log(e.response);
-    console.log(e.response?.status);
-    console.log(e.response?.data);
+    console.error(e);
 
-    alert(
-      e.response?.data?.message ||
-      e.response?.data ||
-      "Không thể hủy đơn"
-    );
+    Swal.fire({
+      icon: "error",
+      title: "Không thể hủy đơn",
+      text:
+        e.response?.data?.message ||
+        e.response?.data ||
+        "Đã xảy ra lỗi."
+    });
 
   }
 
 }
+
+const cancelReasons = [
+  "Đặt nhầm sản phẩm",
+  "Muốn đổi sản phẩm khác",
+  "Muốn thay đổi địa chỉ nhận hàng",
+  "Muốn thay đổi phương thức thanh toán",
+  "Tìm được giá tốt hơn",
+  "Không còn nhu cầu mua",
+  "Lý do khác"
+];
 
 onMounted(async () => {
   try {

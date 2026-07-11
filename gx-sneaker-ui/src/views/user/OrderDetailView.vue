@@ -63,6 +63,52 @@ const formatDate = (date) => {
 
   return new Date(date).toLocaleString("vi-VN");
 };
+const orderSteps = [
+  {
+    key: "CHO_XAC_NHAN",
+    title: "Chờ xác nhận",
+    icon: "fas fa-receipt"
+  },
+  {
+    key: "DA_XAC_NHAN",
+    title: "Đã xác nhận",
+    icon: "fas fa-check-circle"
+  },
+  {
+    key: "DANG_GIAO",
+    title: "Đang giao",
+    icon: "fas fa-truck"
+  },
+  {
+    key: "HOAN_THANH",
+    title: "Hoàn thành",
+    icon: "fas fa-box-open"
+  }
+];
+
+const getCurrentStep = () => {
+
+  if (!order.value) return 0;
+
+  switch (order.value.trangThai) {
+
+    case "CHO_XAC_NHAN":
+      return 0;
+
+    case "DA_XAC_NHAN":
+      return 1;
+
+    case "DANG_GIAO":
+      return 2;
+
+    case "HOAN_THANH":
+      return 3;
+
+    default:
+      return 0;
+  }
+
+};
 
 onMounted(async () => {
   try {
@@ -164,6 +210,46 @@ onMounted(async () => {
           {{ order.diaChi }}
         </p>
 
+      </div>
+
+
+      <!-- Timeline trạng thái -->
+      <div
+        v-if="order.trangThai !== 'DA_HUY'"
+        class="order-timeline"
+      >
+        <div
+          v-for="(step,index) in orderSteps"
+          :key="step.key"
+          class="timeline-item"
+          :class="{ active: index <= getCurrentStep() }"
+        >
+
+          <div class="timeline-circle">
+            <i :class="step.icon"></i>
+          </div>
+
+          <div class="timeline-title">
+            {{ step.title }}
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Nếu đơn đã hủy -->
+      <div
+        v-else
+        class="cancel-box"
+      >
+        <i class="fas fa-ban me-2 text-danger"></i>
+
+        <b>Đơn hàng đã hủy</b>
+
+        <div class="mt-2">
+          <strong>Lý do:</strong>
+
+          {{ order.lyDoHuy }}
+        </div>
       </div>
 
       <table class="table">
@@ -422,4 +508,125 @@ img{
   font-weight: bold;
   color: #e60023;
 }
+
+.order-timeline{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  margin:35px 0;
+
+  position:relative;
+
+}
+
+.order-timeline::before{
+
+  content:"";
+
+  position:absolute;
+
+  top:24px;
+
+  left:8%;
+
+  width:84%;
+
+  height:4px;
+
+  background:#ddd;
+
+  z-index:0;
+
+}
+
+.timeline-item{
+
+  flex:1;
+
+  text-align:center;
+
+  position:relative;
+
+  z-index:1;
+
+}
+
+.timeline-circle{
+
+  width:50px;
+
+  height:50px;
+
+  border-radius:50%;
+
+  background:#ddd;
+
+  color:white;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  margin:auto;
+
+  font-size:22px;
+
+  transition:.3s;
+
+}
+
+.timeline-title{
+
+  margin-top:10px;
+
+  font-weight:600;
+
+  color:#999;
+
+}
+
+.timeline-item.active .timeline-circle{
+
+  background:#28a745;
+
+}
+
+.timeline-item.active .timeline-title{
+
+  color:#28a745;
+
+}
+
+.cancel-order-box{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:15px;
+
+  background:#fff4f4;
+
+  border-left:5px solid #dc3545;
+
+  padding:18px;
+
+  border-radius:10px;
+
+  margin:30px 0;
+
+}
+
+.cancel-order-box i{
+
+  font-size:45px;
+
+  color:#dc3545;
+
+}
+
 </style>
