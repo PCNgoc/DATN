@@ -421,12 +421,11 @@ const confirmPlaceOrder = async () => {
       soDienThoai: phone.value.trim(),
       diaChi: fullShippingAddress.value,
       ghiChu:
-        paymentMethod.value === 'QR'
-          ? `[PAYOS_CHO_THANH_TOAN] ${note.value.trim()}`
-          : `[COD_CHO_XAC_NHAN] ${note.value.trim()}`,
+          paymentMethod.value === 'QR'
+              ? `[VNPAY_CHO_THANH_TOAN] ${note.value.trim()}`
+              : `[COD_CHO_XAC_NHAN] ${note.value.trim()}`,
       phuongThucThanhToan: paymentMethod.value === 'QR' ? 'VNPAY' : 'COD',
       maPhieuGiamGia: appliedCoupon.value ? getCouponCode(appliedCoupon.value) : null,
-
       phiVanChuyen: Number(shipFee.value),
       items: checkoutItems.value.map((item) => ({
         chiTietSanPhamId: Number(getChiTietSanPhamId(item)),
@@ -445,35 +444,16 @@ const confirmPlaceOrder = async () => {
     localStorage.removeItem('buyNowProduct')
     localStorage.removeItem('checkoutData')
 
-    if (paymentMethod.value === 'QR') {if (paymentMethod.value === 'QR') {
-      if (res.data?.checkoutUrl) {
-        window.location.href = res.data.checkoutUrl
+    if (paymentMethod.value === 'QR') {
+      const checkoutUrl = res.data?.checkoutUrl || res.data?.data?.checkoutUrl
+
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl
         return
       }
 
+      console.log('Không có checkoutUrl trong response:', res.data)
       alert('Không nhận được link thanh toán VNPAY')
-      return
-    }
-      if (res.data?.checkoutUrl) {
-        const expiredAt =
-          res.data?.hanThanhToan || new Date(Date.now() + 30 * 60 * 1000).toISOString()
-
-        localStorage.setItem(
-          'payosPaymentInfo',
-          JSON.stringify({
-            orderId: res.data.id,
-            maHoaDon: res.data.maHoaDon,
-            checkoutUrl: res.data.checkoutUrl,
-            totalAmount: res.data.tongTienThanhToan,
-            expiredAt,
-          }),
-        )
-
-        router.push(`/payos-waiting/${res.data.id}`)
-        return
-      }
-
-      alert('Không nhận được link thanh toán payOS')
       return
     }
 

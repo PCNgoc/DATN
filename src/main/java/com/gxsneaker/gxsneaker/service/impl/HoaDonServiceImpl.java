@@ -198,17 +198,15 @@ public class HoaDonServiceImpl implements HoaDonService {
         String value = request.getPhuongThucThanhToan();
 
         if (value == null || value.trim().isEmpty()) {
-            String ghiChu = request.getGhiChu();
-            if (ghiChu != null && ghiChu.toUpperCase().contains("QR")) {
-                return "PAYOS";
-            }
             return "COD";
         }
 
         value = value.trim().toUpperCase();
-        if ("QR".equals(value) || "PAYOS".equals(value) || "BANK".equals(value)) {
-            return "PAYOS";
+
+        if ("QR".equals(value) || "VNPAY".equals(value) || "BANK".equals(value)) {
+            return "VNPAY";
         }
+
         return "COD";
     }
 
@@ -467,6 +465,9 @@ public class HoaDonServiceImpl implements HoaDonService {
                 .phiVanChuyen(hd.getPhiVanChuyen())
                 .soTienGiam(hd.getSoTienGiam())
                 .tongTien(hd.getTongTienThanhToan())
+
+                .checkoutUrl(hd.getCheckoutUrl())
+                .hanThanhToan(hd.getHanThanhToan())
 
                 .maPhieuGiamGia(
                         hd.getPhieuGiamGia() != null

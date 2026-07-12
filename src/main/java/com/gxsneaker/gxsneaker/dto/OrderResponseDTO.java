@@ -48,6 +48,10 @@ public class OrderResponseDTO {
 
     private String tenPhieuGiamGia;
 
+    private String checkoutUrl;
+
+    private Date hanThanhToan;
+
 
     //admin
     private String emailNguoiNhan;
