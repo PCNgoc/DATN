@@ -4,6 +4,7 @@ import com.gxsneaker.gxsneaker.dto.*;
 import com.gxsneaker.gxsneaker.entity.*;
 import com.gxsneaker.gxsneaker.repository.*;
 import com.gxsneaker.gxsneaker.service.HoaDonService;
+import com.gxsneaker.gxsneaker.service.VNPayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +37,7 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final ChiTietSanPhamRepository chiTietSanPhamRepository;
     private final PhieuGiamGiaRepository phieuGiamGiaRepository;
     private final PayOSPaymentService payOSPaymentService;
+    private final VNPayService vnPayService;
 
 
 
@@ -175,13 +177,17 @@ public class HoaDonServiceImpl implements HoaDonService {
         hoaDon.setTongTienThanhToan(tongTienHang.subtract(soTienGiam).add(phiVanChuyen));
 
         // 5. Tạo link cổng thanh toán trực tuyến PayOS nếu có
-        if ("PAYOS".equals(phuongThucThanhToan)) {
+        if ("VNPAY".equals(phuongThucThanhToan)) {
             try {
-                CreatePaymentLinkResponse payOSResponse = payOSPaymentService.createPaymentLink(hoaDon);
-                hoaDon.setCheckoutUrl(payOSResponse.getCheckoutUrl());
-                hoaDon.setPaymentLinkId(payOSResponse.getPaymentLinkId());
+                String checkoutUrl = vnPayService.createPaymentUrl(
+                        hoaDon.getId(),
+                        hoaDon.getTongTienThanhToan(),
+                        "127.0.0.1"
+                );
+
+                hoaDon.setCheckoutUrl(checkoutUrl);
             } catch (Exception e) {
-                throw new RuntimeException("Không thể tạo link thanh toán payOS: " + e.getMessage());
+                throw new RuntimeException("Không thể tạo link thanh toán VNPAY: " + e.getMessage());
             }
         }
 
@@ -646,5 +652,33 @@ public class HoaDonServiceImpl implements HoaDonService {
                 BaseFont.EMBEDDED
         );
 
+    }
+
+    @Override
+    @Transactional
+    public void xacNhanThanhToanVnpay(Long hoaDonId, String maGiaoDich) {
+        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+
+        if (!"VNPAY".equalsIgnoreCase(String.valueOf(hoaDon.getPhuongThucThanhToan()))) {
+            throw new RuntimeException("Đơn hàng không phải thanh toán VNPAY");
+        }
+
+        if ("DA_HUY".equalsIgnoreCase(String.valueOf(hoaDon.getTrangThai()))) {
+            throw new RuntimeException("Đơn hàng đã hủy");
+        }
+
+        hoaDon.setTrangThai("CHO_XAC_NHAN");
+        hoaDon.setTrangThaiThanhToan("DA_THANH_TOAN");
+        hoaDon.setNgayCapNhat(new Date());
+        hoaDon.setNguoiCapNhat("DA_THANH_TOAN");
+        hoaDon.setNgayCapNhat(new Date());
+        hoaDon.setNguoiCapNhat("VNPAY");
+        hoaDon.setGhiChu(
+                (hoaDon.getGhiChu() == null ? "" : hoaDon.getGhiChu())
+                        + " [VNPAY_THANH_CONG: " + maGiaoDich + "]"
+        );
+
+        hoaDonRepository.save(hoaDon);
     }
 }

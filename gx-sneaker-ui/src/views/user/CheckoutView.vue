@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { datHang } from '@/services/HoaDonService'
 import { getByMa, getAll } from '@/services/phieuGiamGiaService'
 import { useRouter } from 'vue-router'
@@ -11,11 +11,18 @@ const isFromCart = ref(false)
 
 const fullName = ref('')
 const phone = ref('')
-const address = ref('')
+// const address = ref('')
 const note = ref('')
 
+const provinces = ref([])
+const selectedProvinceCode = ref('')
+const selectedDistrictCode = ref('')
+const selectedWardCode = ref('')
+const addressDetail = ref('')
+const addressLoading = ref(false)
+
 const paymentMethod = ref('COD')
-const shipFee = ref(30000)
+const shipFee = ref(0)
 const loading = ref(false)
 
 const couponCode = ref('')
@@ -29,6 +36,8 @@ const couponSuccess = ref('')
 const couponPage = ref(1)
 const couponPageSize = 3
 
+const showOrderConfirm = ref(false)
+
 const formatMoney = (value) => {
   return Number(value || 0).toLocaleString('vi-VN') + ' đ'
 }
@@ -36,14 +45,14 @@ const formatMoney = (value) => {
 const normalizeItem = (item) => {
   return {
     detailId:
-        item?.detailId ||
-        item?.chiTietSanPhamId ||
-        item?.idChiTietSanPham ||
-        item?.id_chi_tiet_san_pham ||
-        item?.chiTietSanPham?.id ||
-        item?.chi_tiet_san_pham_id ||
-        item?.idCTSP ||
-        null,
+      item?.detailId ||
+      item?.chiTietSanPhamId ||
+      item?.idChiTietSanPham ||
+      item?.id_chi_tiet_san_pham ||
+      item?.chiTietSanPham?.id ||
+      item?.chi_tiet_san_pham_id ||
+      item?.idCTSP ||
+      null,
 
     productName:
       item?.productName ||
@@ -76,6 +85,7 @@ const normalizeItem = (item) => {
 }
 
 onMounted(async () => {
+  await loadVietnamAddress()
   const userData = localStorage.getItem('user')
 
   if (userData) {
@@ -353,8 +363,23 @@ const validateForm = () => {
     return false
   }
 
-  if (!address.value.trim()) {
-    alert('Vui lòng nhập địa chỉ nhận hàng')
+  if (!selectedProvinceCode.value) {
+    alert('Vui lòng chọn tỉnh/thành phố')
+    return false
+  }
+
+  if (!selectedDistrictCode.value) {
+    alert('Vui lòng chọn quận/huyện')
+    return false
+  }
+
+  if (!selectedWardCode.value) {
+    alert('Vui lòng chọn phường/xã')
+    return false
+  }
+
+  if (!addressDetail.value.trim()) {
+    alert('Vui lòng nhập địa chỉ cụ thể')
     return false
   }
 
@@ -379,6 +404,12 @@ const placeOrder = async () => {
     return
   }
 
+  showOrderConfirm.value = true
+}
+
+const confirmPlaceOrder = async () => {
+  showOrderConfirm.value = false
+
   try {
     loading.value = true
 
@@ -388,13 +419,15 @@ const placeOrder = async () => {
       idKhachHang: Number(idKhachHang),
       tenNguoiNhan: fullName.value.trim(),
       soDienThoai: phone.value.trim(),
-      diaChi: address.value.trim(),
+      diaChi: fullShippingAddress.value,
       ghiChu:
         paymentMethod.value === 'QR'
           ? `[PAYOS_CHO_THANH_TOAN] ${note.value.trim()}`
           : `[COD_CHO_XAC_NHAN] ${note.value.trim()}`,
-      phuongThucThanhToan: paymentMethod.value === 'QR' ? 'PAYOS' : 'COD',
+      phuongThucThanhToan: paymentMethod.value === 'QR' ? 'VNPAY' : 'COD',
       maPhieuGiamGia: appliedCoupon.value ? getCouponCode(appliedCoupon.value) : null,
+
+      phiVanChuyen: Number(shipFee.value),
       items: checkoutItems.value.map((item) => ({
         chiTietSanPhamId: Number(getChiTietSanPhamId(item)),
         soLuong: Number(item.quantity || 1),
@@ -412,7 +445,15 @@ const placeOrder = async () => {
     localStorage.removeItem('buyNowProduct')
     localStorage.removeItem('checkoutData')
 
-    if (paymentMethod.value === 'QR') {
+    if (paymentMethod.value === 'QR') {if (paymentMethod.value === 'QR') {
+      if (res.data?.checkoutUrl) {
+        window.location.href = res.data.checkoutUrl
+        return
+      }
+
+      alert('Không nhận được link thanh toán VNPAY')
+      return
+    }
       if (res.data?.checkoutUrl) {
         const expiredAt =
           res.data?.hanThanhToan || new Date(Date.now() + 30 * 60 * 1000).toISOString()
@@ -453,6 +494,126 @@ const placeOrder = async () => {
     loading.value = false
   }
 }
+
+const selectedProvince = computed(() => {
+  return provinces.value.find((item) => item.code === selectedProvinceCode.value) || null
+})
+
+const districts = computed(() => {
+  return selectedProvince.value?.districts || []
+})
+
+const selectedDistrict = computed(() => {
+  return districts.value.find((item) => item.code === selectedDistrictCode.value) || null
+})
+
+const wards = computed(() => {
+  return selectedDistrict.value?.wards || []
+})
+
+const selectedWard = computed(() => {
+  return wards.value.find((item) => item.code === selectedWardCode.value) || null
+})
+
+const fullShippingAddress = computed(() => {
+  return [
+    addressDetail.value.trim(),
+    selectedWard.value?.name,
+    selectedDistrict.value?.name,
+    selectedProvince.value?.name,
+  ]
+    .filter(Boolean)
+    .join(', ')
+})
+
+const loadVietnamAddress = async () => {
+  try {
+    addressLoading.value = true
+
+    const res = await fetch('https://provinces.open-api.vn/api/v1/?depth=3')
+    const data = await res.json()
+
+    provinces.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('Lỗi tải danh sách địa chỉ:', error)
+    alert('Không tải được danh sách tỉnh/thành phố')
+  } finally {
+    addressLoading.value = false
+  }
+}
+
+const calculateShipFeeByProvince = (provinceName) => {
+  if (!provinceName) return 0
+
+  const name = provinceName.toLowerCase()
+
+  if (name.includes('hà nội')) return 25000
+
+  const mienBac = [
+    'hải phòng',
+    'quảng ninh',
+    'bắc giang',
+    'bắc kạn',
+    'bắc ninh',
+    'cao bằng',
+    'điện biên',
+    'hà giang',
+    'hà nam',
+    'hải dương',
+    'hòa bình',
+    'hưng yên',
+    'lai châu',
+    'lạng sơn',
+    'lào cai',
+    'nam định',
+    'ninh bình',
+    'phú thọ',
+    'sơn la',
+    'thái bình',
+    'thái nguyên',
+    'tuyên quang',
+    'vĩnh phúc',
+    'yên bái',
+  ]
+
+  const mienTrung = [
+    'thanh hóa',
+    'nghệ an',
+    'hà tĩnh',
+    'quảng bình',
+    'quảng trị',
+    'thừa thiên huế',
+    'đà nẵng',
+    'quảng nam',
+    'quảng ngãi',
+    'bình định',
+    'phú yên',
+    'khánh hòa',
+    'ninh thuận',
+    'bình thuận',
+    'kon tum',
+    'gia lai',
+    'đắk lắk',
+    'đắk nông',
+    'lâm đồng',
+  ]
+
+  if (mienBac.some((item) => name.includes(item))) return 35000
+
+  if (mienTrung.some((item) => name.includes(item))) return 40000
+
+  return 50000
+}
+
+watch(selectedProvinceCode, () => {
+  selectedDistrictCode.value = ''
+  selectedWardCode.value = ''
+  shipFee.value = calculateShipFeeByProvince(selectedProvince.value?.name)
+})
+
+watch(selectedDistrictCode, () => {
+  selectedWardCode.value = ''
+})
 </script>
 
 <template>
@@ -491,14 +652,68 @@ const placeOrder = async () => {
             </div>
           </div>
 
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Tỉnh/Thành phố <span>*</span></label>
+              <select
+                v-model="selectedProvinceCode"
+                class="address-select"
+                :disabled="addressLoading"
+              >
+                <option value="">
+                  {{ addressLoading ? 'Đang tải...' : '-- Chọn tỉnh/thành phố --' }}
+                </option>
+
+                <option v-for="province in provinces" :key="province.code" :value="province.code">
+                  {{ province.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Quận/Huyện <span>*</span></label>
+              <select
+                v-model="selectedDistrictCode"
+                class="address-select"
+                :disabled="!selectedProvinceCode"
+              >
+                <option value="">-- Chọn quận/huyện --</option>
+
+                <option v-for="district in districts" :key="district.code" :value="district.code">
+                  {{ district.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
           <div class="form-group">
-            <label>Địa chỉ nhận hàng <span>*</span></label>
+            <label>Phường/Xã <span>*</span></label>
+            <select
+              v-model="selectedWardCode"
+              class="address-select"
+              :disabled="!selectedDistrictCode"
+            >
+              <option value="">-- Chọn phường/xã --</option>
+
+              <option v-for="ward in wards" :key="ward.code" :value="ward.code">
+                {{ ward.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Địa chỉ cụ thể <span>*</span></label>
             <textarea
-              v-model="address"
-              rows="4"
-              placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+              v-model="addressDetail"
+              rows="3"
+              placeholder="Số nhà, tên đường, tòa nhà, ghi chú địa chỉ..."
             />
           </div>
+
+          <p v-if="selectedProvince" class="shipping-note">
+            Phí vận chuyển đến {{ selectedProvince.name }}:
+            <strong>{{ formatMoney(shipFee) }}</strong>
+          </p>
 
           <div class="form-group">
             <label>Ghi chú</label>
@@ -510,7 +725,6 @@ const placeOrder = async () => {
           </div>
         </section>
 
-        <!-- Phương thức thanh toán -->
         <section class="card">
           <div class="card-title">
             <span class="step">2</span>
@@ -534,25 +748,16 @@ const placeOrder = async () => {
               <input v-model="paymentMethod" type="radio" value="QR" />
               <div class="payment-icon">🏦</div>
               <div>
-                <h3>Thanh toán tự động qua payOS</h3>
-                <p>
-                  Hệ thống sẽ chuyển bạn sang trang thanh toán payOS. Sau khi thanh toán thành công,
-                  đơn hàng sẽ tự động cập nhật.
-                </p>
+                <h3>Thanh toán qua VNPAY Sandbox</h3>
+                <p>Hệ thống sẽ chuyển bạn sang trang thanh toán.</p>
               </div>
             </label>
           </div>
 
           <div v-if="paymentMethod === 'QR'" class="qr-box">
-            <h3>Thanh toán tự động qua payOS</h3>
-            <p>Sau khi bấm đặt hàng, hệ thống sẽ chuyển bạn sang trang thanh toán payOS.</p>
-            <p>
-              Sau khi thanh toán thành công, hệ thống sẽ kiểm tra và cập nhật trạng thái thanh toán.
-            </p>
-            <p>
-              Bạn có 30 phút để hoàn tất thanh toán. Sau 30 phút, đơn hàng sẽ tự động bị hủy nếu
-              chưa thanh toán.
-            </p>
+            <h3>Thanh toán qua VNPAY Sandbox</h3>
+            <p>Sau khi bấm đặt hàng, hệ thống sẽ chuyển bạn sang trang thanh toán.</p>
+            <p>Bạn có 30 phút để hoàn tất thanh toán.</p>
           </div>
         </section>
       </div>
@@ -725,7 +930,7 @@ const placeOrder = async () => {
             loading
               ? 'ĐANG XỬ LÝ...'
               : paymentMethod === 'QR'
-                ? 'THANH TOÁN QUA PAYOS'
+                ? 'THANH TOÁN QUA VNPAY'
                 : 'ĐẶT HÀNG - CHỜ XÁC NHẬN'
           }}
         </button>
@@ -734,6 +939,54 @@ const placeOrder = async () => {
           Bằng việc đặt hàng, bạn đồng ý với chính sách mua hàng của GX Sneaker.
         </p>
       </aside>
+    </div>
+  </div>
+  <div v-if="showOrderConfirm" class="confirm-overlay">
+    <div class="confirm-box">
+      <div class="confirm-icon">🛒</div>
+
+      <h2>Xác nhận đặt hàng</h2>
+
+      <p class="confirm-desc">Vui lòng kiểm tra lại thông tin đơn hàng trước khi xác nhận.</p>
+
+      <div class="confirm-info">
+        <div class="confirm-row">
+          <span>Người nhận</span>
+          <strong>{{ fullName }}</strong>
+        </div>
+
+        <div class="confirm-row">
+          <span>Số điện thoại</span>
+          <strong>{{ phone }}</strong>
+        </div>
+
+        <div class="confirm-row">
+          <span>Địa chỉ</span>
+          <strong>{{ fullShippingAddress }}</strong>
+        </div>
+
+        <div class="confirm-row">
+          <span>Phương thức</span>
+          <strong>
+            {{ paymentMethod === 'QR' ? 'Thanh toán online' : 'Thanh toán khi nhận hàng (COD)' }}
+          </strong>
+        </div>
+
+        <div class="confirm-row total">
+          <span>Tổng thanh toán</span>
+          <strong>{{ formatMoney(finalTotal) }}</strong>
+        </div>
+      </div>
+
+      <div class="confirm-actions">
+        <button class="btn-cancel" :disabled="loading" @click="showOrderConfirm = false">
+          Hủy
+        </button>
+
+        <button class="btn-confirm" :disabled="loading" @click="confirmPlaceOrder">
+          {{ loading ? 'Đang xử lý...' : 'Xác nhận đặt hàng' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -1352,5 +1605,215 @@ const placeOrder = async () => {
 
 .discount-text {
   color: #16a34a;
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.confirm-box {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  animation: confirmScale 0.2s ease;
+}
+
+.confirm-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #fff1f2;
+  color: #be123c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 14px;
+}
+
+.confirm-box h2 {
+  margin: 0;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.confirm-desc {
+  margin: 10px 0 22px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.confirm-info {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.confirm-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 15px;
+}
+
+.confirm-row:last-child {
+  border-bottom: none;
+}
+
+.confirm-row span {
+  color: #6b7280;
+  min-width: 120px;
+}
+
+.confirm-row strong {
+  color: #111827;
+  text-align: right;
+  font-weight: 700;
+}
+
+.confirm-row.total {
+  background: #fff1f2;
+}
+
+.confirm-row.total strong {
+  color: #be123c;
+  font-size: 18px;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-cancel,
+.btn-confirm {
+  border: none;
+  outline: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-confirm {
+  background: #be123c;
+  color: #ffffff;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-confirm:hover {
+  background: #9f1239;
+}
+
+.btn-cancel:disabled,
+.btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes confirmScale {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.shipping-location-box {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.btn-location {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #be123c;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-location:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.shipping-result {
+  margin-top: 10px;
+}
+
+.shipping-result p {
+  margin: 5px 0;
+  color: #111827;
+}
+
+.shipping-result strong {
+  color: #be123c;
+}
+
+.shipping-note {
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.btn-location-secondary {
+  margin-top: 10px;
+  background: #374151;
+}
+
+.btn-location-secondary:hover {
+  background: #111827;
+}
+
+.address-select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  font-size: 15px;
+  outline: none;
+  background: #f9fafb;
+}
+
+.address-select:focus {
+  border-color: #ef4444;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
 }
 </style>

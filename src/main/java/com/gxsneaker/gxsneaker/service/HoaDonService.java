@@ -26,5 +26,7 @@ public interface HoaDonService {
     void huyDon(Long id, String ghiChu, String nguoiThucHien);
     List<TopTonKhoDTO> getTop5TonKho();
 
+    void xacNhanThanhToanVnpay(Long hoaDonId, String maGiaoDich);
+
     ResponseEntity<byte[]> exportPdf(Long id);
 }
