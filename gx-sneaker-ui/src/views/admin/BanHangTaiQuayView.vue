@@ -31,7 +31,7 @@ import {
 
   thanhToanTienMat
 
-} from "@/services/HoaDonService";
+} from "@/services/hoaDonService";
 
 //=====================
 // HÓA ĐƠN CHỜ
