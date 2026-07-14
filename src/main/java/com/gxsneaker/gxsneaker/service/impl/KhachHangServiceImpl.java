@@ -1,10 +1,13 @@
 package com.gxsneaker.gxsneaker.service.impl;
 
 import com.gxsneaker.gxsneaker.dto.KhachHangDTO;
+import com.gxsneaker.gxsneaker.entity.HoaDon;
 import com.gxsneaker.gxsneaker.entity.KhachHang;
 import com.gxsneaker.gxsneaker.mapper.KhachHangMapper;
+import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.KhachHangRepository;
 import com.gxsneaker.gxsneaker.service.KhachHangService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +22,8 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    @Autowired
+    private HoaDonRepository hoaDonRepository;
 
     @Override
     public List<KhachHangDTO> getAllKhachHang() {
@@ -94,4 +99,6 @@ public class KhachHangServiceImpl implements KhachHangService {
     public void deleteKhachHang(Integer id) {
         khachHangRepository.deleteById(id);
     }
+
+
 }

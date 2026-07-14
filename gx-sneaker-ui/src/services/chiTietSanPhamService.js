@@ -17,3 +17,12 @@ export const remove = (id) =>
 
 export const getBySanPhamUser = (id) =>
   axios.get(`${API}/user/san-pham/${id}`)
+
+
+// =============================
+// BÁN TẠI QUẦY
+// =============================
+export const getBanTaiQuay = () =>
+  axios.get(`${API}/ban-tai-quay`)
+
+

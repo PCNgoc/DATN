@@ -4,6 +4,7 @@ import com.gxsneaker.gxsneaker.dto.*;
 import com.gxsneaker.gxsneaker.entity.HoaDon;
 import com.gxsneaker.gxsneaker.entity.LichSuTrangThaiHoaDon;
 import com.gxsneaker.gxsneaker.entity.PhieuGiamGia;
+import com.gxsneaker.gxsneaker.repository.HoaDonChiTietRepository;
 import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.LichSuTrangThaiHoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.PhieuGiamGiaRepository;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import com.gxsneaker.gxsneaker.dto.ThanhToanRequest;
 
 @RestController
 @RequestMapping("/api/hoa-don")
@@ -37,6 +39,8 @@ public class HoaDonController {
 
     @Autowired
     private HoaDonService hoaDonService;
+    @Autowired
+    private HoaDonChiTietRepository hoaDonChiTietRepository;
 
     @GetMapping
     public List<HoaDon> getAll() {
@@ -439,4 +443,95 @@ public class HoaDonController {
         );
 
     }
+
+    @PostMapping("/tao-hoa-don-cho")
+    public ResponseEntity<HoaDon> taoHoaDonCho() {
+
+        HoaDon hoaDon = hoaDonService.taoHoaDonCho();
+
+        return ResponseEntity.ok(hoaDon);
+
+    }
+
+    @GetMapping("/hoa-don-cho")
+    public ResponseEntity<List<HoaDon>> getHoaDonCho() {
+
+        return ResponseEntity.ok(
+                hoaDonService.getHoaDonCho()
+        );
+
+    }
+
+    @PostMapping("/{hoaDonId}/them-san-pham")
+    public ResponseEntity<?> themSanPham(
+            @PathVariable Long hoaDonId,
+            @RequestBody ThemSanPhamRequest request
+    ){
+        hoaDonService.themSanPham(hoaDonId, request);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @GetMapping("/{id}/chi-tiet")
+    public ResponseEntity<?> getChiTietHoaDon(
+            @PathVariable Long id
+    ){
+
+        return ResponseEntity.ok(
+                hoaDonChiTietRepository.getBanHangByHoaDon(id)
+        );
+
+    }
+
+    @PutMapping("/chi-tiet/{id}/so-luong")
+    public ResponseEntity<?> capNhatSoLuong(
+            @PathVariable Long id,
+            @RequestParam Integer soLuong
+    ){
+
+        hoaDonService.capNhatSoLuong(id, soLuong);
+
+        return ResponseEntity.ok().build();
+
+    }
+
+
+
+
+    @PutMapping("/{id}/khach-hang")
+    public ResponseEntity<?> doiKhachHang(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long khachHangId
+    ){
+
+        hoaDonService.doiKhachHang(id,khachHangId);
+
+        return ResponseEntity.ok().build();
+
+    }
+
+    @DeleteMapping("/chi-tiet/{id}")
+    public ResponseEntity<?> xoaSanPham(
+            @PathVariable Long id
+    ){
+
+        hoaDonService.xoaSanPham(id);
+
+        return ResponseEntity.ok().build();
+
+    }
+
+    @PostMapping("/{id}/thanh-toan")
+    public ResponseEntity<?> thanhToan(
+            @PathVariable Long id,
+            @RequestBody ThanhToanRequest request
+    ) {
+
+        hoaDonService.thanhToan(id, request);
+
+        return ResponseEntity.ok().build();
+
+    }
+
+
 }

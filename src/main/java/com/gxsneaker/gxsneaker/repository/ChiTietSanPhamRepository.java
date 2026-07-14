@@ -61,4 +61,6 @@ AND ct.id<>:id
             Long kichThuocId
     );
 
+    List<ChiTietSanPham> findByTrangThai(Boolean trangThai);
+
 }

@@ -22,17 +22,19 @@ public class ChiTietSanPhamServiceImpl
     private final MauSacRepository mauSacRepository;
 
     private final KichThuocRepository kichThuocRepository;
+    private final ChiTietSanPhamRepository chiTietSanPhamRepository;
 
     public ChiTietSanPhamServiceImpl(
             ChiTietSanPhamRepository repository,
             SanPhamRepository sanPhamRepository,
             MauSacRepository mauSacRepository,
-            KichThuocRepository kichThuocRepository
-    ) {
+            KichThuocRepository kichThuocRepository,
+            ChiTietSanPhamRepository chiTietSanPhamRepository) {
         this.repository = repository;
         this.sanPhamRepository = sanPhamRepository;
         this.mauSacRepository = mauSacRepository;
         this.kichThuocRepository = kichThuocRepository;
+        this.chiTietSanPhamRepository = chiTietSanPhamRepository;
     }
 
     @Override
@@ -322,6 +324,13 @@ public class ChiTietSanPhamServiceImpl
             }
 
         }
+
+    }
+
+    @Override
+    public List<ChiTietSanPham> getBanTaiQuay() {
+
+        return chiTietSanPhamRepository.findByTrangThai(true);
 
     }
 

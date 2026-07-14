@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { getHoaDonById } from "@/services/HoaDonService";
+import { getHoaDonById } from "@/services/hoaDonService.js";
 
 
 

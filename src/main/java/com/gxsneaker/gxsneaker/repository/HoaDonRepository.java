@@ -218,4 +218,16 @@ ORDER BY SUM(hdct.so_luong) DESC
             String trangThaiThanhToan,
             Date hanThanhToan
     );
+
+    Optional<HoaDon> findByMaHoaDon(String maHoaDon);
+
+    List<HoaDon> findByLoaiDonAndTrangThaiOrderByNgayTaoDesc(
+            String loaiDon,
+            String trangThai
+    );
+    @Query("""
+SELECT MAX(h.id)
+FROM HoaDon h
+""")
+    Long getMaxId();
 }

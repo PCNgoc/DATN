@@ -10,5 +10,6 @@ public interface KhachHangService {
     KhachHangDTO createKhachHang(KhachHangDTO khachHang);
     KhachHangDTO updateKhachHang(Integer id, KhachHangDTO khachHang);
     void deleteKhachHang(Integer id);
+
 }
 

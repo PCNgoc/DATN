@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { getHoaDonByKhachHang } from "@/services/HoaDonService";
-import { huyHoaDon } from "@/services/HoaDonService";
+import { getHoaDonByKhachHang } from "@/services/hoaDonService.js";
+import { huyHoaDon } from "@/services/hoaDonService.js";
 import Swal from "sweetalert2";
 
 const orders = ref([]);

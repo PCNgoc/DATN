@@ -4,7 +4,7 @@ import com.gxsneaker.gxsneaker.dto.*;
 import com.gxsneaker.gxsneaker.entity.HoaDon;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
-
+import com.gxsneaker.gxsneaker.dto.ThemSanPhamRequest;
 import java.util.List;
 
 public interface HoaDonService {
@@ -29,4 +29,14 @@ public interface HoaDonService {
     void xacNhanThanhToanVnpay(Long hoaDonId, String maGiaoDich);
 
     ResponseEntity<byte[]> exportPdf(Long id);
+
+    HoaDon taoHoaDonCho();
+    List<HoaDon> getHoaDonCho();
+
+    void themSanPham(Long hoaDonId, ThemSanPhamRequest request);
+    void capNhatSoLuong(Long hoaDonChiTietId,Integer soLuong);
+    void doiKhachHang(Long hoaDonId, Long khachHangId);
+    void xoaSanPham(Long hoaDonChiTietId);
+    void thanhToan(Long hoaDonId, ThanhToanRequest request);
+
 }

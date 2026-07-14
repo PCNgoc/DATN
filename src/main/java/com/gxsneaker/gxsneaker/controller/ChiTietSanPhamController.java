@@ -2,7 +2,9 @@ package com.gxsneaker.gxsneaker.controller;
 
 import com.gxsneaker.gxsneaker.dto.ChiTietSanPhamDTO;
 import com.gxsneaker.gxsneaker.dto.GenerateVariantDTO;
+import com.gxsneaker.gxsneaker.entity.ChiTietSanPham;
 import com.gxsneaker.gxsneaker.service.ChiTietSanPhamService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,11 +15,13 @@ import java.util.List;
 public class ChiTietSanPhamController {
 
     private final ChiTietSanPhamService service;
+    private final ChiTietSanPhamService chiTietSanPhamService;
 
     public ChiTietSanPhamController(
-            ChiTietSanPhamService service
-    ) {
+            ChiTietSanPhamService service,
+            ChiTietSanPhamService chiTietSanPhamService) {
         this.service = service;
+        this.chiTietSanPhamService = chiTietSanPhamService;
     }
 
     @GetMapping
@@ -73,5 +77,14 @@ public class ChiTietSanPhamController {
             @RequestBody GenerateVariantDTO dto
     ){
         service.generateVariants(dto);
+    }
+
+    @GetMapping("/ban-tai-quay")
+    public ResponseEntity<List<ChiTietSanPham>> getBanTaiQuay() {
+
+        return ResponseEntity.ok(
+                chiTietSanPhamService.getBanTaiQuay()
+        );
+
     }
 }

@@ -12,4 +12,6 @@ public interface GioHangChiTietRepository
     @Transactional
     void deleteByChiTietSanPham_SanPham_Id(Long id);
 
+
+
 }

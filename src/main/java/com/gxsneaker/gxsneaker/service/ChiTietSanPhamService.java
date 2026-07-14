@@ -2,6 +2,7 @@ package com.gxsneaker.gxsneaker.service;
 
 import com.gxsneaker.gxsneaker.dto.ChiTietSanPhamDTO;
 import com.gxsneaker.gxsneaker.dto.GenerateVariantDTO;
+import com.gxsneaker.gxsneaker.entity.ChiTietSanPham;
 
 import java.util.List;
 
@@ -27,4 +28,6 @@ public interface ChiTietSanPhamService {
 
     void delete(Long id);
     void generateVariants(GenerateVariantDTO dto);
+
+    List<ChiTietSanPham> getBanTaiQuay();
 }

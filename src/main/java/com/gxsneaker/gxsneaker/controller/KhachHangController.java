@@ -1,6 +1,8 @@
 package com.gxsneaker.gxsneaker.controller;
 
 import com.gxsneaker.gxsneaker.dto.KhachHangDTO;
+import com.gxsneaker.gxsneaker.repository.KhachHangRepository;
+import com.gxsneaker.gxsneaker.service.HoaDonService;
 import com.gxsneaker.gxsneaker.service.KhachHangService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,10 @@ public class KhachHangController {
 
     @Autowired
     private KhachHangService khachHangService;
+    @Autowired
+    private KhachHangRepository khachHangRepository;
+    @Autowired
+    private HoaDonService hoaDonService;
 
     @GetMapping
     public List<KhachHangDTO> getAllKhachHang() {
@@ -55,5 +61,14 @@ public class KhachHangController {
     public ResponseEntity<Void> deleteKhachHang(@PathVariable Integer id) {
         khachHangService.deleteKhachHang(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/ban-tai-quay")
+    public ResponseEntity<?> getBanTaiQuay() {
+
+        return ResponseEntity.ok(
+                khachHangRepository.findAll()
+        );
+
     }
 }

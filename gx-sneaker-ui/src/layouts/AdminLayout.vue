@@ -88,10 +88,10 @@ const menuItems = computed(() => [
     roles: ['ADMIN', 'STAFF'],
   },
   {
-    label: 'Quản lý đơn hàng',
-    icon: '🧾',
-    path: '/admin/hoa-don',
-    roles: ['ADMIN', 'STAFF'],
+    label: "Bán tại quầy",
+    icon: "🧾",
+    path: "/admin/ban-hang",
+    roles: ["ADMIN", "STAFF"],
   },
   {
     label: 'Khách hàng',

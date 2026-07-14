@@ -52,3 +52,73 @@ export default {
   apDungMaGiamGia,
   huyHoaDon,
 }
+
+export const taoHoaDonCho = () => {
+  return axios.post(
+    `${API_URL}/tao-hoa-don-cho`,
+    {},
+    getAuthHeader()
+  );
+};
+
+export const getHoaDonCho = () => {
+  return axios.get(
+    `${API_URL}/hoa-don-cho`,
+    getAuthHeader()
+  );
+};
+
+export const themSanPham = (hoaDonId, data) => {
+  return axios.post(
+    `${API_URL}/${hoaDonId}/them-san-pham`,
+    data,
+    getAuthHeader()
+  );
+};
+
+export const getChiTietHoaDon = (id) => {
+
+  return axios.get(`${API_URL}/${id}/chi-tiet`);
+
+}
+
+export const capNhatSoLuong = (id,soLuong)=>{
+
+  return axios.put(
+
+    `${API_URL}/chi-tiet/${id}/so-luong?soLuong=${soLuong}`
+
+  );
+
+}
+export const xoaSanPham = (id) => {
+
+  return axios.delete(
+
+    `${API_URL}/chi-tiet/${id}`,
+
+    getAuthHeader()
+
+  );
+
+}
+
+export const thanhToanTienMat = (hoaDonId, tienKhachDua) => {
+
+  return axios.post(
+
+    `${API_URL}/${hoaDonId}/thanh-toan`,
+
+    {
+      tienKhachDua
+    },
+
+    getAuthHeader()
+
+  );
+
+};
+
+
+
+
