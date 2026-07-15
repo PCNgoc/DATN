@@ -666,12 +666,26 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     private BaseFont getBaseFont() throws Exception {
 
+        System.out.println("WorkingDir = " + System.getProperty("user.dir"));
+
+        System.out.println("ClassLoader = "
+                + HoaDonServiceImpl.class.getClassLoader().getResource("fonts/arial.ttf"));
+
+        ClassPathResource resource = new ClassPathResource("fonts/arial.ttf");
+
+        System.out.println("Exists = " + resource.exists());
+
+        File file = new File("target/classes/fonts/arial.ttf");
+
+        System.out.println("File Exists = " + file.exists());
+
+        System.out.println(file.getAbsolutePath());
+
         return BaseFont.createFont(
-                "D:\\DATN2\\src\\main\\resources\\ fonts\\arial.ttf",
+                file.getAbsolutePath(),
                 BaseFont.IDENTITY_H,
                 BaseFont.EMBEDDED
         );
-
     }
 
     @Override
