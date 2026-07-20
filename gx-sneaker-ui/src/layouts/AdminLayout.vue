@@ -76,11 +76,18 @@ const menuItems = computed(() => [
     roles: ['ADMIN'],
   },
   {
-    label: 'Quản lý hóa đơn',
-    icon: '🧾',
+    label: 'Quản lý đơn hàng',
+    icon: '📦',
     path: '/admin/hoa-don',
     roles: ['ADMIN', 'STAFF'],
   },
+  {
+    label: 'Quản lý hóa đơn',
+    icon: '🧾',
+    path: '/admin/hoa-don-tai-quay',
+    roles: ['ADMIN', 'STAFF'],
+  },
+
   {
     label: 'Quản lý sản phẩm',
     icon: '👟',
@@ -89,7 +96,7 @@ const menuItems = computed(() => [
   },
   {
     label: "Bán tại quầy",
-    icon: "🧾",
+    icon: "🛒",
     path: "/admin/ban-hang",
     roles: ["ADMIN", "STAFF"],
   },

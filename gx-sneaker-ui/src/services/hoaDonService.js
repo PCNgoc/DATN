@@ -103,6 +103,13 @@ export const xoaSanPham = (id) => {
 
 }
 
+export const getHoaDonTaiQuay = () => {
+  return axios.get(`${API_URL}/tai-quay`)
+}
+
+export const getHoaDonOnline = () =>
+  axios.get("/hoa-don/online");
+
 export const thanhToanTienMat = (hoaDonId, tienKhachDua) => {
 
   return axios.post(

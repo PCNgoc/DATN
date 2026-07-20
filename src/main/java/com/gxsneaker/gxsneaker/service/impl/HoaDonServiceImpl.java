@@ -969,6 +969,15 @@ public class HoaDonServiceImpl implements HoaDonService {
         hoaDonRepository.save(hoaDon);
 
     }
+    @Override
+    public List<HoaDon> getHoaDonTaiQuay() {
+        return hoaDonRepository.findByLoaiDonOrderByNgayTaoDesc("TAI_QUAY");
+    }
+
+    @Override
+    public List<HoaDon> getHoaDonOnline() {
+        return hoaDonRepository.findByLoaiDonOrderByNgayTaoDesc("ONLINE");
+    }
 
 
 }

@@ -46,6 +46,8 @@ import ContactView from '@/views/user/ContactView.vue'
 // Khác
 import FavoriteView from '@/views/FavoriteView.vue'
 import BanHangTaiQuayView from "@/views/admin/BanHangTaiQuayView.vue";
+import HoaDonTaiQuayView from "@/views/admin/HoaDonTaiQuayView.vue";
+
 // Bán tại quầy
 import("@/views/admin/BanHangTaiQuayView.vue")
 
@@ -354,6 +356,14 @@ const router = createRouter({
             roles: ['ADMIN', 'STAFF'],
           },
         },
+        {
+          path: "hoa-don-tai-quay",
+          name: "HoaDonTaiQuay",
+          component: HoaDonTaiQuayView,
+          meta: {
+            roles: ["ADMIN", "STAFF"],
+          },
+        },
 
         {
           path: "ban-hang",
@@ -383,6 +393,7 @@ const router = createRouter({
       path: '/dashboard',
       redirect: '/admin/thong-ke',
     },
+
   ],
 })
 

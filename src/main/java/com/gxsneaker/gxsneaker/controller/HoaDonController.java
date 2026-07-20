@@ -79,26 +79,38 @@ public class HoaDonController {
     public void delete(@PathVariable Long id) {
         repository.deleteById(id);
     }
-
     @GetMapping("/search")
     public List<HoaDon> search(
             @RequestParam(required = false) String maHoaDon,
             @RequestParam(required = false) String trangThai
     ) {
+
+        String loaiDon = "ONLINE";
+
         if ((maHoaDon == null || maHoaDon.isBlank())
                 && (trangThai == null || trangThai.isBlank())) {
-            return repository.findAll();
+
+            return repository.findByLoaiDonOrderByNgayTaoDesc(loaiDon);
         }
 
         if (trangThai == null || trangThai.isBlank()) {
-            return repository.findByMaHoaDonContaining(maHoaDon);
+
+            return repository.findByLoaiDonAndMaHoaDonContainingOrderByNgayTaoDesc(
+                    loaiDon,
+                    maHoaDon
+            );
         }
 
         if (maHoaDon == null || maHoaDon.isBlank()) {
-            return repository.findByTrangThai(trangThai);
+
+            return repository.findByLoaiDonAndTrangThaiOrderByNgayTaoDesc(
+                    loaiDon,
+                    trangThai
+            );
         }
 
-        return repository.findByMaHoaDonContainingAndTrangThai(
+        return repository.findByLoaiDonAndMaHoaDonContainingAndTrangThaiOrderByNgayTaoDesc(
+                loaiDon,
                 maHoaDon,
                 trangThai
         );
@@ -531,6 +543,16 @@ public class HoaDonController {
 
         return ResponseEntity.ok().build();
 
+    }
+
+    @GetMapping("/tai-quay")
+    public List<HoaDon> getHoaDonTaiQuay() {
+        return hoaDonService.getHoaDonTaiQuay();
+    }
+
+    @GetMapping("/online")
+    public List<HoaDon> getHoaDonOnline() {
+        return hoaDonService.getHoaDonOnline();
     }
 
 

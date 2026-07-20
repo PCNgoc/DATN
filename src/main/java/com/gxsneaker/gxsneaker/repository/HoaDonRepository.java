@@ -22,6 +22,38 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Long> {
             String maHoaDon,
             String trangThai
     );
+    List<HoaDon> findByLoaiDonOrderByIdDesc(String loaiDon);
+    List<HoaDon> findByLoaiDonOrderByNgayTaoDesc(String loaiDon);
+
+    List<HoaDon> findByLoaiDonAndTrangThaiOrderByNgayTaoDesc(
+            String loaiDon,
+            String trangThai
+    );
+
+    List<HoaDon> findByLoaiDonAndMaHoaDonContainingOrderByNgayTaoDesc(
+            String loaiDon,
+            String maHoaDon
+    );
+
+    List<HoaDon> findByLoaiDonAndMaHoaDonContainingAndTrangThaiOrderByNgayTaoDesc(
+            String loaiDon,
+            String maHoaDon,
+            String trangThai
+    );
+
+    List<HoaDon> findByLoaiDon(String loaiDon);
+
+    List<HoaDon> findByLoaiDonAndTrangThai(String loaiDon, String trangThai);
+
+    List<HoaDon> findByLoaiDonAndMaHoaDonContaining(String loaiDon, String maHoaDon);
+
+    List<HoaDon> findByLoaiDonAndMaHoaDonContainingAndTrangThai(
+            String loaiDon,
+            String maHoaDon,
+            String trangThai
+    );
+
+
 
 
     // ==========================================
@@ -221,10 +253,7 @@ ORDER BY SUM(hdct.so_luong) DESC
 
     Optional<HoaDon> findByMaHoaDon(String maHoaDon);
 
-    List<HoaDon> findByLoaiDonAndTrangThaiOrderByNgayTaoDesc(
-            String loaiDon,
-            String trangThai
-    );
+
     @Query("""
 SELECT MAX(h.id)
 FROM HoaDon h
