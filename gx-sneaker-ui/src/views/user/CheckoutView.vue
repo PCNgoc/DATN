@@ -1,8 +1,14 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { datHang } from '@/services/HoaDonService'
+import { datHang } from '@/services/hoaDonService'
 import { getByMa, getAll } from '@/services/phieuGiamGiaService'
 import { useRouter } from 'vue-router'
+import {
+  getShippingQuote,
+  getGhnProvinces,
+  getGhnDistricts,
+  getGhnWards,
+} from '@/services/shippingService'
 
 const router = useRouter()
 
@@ -15,6 +21,8 @@ const phone = ref('')
 const note = ref('')
 
 const provinces = ref([])
+const districts = ref([])
+const wards = ref([])
 const selectedProvinceCode = ref('')
 const selectedDistrictCode = ref('')
 const selectedWardCode = ref('')
@@ -23,6 +31,13 @@ const addressLoading = ref(false)
 
 const paymentMethod = ref('COD')
 const shipFee = ref(0)
+
+const shippingFeeLoading = ref(false)
+const shippingFeeReady = ref(false)
+const shippingFeeError = ref('')
+const shippingProvider = ref('')
+const shippingQuoteId = ref('')
+
 const loading = ref(false)
 
 const couponCode = ref('')
@@ -85,7 +100,7 @@ const normalizeItem = (item) => {
 }
 
 onMounted(async () => {
-  await loadVietnamAddress()
+  await loadProvinces()
   const userData = localStorage.getItem('user')
 
   if (userData) {
@@ -383,6 +398,16 @@ const validateForm = () => {
     return false
   }
 
+  if (shippingFeeLoading.value) {
+    alert('Đơn vị vận chuyển đang tính phí, vui lòng chờ hoàn tất')
+    return false
+  }
+
+  if (!shippingFeeReady.value) {
+    alert(shippingFeeError.value || 'Chưa lấy được phí vận chuyển từ đơn vị thứ ba')
+    return false
+  }
+
   return true
 }
 
@@ -421,12 +446,15 @@ const confirmPlaceOrder = async () => {
       soDienThoai: phone.value.trim(),
       diaChi: fullShippingAddress.value,
       ghiChu:
-          paymentMethod.value === 'QR'
-              ? `[VNPAY_CHO_THANH_TOAN] ${note.value.trim()}`
-              : `[COD_CHO_XAC_NHAN] ${note.value.trim()}`,
+        paymentMethod.value === 'QR'
+          ? `[VNPAY_CHO_THANH_TOAN] ${note.value.trim()}`
+          : `[COD_CHO_XAC_NHAN] ${note.value.trim()}`,
       phuongThucThanhToan: paymentMethod.value === 'QR' ? 'VNPAY' : 'COD',
       maPhieuGiamGia: appliedCoupon.value ? getCouponCode(appliedCoupon.value) : null,
-      phiVanChuyen: Number(shipFee.value),
+      maTinhThanh: String(selectedProvinceCode.value),
+      maQuanHuyen: String(selectedDistrictCode.value),
+      maPhuongXa: String(selectedWardCode.value),
+      maBaoGiaVanChuyen: shippingQuoteId.value || null,
       items: checkoutItems.value.map((item) => ({
         chiTietSanPhamId: Number(getChiTietSanPhamId(item)),
         soLuong: Number(item.quantity || 1),
@@ -479,16 +507,8 @@ const selectedProvince = computed(() => {
   return provinces.value.find((item) => item.code === selectedProvinceCode.value) || null
 })
 
-const districts = computed(() => {
-  return selectedProvince.value?.districts || []
-})
-
 const selectedDistrict = computed(() => {
   return districts.value.find((item) => item.code === selectedDistrictCode.value) || null
-})
-
-const wards = computed(() => {
-  return selectedDistrict.value?.wards || []
 })
 
 const selectedWard = computed(() => {
@@ -506,94 +526,194 @@ const fullShippingAddress = computed(() => {
     .join(', ')
 })
 
-const loadVietnamAddress = async () => {
+const loadProvinces = async () => {
   try {
     addressLoading.value = true
 
-    const res = await fetch('https://provinces.open-api.vn/api/v1/?depth=3')
-    const data = await res.json()
+    const response = await getGhnProvinces()
 
-    provinces.value = Array.isArray(data) ? data : []
+    provinces.value = Array.isArray(response.data) ? response.data : []
   } catch (error) {
-    console.error('Lỗi tải danh sách địa chỉ:', error)
-    alert('Không tải được danh sách tỉnh/thành phố')
+    console.error('Lỗi tải tỉnh/thành GHN:', error)
+
+    alert(error.response?.data?.message || 'Không tải được tỉnh/thành phố từ GHN')
   } finally {
     addressLoading.value = false
   }
 }
 
-const calculateShipFeeByProvince = (provinceName) => {
-  if (!provinceName) return 0
+const loadDistricts = async () => {
+  districts.value = []
+  wards.value = []
 
-  const name = provinceName.toLowerCase()
+  if (!selectedProvinceCode.value) {
+    return
+  }
 
-  if (name.includes('hà nội')) return 25000
+  try {
+    addressLoading.value = true
 
-  const mienBac = [
-    'hải phòng',
-    'quảng ninh',
-    'bắc giang',
-    'bắc kạn',
-    'bắc ninh',
-    'cao bằng',
-    'điện biên',
-    'hà giang',
-    'hà nam',
-    'hải dương',
-    'hòa bình',
-    'hưng yên',
-    'lai châu',
-    'lạng sơn',
-    'lào cai',
-    'nam định',
-    'ninh bình',
-    'phú thọ',
-    'sơn la',
-    'thái bình',
-    'thái nguyên',
-    'tuyên quang',
-    'vĩnh phúc',
-    'yên bái',
-  ]
+    const response = await getGhnDistricts(Number(selectedProvinceCode.value))
 
-  const mienTrung = [
-    'thanh hóa',
-    'nghệ an',
-    'hà tĩnh',
-    'quảng bình',
-    'quảng trị',
-    'thừa thiên huế',
-    'đà nẵng',
-    'quảng nam',
-    'quảng ngãi',
-    'bình định',
-    'phú yên',
-    'khánh hòa',
-    'ninh thuận',
-    'bình thuận',
-    'kon tum',
-    'gia lai',
-    'đắk lắk',
-    'đắk nông',
-    'lâm đồng',
-  ]
+    districts.value = Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    console.error('Lỗi tải quận/huyện GHN:', error)
 
-  if (mienBac.some((item) => name.includes(item))) return 35000
-
-  if (mienTrung.some((item) => name.includes(item))) return 40000
-
-  return 50000
+    alert(error.response?.data?.message || 'Không tải được quận/huyện từ GHN')
+  } finally {
+    addressLoading.value = false
+  }
 }
 
-watch(selectedProvinceCode, () => {
+const loadWards = async () => {
+  wards.value = []
+
+  if (!selectedDistrictCode.value) {
+    return
+  }
+
+  try {
+    addressLoading.value = true
+
+    const response = await getGhnWards(Number(selectedDistrictCode.value))
+
+    wards.value = Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    console.error('Lỗi tải phường/xã GHN:', error)
+
+    alert(error.response?.data?.message || 'Không tải được phường/xã từ GHN')
+  } finally {
+    addressLoading.value = false
+  }
+}
+
+let shippingFeeTimer = null
+let shippingRequestSequence = 0
+
+const buildShippingItems = () => {
+  return checkoutItems.value.map((item) => ({
+    chiTietSanPhamId: Number(getChiTietSanPhamId(item)),
+    soLuong: Number(item.quantity || 1),
+  }))
+}
+
+const resetShippingQuote = () => {
+  shipFee.value = 0
+  shippingFeeReady.value = false
+  shippingFeeError.value = ''
+  shippingProvider.value = ''
+  shippingQuoteId.value = ''
+}
+
+const canRequestShippingQuote = () => {
+  return Boolean(
+    selectedProvinceCode.value &&
+    selectedDistrictCode.value &&
+    selectedWardCode.value &&
+    addressDetail.value.trim() &&
+    checkoutItems.value.length > 0 &&
+    checkoutItems.value.every((item) => getChiTietSanPhamId(item)),
+  )
+}
+
+const loadShippingFee = async () => {
+  if (!canRequestShippingQuote()) {
+    resetShippingQuote()
+    return
+  }
+
+  const currentRequest = ++shippingRequestSequence
+
+  shippingFeeLoading.value = true
+  shippingFeeReady.value = false
+  shippingFeeError.value = ''
+
+  try {
+    const response = await getShippingQuote({
+      provinceCode: String(selectedProvinceCode.value),
+      districtCode: String(selectedDistrictCode.value),
+      wardCode: String(selectedWardCode.value),
+      address: fullShippingAddress.value,
+      items: buildShippingItems(),
+    })
+
+    // Bỏ qua kết quả cũ nếu người dùng vừa đổi địa chỉ
+    if (currentRequest !== shippingRequestSequence) {
+      return
+    }
+
+    const fee = Number(response.data?.fee)
+
+    if (!Number.isFinite(fee) || fee < 0) {
+      throw new Error('Đơn vị vận chuyển trả về phí không hợp lệ')
+    }
+
+    shipFee.value = fee
+    shippingProvider.value = response.data?.provider || 'Đơn vị vận chuyển'
+
+    shippingQuoteId.value = response.data?.quoteId || ''
+    shippingFeeReady.value = true
+  } catch (error) {
+    if (currentRequest !== shippingRequestSequence) {
+      return
+    }
+
+    shipFee.value = 0
+    shippingFeeReady.value = false
+    shippingProvider.value = ''
+    shippingQuoteId.value = ''
+
+    shippingFeeError.value =
+      error.response?.data?.message || error.message || 'Không lấy được phí vận chuyển'
+  } finally {
+    if (currentRequest === shippingRequestSequence) {
+      shippingFeeLoading.value = false
+    }
+  }
+}
+
+const queueShippingFeeQuote = () => {
+  clearTimeout(shippingFeeTimer)
+  resetShippingQuote()
+
+  if (!canRequestShippingQuote()) {
+    return
+  }
+
+  // Chờ 500 ms để tránh gọi API liên tục khi người dùng đang nhập
+  shippingFeeTimer = setTimeout(() => {
+    loadShippingFee()
+  }, 500)
+}
+
+watch(selectedProvinceCode, async () => {
   selectedDistrictCode.value = ''
   selectedWardCode.value = ''
-  shipFee.value = calculateShipFeeByProvince(selectedProvince.value?.name)
+
+  districts.value = []
+  wards.value = []
+
+  resetShippingQuote()
+
+  if (selectedProvinceCode.value) {
+    await loadDistricts()
+  }
 })
 
-watch(selectedDistrictCode, () => {
+watch(selectedDistrictCode, async () => {
   selectedWardCode.value = ''
+  wards.value = []
+
+  resetShippingQuote()
+
+  if (selectedDistrictCode.value) {
+    await loadWards()
+  }
 })
+
+watch(selectedWardCode, queueShippingFeeQuote)
+watch(addressDetail, queueShippingFeeQuote)
+watch(checkoutItems, queueShippingFeeQuote, { deep: true })
 </script>
 
 <template>
@@ -635,6 +755,7 @@ watch(selectedDistrictCode, () => {
           <div class="form-grid">
             <div class="form-group">
               <label>Tỉnh/Thành phố <span>*</span></label>
+
               <select
                 v-model="selectedProvinceCode"
                 class="address-select"
@@ -652,12 +773,17 @@ watch(selectedDistrictCode, () => {
 
             <div class="form-group">
               <label>Quận/Huyện <span>*</span></label>
+
               <select
                 v-model="selectedDistrictCode"
                 class="address-select"
-                :disabled="!selectedProvinceCode"
+                :disabled="addressLoading || !selectedProvinceCode"
               >
-                <option value="">-- Chọn quận/huyện --</option>
+                <option value="">
+                  {{
+                    addressLoading && selectedProvinceCode ? 'Đang tải...' : '-- Chọn quận/huyện --'
+                  }}
+                </option>
 
                 <option v-for="district in districts" :key="district.code" :value="district.code">
                   {{ district.name }}
@@ -668,12 +794,17 @@ watch(selectedDistrictCode, () => {
 
           <div class="form-group">
             <label>Phường/Xã <span>*</span></label>
+
             <select
               v-model="selectedWardCode"
               class="address-select"
-              :disabled="!selectedDistrictCode"
+              :disabled="addressLoading || !selectedDistrictCode"
             >
-              <option value="">-- Chọn phường/xã --</option>
+              <option value="">
+                {{
+                  addressLoading && selectedDistrictCode ? 'Đang tải...' : '-- Chọn phường/xã --'
+                }}
+              </option>
 
               <option v-for="ward in wards" :key="ward.code" :value="ward.code">
                 {{ ward.name }}
@@ -690,10 +821,22 @@ watch(selectedDistrictCode, () => {
             />
           </div>
 
-          <p v-if="selectedProvince" class="shipping-note">
-            Phí vận chuyển đến {{ selectedProvince.name }}:
-            <strong>{{ formatMoney(shipFee) }}</strong>
-          </p>
+          <div v-if="selectedProvince" class="shipping-note">
+            <span v-if="shippingFeeLoading"> Đơn vị vận chuyển đang tính phí... </span>
+
+            <span v-else-if="shippingFeeError" class="shipping-error">
+              {{ shippingFeeError }}
+
+              <button type="button" class="retry-shipping" @click="loadShippingFee">Thử lại</button>
+            </span>
+
+            <span v-else-if="shippingFeeReady">
+              Phí do {{ shippingProvider }} báo:
+              <strong>{{ formatMoney(shipFee) }}</strong>
+            </span>
+
+            <span v-else> Chọn đầy đủ địa chỉ để nhận phí từ đơn vị vận chuyển. </span>
+          </div>
 
           <div class="form-group">
             <label>Ghi chú</label>
@@ -895,7 +1038,14 @@ watch(selectedDistrictCode, () => {
 
         <div class="price-row">
           <span>Phí vận chuyển</span>
-          <strong>{{ formatMoney(shipFee) }}</strong>
+
+          <strong v-if="shippingFeeLoading"> Đang tính... </strong>
+
+          <strong v-else-if="shippingFeeReady">
+            {{ formatMoney(shipFee) }}
+          </strong>
+
+          <strong v-else> Chưa có </strong>
         </div>
 
         <div class="divider"></div>
@@ -905,13 +1055,21 @@ watch(selectedDistrictCode, () => {
           <strong>{{ formatMoney(finalTotal) }}</strong>
         </div>
 
-        <button class="btn-order" :disabled="loading" @click="placeOrder">
+        <button
+          class="btn-order"
+          :disabled="loading || shippingFeeLoading || !shippingFeeReady"
+          @click="placeOrder"
+        >
           {{
             loading
               ? 'ĐANG XỬ LÝ...'
-              : paymentMethod === 'QR'
-                ? 'THANH TOÁN QUA VNPAY'
-                : 'ĐẶT HÀNG - CHỜ XÁC NHẬN'
+              : shippingFeeLoading
+                ? 'ĐANG LẤY PHÍ VẬN CHUYỂN...'
+                : !shippingFeeReady
+                  ? 'CHƯA CÓ PHÍ VẬN CHUYỂN'
+                  : paymentMethod === 'QR'
+                    ? 'THANH TOÁN QUA VNPAY'
+                    : 'ĐẶT HÀNG - CHỜ XÁC NHẬN'
           }}
         </button>
 
@@ -1795,5 +1953,18 @@ watch(selectedDistrictCode, () => {
   border-color: #ef4444;
   background: white;
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+}
+
+.shipping-error {
+  color: #b91c1c;
+}
+
+.retry-shipping {
+  margin-left: 8px;
+  border: 0;
+  background: transparent;
+  color: #be123c;
+  font-weight: 700;
+  cursor: pointer;
 }
 </style>

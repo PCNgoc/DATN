@@ -24,5 +24,13 @@ public class DatHangRequestDTO {
 
     private BigDecimal phiVanChuyen;
 
+    private String maTinhThanh;
+
+    private String maQuanHuyen;
+
+    private String maPhuongXa;
+
+    private String maBaoGiaVanChuyen;
+
     private List<DatHangItemDTO> items;
 }

@@ -25,6 +25,8 @@ import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.io.File;
+
+import com.gxsneaker.gxsneaker.service.ShippingFeeService;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -38,6 +40,7 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final PhieuGiamGiaRepository phieuGiamGiaRepository;
     private final PayOSPaymentService payOSPaymentService;
     private final VNPayService vnPayService;
+    private final ShippingFeeService shippingFeeService;
 
 
 
@@ -153,7 +156,36 @@ public class HoaDonServiceImpl implements HoaDonService {
             tongTienHang = tongTienHang.add(thanhTien);
         }
 
-        BigDecimal phiVanChuyen = BigDecimal.valueOf(30000);
+        ShippingFeeRequestDTO shippingFeeRequest =
+                new ShippingFeeRequestDTO();
+
+        shippingFeeRequest.setProvinceCode(
+                request.getMaTinhThanh()
+        );
+
+        shippingFeeRequest.setDistrictCode(
+                request.getMaQuanHuyen()
+        );
+
+        shippingFeeRequest.setWardCode(
+                request.getMaPhuongXa()
+        );
+
+        shippingFeeRequest.setAddress(
+                request.getDiaChi()
+        );
+
+        shippingFeeRequest.setItems(
+                request.getItems()
+        );
+
+// Backend tự gọi lại bên vận chuyển.
+// Không sử dụng phí do trình duyệt gửi lên.
+        ShippingFeeQuoteDTO shippingQuote =
+                shippingFeeService.calculateFee(shippingFeeRequest);
+
+        BigDecimal phiVanChuyen =
+                shippingQuote.getFee();
         BigDecimal soTienGiam = BigDecimal.ZERO;
         hoaDon.setTongTienHang(tongTienHang);
 
