@@ -307,73 +307,162 @@ const editItem = (item)=>{
 
 }
 //============================================
+//============================================
 const validateForm = () => {
 
   errors.value = {
-
     maChiTiet: "",
-
     idMauSac: "",
-
     idKichThuoc: "",
-
     soLuongTon: "",
-
     giaNhap: "",
-
     giaBan: ""
-
   }
 
   let valid = true
 
+  // ==========================
+  // Chuẩn hóa dữ liệu
+  // ==========================
+  form.value.soLuongTon =
+    form.value.soLuongTon?.toString().trim() || ""
 
+  form.value.giaNhap =
+    form.value.giaNhap?.toString().trim() || ""
+
+  form.value.giaBan =
+    form.value.giaBan?.toString().trim() || ""
+
+  // ==========================
+  // Màu sắc
+  // ==========================
   if (!form.value.idMauSac) {
-
     errors.value.idMauSac = "Vui lòng chọn màu sắc"
-
     valid = false
-
   }
 
+  // ==========================
+  // Kích thước
+  // ==========================
   if (!form.value.idKichThuoc) {
-
     errors.value.idKichThuoc = "Vui lòng chọn kích thước"
+    valid = false
+  }
+
+  // ==========================
+  // Số lượng tồn
+  // ==========================
+  if (!form.value.soLuongTon) {
+
+    errors.value.soLuongTon = "Vui lòng nhập số lượng tồn"
 
     valid = false
 
-  }
+  } else if (isNaN(form.value.soLuongTon)) {
 
-  if (form.value.soLuongTon === "" || form.value.soLuongTon <= 0) {
+    errors.value.soLuongTon = "Số lượng tồn phải là số"
+
+    valid = false
+
+  } else if (!Number.isInteger(Number(form.value.soLuongTon))) {
+
+    errors.value.soLuongTon = "Số lượng tồn phải là số nguyên"
+
+    valid = false
+
+  } else if (Number(form.value.soLuongTon) <= 0) {
+
     errors.value.soLuongTon = "Số lượng tồn phải lớn hơn 0"
+
     valid = false
+
+  } else if (Number(form.value.soLuongTon) > 1000000) {
+
+    errors.value.soLuongTon =
+      "Số lượng tồn không được vượt quá 1.000.000"
+
+    valid = false
+
   }
 
-  if (form.value.giaNhap === "" || form.value.giaNhap <= 0) {
+  // ==========================
+  // Giá nhập
+  // ==========================
+  if (!form.value.giaNhap) {
+
+    errors.value.giaNhap = "Vui lòng nhập giá nhập"
+
+    valid = false
+
+  } else if (isNaN(form.value.giaNhap)) {
+
+    errors.value.giaNhap = "Giá nhập phải là số"
+
+    valid = false
+
+  } else if (Number(form.value.giaNhap) <= 0) {
 
     errors.value.giaNhap = "Giá nhập phải lớn hơn 0"
 
     valid = false
 
+  } else if (Number(form.value.giaNhap) > 1000000000) {
+
+    errors.value.giaNhap =
+      "Giá nhập không được vượt quá 1.000.000.000 VNĐ"
+
+    valid = false
+
   }
 
-  if (form.value.giaBan === "" || form.value.giaBan <= 0) {
+  // ==========================
+  // Giá bán
+  // ==========================
+  if (!form.value.giaBan) {
+
+    errors.value.giaBan = "Vui lòng nhập giá bán"
+
+    valid = false
+
+  } else if (isNaN(form.value.giaBan)) {
+
+    errors.value.giaBan = "Giá bán phải là số"
+
+    valid = false
+
+  } else if (Number(form.value.giaBan) <= 0) {
 
     errors.value.giaBan = "Giá bán phải lớn hơn 0"
 
     valid = false
 
-  }
+  } else if (Number(form.value.giaBan) > 1000000000) {
 
-  if (
-    Number(form.value.giaBan)
-    <
-    Number(form.value.giaNhap)
-  ) {
-
-    errors.value.giaBan = "Giá bán phải lớn hơn hoặc bằng giá nhập"
+    errors.value.giaBan =
+      "Giá bán không được vượt quá 1.000.000.000 VNĐ"
 
     valid = false
+
+  }
+
+  // ==========================
+  // So sánh giá
+  // ==========================
+  if (
+    form.value.giaNhap &&
+    form.value.giaBan &&
+    !isNaN(form.value.giaNhap) &&
+    !isNaN(form.value.giaBan)
+  ) {
+
+    if (Number(form.value.giaBan) < Number(form.value.giaNhap)) {
+
+      errors.value.giaBan =
+        "Giá bán phải lớn hơn hoặc bằng giá nhập"
+
+      valid = false
+
+    }
 
   }
 
@@ -438,22 +527,117 @@ const saveItem = async()=>{
   }
 
 }
+//=================lỗi sinh biến thể
+const generateErrors = ref({
+  mauSacIds: "",
+  kichThuocIds: "",
+  giaNhap: "",
+  giaBan: "",
+  soLuongTon: ""
+})
+const validateGenerateVariant = () => {
+
+  generateErrors.value = {
+    mauSacIds: "",
+    kichThuocIds: "",
+    giaNhap: "",
+    giaBan: "",
+    soLuongTon: ""
+  }
+
+  let valid = true
+
+  // ==========================
+  // Màu sắc
+  // ==========================
+  if (
+    !generateForm.value.mauSacIds ||
+    generateForm.value.mauSacIds.length === 0
+  ) {
+
+    generateErrors.value.mauSacIds =
+      "Vui lòng chọn ít nhất một màu sắc"
+
+    valid = false
+
+  }
+
+  // ==========================
+  // Kích thước
+  // ==========================
+  if (
+    !generateForm.value.kichThuocIds ||
+    generateForm.value.kichThuocIds.length === 0
+  ) {
+
+    generateErrors.value.kichThuocIds =
+      "Vui lòng chọn ít nhất một kích thước"
+
+    valid = false
+
+  }
+  // Giá nhập
+  if (!generateForm.value.giaNhap || Number(generateForm.value.giaNhap) <= 0) {
+    generateErrors.value.giaNhap = "Giá nhập phải lớn hơn 0"
+    valid = false
+  }
+
+// Giá bán
+  if (!generateForm.value.giaBan || Number(generateForm.value.giaBan) <= 0) {
+    generateErrors.value.giaBan = "Giá bán phải lớn hơn 0"
+    valid = false
+  }
+
+// Giá bán >= Giá nhập
+  if (
+    Number(generateForm.value.giaBan) <
+    Number(generateForm.value.giaNhap)
+  ) {
+    generateErrors.value.giaBan =
+      "Giá bán phải lớn hơn hoặc bằng giá nhập"
+    valid = false
+  }
+
+// Số lượng
+  if (!generateForm.value.soLuongTon || Number(generateForm.value.soLuongTon) <= 0) {
+    generateErrors.value.soLuongTon = "Số lượng phải lớn hơn 0"
+    valid = false
+  }
+
+  // ==========================
+  // Giới hạn số biến thể
+  // ==========================
+
+  const total =
+    generateForm.value.mauSacIds.length *
+    generateForm.value.kichThuocIds.length
+
+  if (total > 100) {
+
+    alert("Chỉ được sinh tối đa 100 biến thể mỗi lần")
+
+    valid = false
+
+  }
+
+  return valid
+
+}
 const generateVariants = async () => {
+
+  // BẮT BUỘC phải gọi validate
+  if (!validateGenerateVariant()) {
+    return
+  }
 
   try {
 
     await axios.post(
-
       "http://localhost:8080/api/chi-tiet-san-pham/generate",
-
       {
-
         idSanPham: Number(route.params.id),
-
         ...generateForm.value
-
       }
-
     )
 
     showGenerateModal.value = false
@@ -462,18 +646,13 @@ const generateVariants = async () => {
 
     alert("Sinh biến thể thành công")
 
-  }
+  } catch (e) {
 
-  catch (e) {
-
-    console.log(e)
+    console.error(e)
 
     alert(
-
       e.response?.data ||
-
       "Không thể sinh biến thể"
-
     )
 
   }
@@ -1025,6 +1204,8 @@ onMounted(()=>{
 
         <h2>Sinh biến thể</h2>
 
+        <label>Màu sắc</label>
+
         <div class="checkbox-group">
 
           <label
@@ -1044,6 +1225,12 @@ onMounted(()=>{
           </label>
 
         </div>
+
+        <div class="error">
+          {{ generateErrors.mauSacIds }}
+        </div>
+
+        <label>Kích thước</label>
 
         <div class="checkbox-group">
 
@@ -1065,35 +1252,45 @@ onMounted(()=>{
 
         </div>
 
+        <div class="error">
+          {{ generateErrors.kichThuocIds }}
+        </div>
+
         <label>Giá nhập</label>
 
         <input
-
           type="number"
-
           v-model="generateForm.giaNhap"
+          :class="{ 'error-input': generateErrors.giaNhap }"
+        />
 
-        >
+        <div class="error">
+          {{ generateErrors.giaNhap }}
+        </div>
 
         <label>Giá bán</label>
 
         <input
-
           type="number"
-
           v-model="generateForm.giaBan"
+          :class="{ 'error-input': generateErrors.giaBan }"
+        />
 
-        >
+        <div class="error">
+          {{ generateErrors.giaBan }}
+        </div>
 
         <label>Số lượng</label>
 
         <input
-
           type="number"
-
           v-model="generateForm.soLuongTon"
+          :class="{ 'error-input': generateErrors.soLuongTon }"
+        />
 
-        >
+        <div class="error">
+          {{ generateErrors.soLuongTon }}
+        </div>
         <label>Trạng thái</label>
 
         <select v-model="generateForm.trangThai">
@@ -1628,5 +1825,34 @@ tbody tr:hover{
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+}
+/* ===========================
+   VALIDATE - Sinh biến thể
+=========================== */
+
+.error {
+  color: #dc3545;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 4px;
+  min-height: 18px;
+}
+
+/* Input lỗi */
+.error-input {
+  border: 1px solid #dc3545 !important;
+  outline: none;
+}
+
+.error-input:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 4px rgba(220, 53, 69, 0.3);
+}
+
+/* Checkbox lỗi */
+.error-box {
+  border: 1px solid #dc3545;
+  border-radius: 6px;
+  padding: 10px;
 }
 </style>

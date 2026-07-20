@@ -512,6 +512,7 @@ const editProduct=(item)=>{
 
 const saveProduct = async () => {
 
+  // Reset lỗi
   errors.value = {
     maSanPham: "",
     tenSanPham: "",
@@ -521,85 +522,95 @@ const saveProduct = async () => {
     idCoGiay: "",
     idDeGiay: "",
     idDanhMuc: "",
-    anhDaiDien: ""
+    anhDaiDien: "",
+    moTa: ""
   }
 
   let valid = true
 
-  form.value.maSanPham = form.value.maSanPham.trim()
-  form.value.tenSanPham = form.value.tenSanPham.trim()
+  // Chuẩn hóa dữ liệu
+  form.value.maSanPham = form.value.maSanPham?.trim() || ""
+  form.value.tenSanPham = form.value.tenSanPham?.trim().replace(/\s+/g, " ") || ""
+  form.value.moTa = form.value.moTa?.trim() || ""
 
-  if (form.value.tenSanPham === "") {
+  // ================== Tên sản phẩm ==================
+  if (!form.value.tenSanPham) {
     errors.value.tenSanPham = "Vui lòng nhập tên sản phẩm"
+    valid = false
+  } else if (form.value.tenSanPham.length < 3) {
+    errors.value.tenSanPham = "Tên sản phẩm phải có ít nhất 3 ký tự"
+    valid = false
+  } else if (form.value.tenSanPham.length > 100) {
+    errors.value.tenSanPham = "Tên sản phẩm không được vượt quá 100 ký tự"
     valid = false
   }
 
+  // ================== Thương hiệu ==================
   if (!form.value.idThuongHieu) {
     errors.value.idThuongHieu = "Vui lòng chọn thương hiệu"
     valid = false
   }
 
-  if (!form.value.idXuatXu) {
-    errors.value.idXuatXu = "Vui lòng chọn xuất xứ"
-    valid = false
-  }
-
-  if (!form.value.idChatLieu) {
-    errors.value.idChatLieu = "Vui lòng chọn chất liệu"
-    valid = false
-  }
-
-  if (!form.value.idCoGiay) {
-    errors.value.idCoGiay = "Vui lòng chọn cổ giày"
-    valid = false
-  }
-
-  if (!form.value.idDeGiay) {
-    errors.value.idDeGiay = "Vui lòng chọn đế giày"
-    valid = false
-  }
-
+  // ================== Danh mục ==================
   if (!form.value.idDanhMuc) {
     errors.value.idDanhMuc = "Vui lòng chọn danh mục"
     valid = false
   }
 
+  // ================== Xuất xứ ==================
+  if (!form.value.idXuatXu) {
+    errors.value.idXuatXu = "Vui lòng chọn xuất xứ"
+    valid = false
+  }
+
+  // ================== Chất liệu ==================
+  if (!form.value.idChatLieu) {
+    errors.value.idChatLieu = "Vui lòng chọn chất liệu"
+    valid = false
+  }
+
+  // ================== Cổ giày ==================
+  if (!form.value.idCoGiay) {
+    errors.value.idCoGiay = "Vui lòng chọn cổ giày"
+    valid = false
+  }
+
+  // ================== Đế giày ==================
+  if (!form.value.idDeGiay) {
+    errors.value.idDeGiay = "Vui lòng chọn đế giày"
+    valid = false
+  }
+
+  // ================== Ảnh đại diện ==================
   if (!form.value.anhDaiDien) {
     errors.value.anhDaiDien = "Vui lòng tải ảnh sản phẩm"
     valid = false
   }
 
+  // ================== Mô tả ==================
+  if (form.value.moTa && form.value.moTa.length > 500) {
+    errors.value.moTa = "Mô tả không được vượt quá 500 ký tự"
+    valid = false
+  }
+
+  // Nếu có lỗi thì dừng
   if (!valid) return
 
   try {
 
     if (isEdit.value) {
-
-      await update(
-        form.value.id,
-        form.value
-      )
-
+      await update(form.value.id, form.value)
     } else {
-
-      await create(
-        form.value
-      )
-
+      await create(form.value)
     }
 
     showModal.value = false
-
     await loadData()
 
   } catch (e) {
-
-    console.log(e)
-
-    alert("Lỗi lưu sản phẩm")
-
+    console.error(e)
+    alert("Lưu sản phẩm thất bại!")
   }
-
 }
 // ================= DELETE =================
 
