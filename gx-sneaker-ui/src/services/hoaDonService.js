@@ -125,6 +125,24 @@ export const thanhToanTienMat = (hoaDonId, tienKhachDua) => {
   );
 
 };
+export const doiKhachHang = (hoaDonId, khachHangId) => {
+
+  return axios.put(
+
+    `${API_URL}/${hoaDonId}/khach-hang`,
+
+    null,
+
+    {
+      params: {
+        khachHangId
+      },
+      ...getAuthHeader()
+    }
+
+  );
+
+};
 
 
 

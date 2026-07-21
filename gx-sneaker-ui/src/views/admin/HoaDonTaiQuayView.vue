@@ -91,7 +91,7 @@ onMounted(() => {
             <td>{{ hd.maHoaDon }}</td>
 
             <td>
-              {{ hd.tenNguoiNhan || "Khách lẻ" }}
+              {{ hd.tenKhachHang || "Khách lẻ" }}
             </td>
 
             <td>
@@ -181,7 +181,15 @@ onMounted(() => {
 
                 <strong>Khách hàng:</strong>
 
-                {{ selectedHoaDon.tenNguoiNhan || "Khách lẻ" }}
+                {{ selectedHoaDon.tenKhachHang || "Khách lẻ" }}
+
+              </div>
+
+              <div class="mb-2">
+
+                <strong>Số điện thoại:</strong>
+
+                {{ selectedHoaDon.soDienThoai || "Null" }}
 
               </div>
 
@@ -244,7 +252,7 @@ onMounted(() => {
 
                   <td class="text-end">
 
-                    {{ formatMoney(ct.giaBan) }}
+                    {{ formatMoney(ct.donGia) }}
 
                   </td>
 

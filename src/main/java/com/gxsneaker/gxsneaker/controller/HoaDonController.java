@@ -509,17 +509,19 @@ public class HoaDonController {
 
 
 
-
     @PutMapping("/{id}/khach-hang")
     public ResponseEntity<?> doiKhachHang(
             @PathVariable Long id,
             @RequestParam(required = false) Long khachHangId
     ){
 
-        hoaDonService.doiKhachHang(id,khachHangId);
+        System.out.println("===== DOI KHACH HANG =====");
+        System.out.println("HoaDon = " + id);
+        System.out.println("KhachHang = " + khachHangId);
+
+        hoaDonService.doiKhachHang(id, khachHangId);
 
         return ResponseEntity.ok().build();
-
     }
 
     @DeleteMapping("/chi-tiet/{id}")
@@ -546,8 +548,10 @@ public class HoaDonController {
     }
 
     @GetMapping("/tai-quay")
-    public List<HoaDon> getHoaDonTaiQuay() {
-        return hoaDonService.getHoaDonTaiQuay();
+    public ResponseEntity<?> getHoaDonTaiQuay() {
+        return ResponseEntity.ok(
+                hoaDonService.getHoaDonTaiQuay()
+        );
     }
 
     @GetMapping("/online")

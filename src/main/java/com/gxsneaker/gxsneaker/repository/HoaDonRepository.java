@@ -11,6 +11,8 @@ import java.awt.print.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Date;
+import com.gxsneaker.gxsneaker.dto.HoaDonTaiQuayDTO;
+import org.springframework.data.jpa.repository.Query;
 
 
 public interface HoaDonRepository extends JpaRepository<HoaDon, Long> {
@@ -259,4 +261,6 @@ SELECT MAX(h.id)
 FROM HoaDon h
 """)
     Long getMaxId();
+
+
 }

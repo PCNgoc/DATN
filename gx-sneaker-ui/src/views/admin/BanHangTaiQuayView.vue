@@ -5,7 +5,8 @@ import {
   taoHoaDonCho,
   getHoaDonCho,
   themSanPham,
-  getChiTietHoaDon
+  getChiTietHoaDon,
+  doiKhachHang
 } from "@/services/hoaDonService.js";
 
 import {
@@ -224,17 +225,21 @@ const loadKhachHang = async () => {
 
 }
 
-watch(selectedKhachHang,async(val)=>{
+watch(selectedKhachHang, async (val) => {
 
-  if(!selectedHoaDon.value) return;
+  if (!selectedHoaDon.value) return;
 
   await doiKhachHang(
-
     selectedHoaDon.value.id,
-
     val?.id
-
   );
+
+  await loadHoaDonCho();
+
+  selectedHoaDon.value =
+    hoaDonCho.value.find(
+      h => h.id === selectedHoaDon.value.id
+    );
 
 });
 

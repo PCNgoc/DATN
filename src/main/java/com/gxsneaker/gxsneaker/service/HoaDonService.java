@@ -38,7 +38,7 @@ public interface HoaDonService {
     void doiKhachHang(Long hoaDonId, Long khachHangId);
     void xoaSanPham(Long hoaDonChiTietId);
     void thanhToan(Long hoaDonId, ThanhToanRequest request);
-    List<HoaDon> getHoaDonTaiQuay();
     List<HoaDon> getHoaDonOnline();
+    List<HoaDonTaiQuayDTO> getHoaDonTaiQuay();
 
 }
