@@ -30,7 +30,9 @@ import com.gxsneaker.gxsneaker.service.ShippingFeeService;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import com.gxsneaker.gxsneaker.repository.ChiTietSanPhamRepository;
 import com.gxsneaker.gxsneaker.repository.KhachHangRepository;
+import com.gxsneaker.gxsneaker.repository.PhieuGiamGiaKhachHangRepository;
 import com.gxsneaker.gxsneaker.repository.NhanVienRepository;
 import com.gxsneaker.gxsneaker.dto.HoaDonTaiQuayDTO;
 @Service
@@ -46,6 +48,7 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final ShippingFeeService shippingFeeService;
     private final KhachHangRepository khachHangRepository;
     private final NhanVienRepository nhanVienRepository;
+    private final PhieuGiamGiaKhachHangRepository pggKhachHangRepository;
 
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0(3|5|7|8|9)[0-9]{8}$");
@@ -200,11 +203,47 @@ public class HoaDonServiceImpl implements HoaDonService {
                     .orElseThrow(() -> new RuntimeException("Mã giảm giá không tồn tại"));
 
             soTienGiam = tinhTienGiam(phieu, tongTienHang);
+            
+            // Xử lý logic validate nâng cao
+            KhachHang khachHang = request.getIdKhachHang() != null ? khachHangRepository.findById(request.getIdKhachHang().intValue()).orElse(null) : null;
+            if (phieu.getKieuPhieu() != null && phieu.getKieuPhieu() != com.gxsneaker.gxsneaker.enums.KieuPhieuGiamGia.PUBLIC) {
+                if (khachHang == null) {
+                    throw new RuntimeException("Cần đăng nhập để sử dụng mã giảm giá này");
+                }
+                switch (phieu.getKieuPhieu()) {
+                    case MEMBER_ONLY:
+                        if (phieu.getDieuKienHangThanhVien() != null) {
+                            int userRank = khachHang.getHangThanhVien() != null ? khachHang.getHangThanhVien().ordinal() : 0;
+                            int requiredRank = phieu.getDieuKienHangThanhVien().ordinal();
+                            if (userRank < requiredRank) {
+                                throw new RuntimeException("Hạng hội viên của bạn không đủ để dùng mã này");
+                            }
+                        }
+                        break;
+                    case NEW_CUSTOMER:
+                        long orderCount = hoaDonRepository.countByIdKhachHang(Long.valueOf(khachHang.getId()));
+                        if (orderCount > 0) {
+                            throw new RuntimeException("Mã này chỉ dành cho khách hàng mới mua lần đầu");
+                        }
+                        break;
+                    case PERSONAL:
+                        boolean isOwner = pggKhachHangRepository.existsByKhachHangIdAndPhieuGiamGiaId(khachHang.getId(), phieu.getId());
+                        if (!isOwner) {
+                            throw new RuntimeException("Mã này không dành cho bạn");
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            
             hoaDon.setIdPhieuGiamGia(phieu.getId().longValue());
 
-            if (phieu.getSoLuong() != null && phieu.getSoLuong() > 0) {
-                phieu.setSoLuong(phieu.getSoLuong() - 1);
-                phieuGiamGiaRepository.save(phieu);
+            if (phieu.getSoLuong() != null) {
+                int updatedRows = phieuGiamGiaRepository.decrementSoLuong(phieu.getId());
+                if (updatedRows == 0) {
+                    throw new RuntimeException("Mã giảm giá đã hết lượt sử dụng ngay lúc bạn đặt hàng");
+                }
             }
         }
 

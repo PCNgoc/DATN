@@ -19,4 +19,5 @@ public class KhachHangDTO {
     private Boolean daXacThuc;
     private Date ngayTao;
     private Date ngayCapNhat;
+    private String hangThanhVien;
 }

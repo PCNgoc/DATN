@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { datHang } from '@/services/hoaDonService'
+import { datHang, apDungMaGiamGia } from '@/services/hoaDonService'
 import { getByMa, getAll } from '@/services/phieuGiamGiaService'
 import { useRouter } from 'vue-router'
 import {
@@ -280,45 +280,36 @@ const applyCoupon = async () => {
   try {
     couponLoading.value = true
 
-    const res = await getByMa(couponCode.value.trim())
-    const coupon = res.data
-
-    if (!coupon || coupon.trangThai !== true) {
-      appliedCoupon.value = null
-      couponError.value = 'Mã giảm giá không hợp lệ hoặc đã ngừng hoạt động'
-      return
+    // CALL REAL API INSTEAD OF LOCAL VALIDATION
+    const requestData = {
+      maPhieuGiamGia: couponCode.value.trim(),
+      tongTienHang: totalMoney.value,
+      idKhachHang: getUserId() || null
+    };
+    
+    const res = await apDungMaGiamGia(requestData);
+    const apiResponse = res.data;
+    
+    // API returns ApDungMaGiamGiaResponse with soTienGiam and phieuGiamGia
+    if (apiResponse && apiResponse.phieuGiamGia) {
+      appliedCoupon.value = apiResponse.phieuGiamGia;
+      couponCode.value = getCouponCode(apiResponse.phieuGiamGia);
+      couponSuccess.value = `Áp dụng mã ${couponCode.value} thành công. Bạn được giảm ${formatMoney(apiResponse.soTienGiam)}`;
+    } else {
+      throw new Error("Không thể áp dụng mã");
     }
-
-    if (!isCouponEligible(coupon)) {
-      appliedCoupon.value = null
-      couponError.value = `Đơn hàng tối thiểu phải từ ${formatMoney(getMinOrder(coupon))} để sử dụng mã này`
-      return
-    }
-
-    appliedCoupon.value = coupon
-    couponCode.value = getCouponCode(coupon)
-    couponSuccess.value = `Áp dụng mã ${getCouponCode(coupon)} thành công`
   } catch (err) {
     appliedCoupon.value = null
     couponError.value =
-      err.response?.data?.message || err.response?.data || 'Mã giảm giá không tồn tại'
+      err.response?.data?.message || err.response?.data || err.message || 'Mã giảm giá không hợp lệ'
   } finally {
     couponLoading.value = false
   }
 }
 
-const selectCoupon = (coupon) => {
-  couponError.value = ''
-  couponSuccess.value = ''
-
-  if (!isCouponEligible(coupon)) {
-    couponError.value = `Bạn cần mua thêm ${formatMoney(getMinOrder(coupon) - totalMoney.value)} để dùng mã này`
-    return
-  }
-
-  appliedCoupon.value = coupon
-  couponCode.value = getCouponCode(coupon)
-  couponSuccess.value = `Áp dụng mã ${getCouponCode(coupon)} thành công`
+const selectCoupon = async (coupon) => {
+  couponCode.value = getCouponCode(coupon);
+  await applyCoupon();
 }
 
 const removeCoupon = () => {

@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import com.gxsneaker.gxsneaker.enums.HangThanhVien;
+import com.gxsneaker.gxsneaker.enums.KieuPhieuGiamGia;
 
 @Entity
 @Table(name = "phieu_giam_gia")
@@ -39,6 +41,14 @@ public class PhieuGiamGia {
     @Column(name = "so_luong")
     private Integer soLuong;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kieu_phieu")
+    private KieuPhieuGiamGia kieuPhieu;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dieu_kien_hang_thanh_vien")
+    private HangThanhVien dieuKienHangThanhVien;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "ngay_bat_dau")
     private Date ngayBatDau;
@@ -63,6 +73,9 @@ public class PhieuGiamGia {
         ngayTao = new Date();
         if (trangThai == null) {
             trangThai = true;
+        }
+        if (kieuPhieu == null) {
+            kieuPhieu = KieuPhieuGiamGia.PUBLIC;
         }
     }
 

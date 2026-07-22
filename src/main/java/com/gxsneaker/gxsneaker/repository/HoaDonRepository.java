@@ -20,6 +20,8 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Long> {
 
     List<HoaDon> findByTrangThai(String trangThai);
     List<HoaDon> findByIdKhachHangOrderByNgayDatHangDesc(Long idKhachHang);
+    long countByIdKhachHang(Long idKhachHang);
+
     List<HoaDon> findByMaHoaDonContainingAndTrangThai(
             String maHoaDon,
             String trangThai

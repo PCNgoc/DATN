@@ -105,9 +105,14 @@ public class AuthController {
     public ResponseEntity<?> adminLogin(
             @RequestBody AdminLoginRequest request
     ) {
-
-        return ResponseEntity.ok(
-                authService.adminLogin(request)
-        );
+        try {
+            return ResponseEntity.ok(
+                    authService.adminLogin(request)
+            );
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 }

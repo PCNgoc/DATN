@@ -55,7 +55,7 @@ public class DataInitializer implements CommandLineRunner {
                     .maNhanVien("NV001")
                     .hoTen("Admin GX Sneaker")
                     .email("admin@gmail.com")
-                    .matKhau(passwordEncoder.encode("123"))
+                    .matKhau(passwordEncoder.encode("123456"))
                     .soDienThoai("0987654321")
                     .trangThai(true)
                     .build();
@@ -63,7 +63,7 @@ public class DataInitializer implements CommandLineRunner {
             log.info("=================================================");
             log.info("CREATED DEFAULT ADMIN ACCOUNT:");
             log.info("Username / Email: admin@gmail.com");
-            log.info("Password: 123");
+            log.info("Password: 123456");
             log.info("=================================================");
         }
 
@@ -90,6 +90,41 @@ public class DataInitializer implements CommandLineRunner {
         alterColumnSafely("thuong_hieu", "mo_ta", "NVARCHAR(500)");
         alterColumnSafely("xuat_xu", "ten", "NVARCHAR(255)");
         log.info("Finished safe database columns alter.");
+        
+        log.info("Adding new columns for Voucher Upgrade...");
+        addColumnSafely("khach_hang", "hang_thanh_vien", "VARCHAR(50) DEFAULT 'BRONZE'");
+        addColumnSafely("phieu_giam_gia", "kieu_phieu", "VARCHAR(50) DEFAULT 'PUBLIC'");
+        addColumnSafely("phieu_giam_gia", "dieu_kien_hang_thanh_vien", "VARCHAR(50)");
+        
+        log.info("Adding missing columns for payment integration...");
+        addColumnSafely("hoa_don", "phuong_thuc_thanh_toan", "VARCHAR(50)");
+        addColumnSafely("hoa_don", "trang_thai_thanh_toan", "VARCHAR(50)");
+        addColumnSafely("hoa_don", "han_thanh_toan", "DATETIME");
+        addColumnSafely("hoa_don", "ngay_thanh_toan", "DATETIME");
+        addColumnSafely("hoa_don", "payos_order_code", "BIGINT");
+        addColumnSafely("hoa_don", "payment_link_id", "VARCHAR(255)");
+        addColumnSafely("hoa_don", "checkout_url", "NVARCHAR(2000)");
+        addColumnSafely("hoa_don", "dia_chi_nguoi_nhan", "NVARCHAR(1000)");
+
+        log.info("Adding missing columns for nhan_vien...");
+        addColumnSafely("nhan_vien", "anh_dai_dien", "VARCHAR(255)");
+        addColumnSafely("nhan_vien", "dia_chi", "NVARCHAR(500)");
+        addColumnSafely("nhan_vien", "gioi_tinh", "BIT");
+        addColumnSafely("nhan_vien", "ngay_tao", "DATETIME");
+        addColumnSafely("nhan_vien", "ngay_cap_nhat", "DATETIME");
+
+        log.info("Finished adding new columns.");
+    }
+
+    private void addColumnSafely(String tableName, String columnName, String definition) {
+        try {
+            // Check if column exists, if not add it
+            String checkSql = String.format("IF COL_LENGTH('%s', '%s') IS NULL BEGIN ALTER TABLE %s ADD %s %s END", 
+                tableName, columnName, tableName, columnName, definition);
+            jdbcTemplate.execute(checkSql);
+        } catch (Exception e) {
+            log.warn("Could not add column {}.{} : {}", tableName, columnName, e.getMessage());
+        }
     }
 
     private void alterColumnSafely(String tableName, String columnName, String definition) {

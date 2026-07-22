@@ -2,6 +2,7 @@ package com.gxsneaker.gxsneaker.controller;
 
 import com.gxsneaker.gxsneaker.dto.*;
 import com.gxsneaker.gxsneaker.entity.HoaDon;
+import com.gxsneaker.gxsneaker.entity.KhachHang;
 import com.gxsneaker.gxsneaker.entity.LichSuTrangThaiHoaDon;
 import com.gxsneaker.gxsneaker.entity.PhieuGiamGia;
 import com.gxsneaker.gxsneaker.repository.HoaDonChiTietRepository;
@@ -41,6 +42,12 @@ public class HoaDonController {
     private HoaDonService hoaDonService;
     @Autowired
     private HoaDonChiTietRepository hoaDonChiTietRepository;
+    
+    @Autowired
+    private com.gxsneaker.gxsneaker.repository.KhachHangRepository khachHangRepository;
+    
+    @Autowired
+    private com.gxsneaker.gxsneaker.repository.PhieuGiamGiaKhachHangRepository pggKhachHangRepository;
 
     @GetMapping
     public List<HoaDon> getAll() {
@@ -375,6 +382,48 @@ public class HoaDonController {
 
             if (phieu.getGiaTriGiam() == null) {
                 throw new RuntimeException("Giá trị giảm không hợp lệ");
+            }
+            
+            // Lấy thông tin khách hàng nếu có
+            KhachHang khachHang = null;
+            if (request.getIdKhachHang() != null) {
+                khachHang = khachHangRepository.findById(request.getIdKhachHang().intValue()).orElse(null);
+            }
+            
+            // Xử lý các kiểu phiếu giảm giá
+            if (phieu.getKieuPhieu() != null && phieu.getKieuPhieu() != com.gxsneaker.gxsneaker.enums.KieuPhieuGiamGia.PUBLIC) {
+                if (khachHang == null) {
+                    throw new RuntimeException("Cần đăng nhập để sử dụng mã giảm giá này");
+                }
+                
+                switch (phieu.getKieuPhieu()) {
+                    case MEMBER_ONLY:
+                        if (phieu.getDieuKienHangThanhVien() != null) {
+                            int userRank = khachHang.getHangThanhVien() != null ? khachHang.getHangThanhVien().ordinal() : 0;
+                            int requiredRank = phieu.getDieuKienHangThanhVien().ordinal();
+                            if (userRank < requiredRank) {
+                                throw new RuntimeException("Hạng hội viên của bạn không đủ để dùng mã này");
+                            }
+                        }
+                        break;
+                    case NEW_CUSTOMER:
+                        long orderCount = repository.countByIdKhachHang(Long.valueOf(khachHang.getId()));
+                        if (orderCount > 0) {
+                            throw new RuntimeException("Mã này chỉ dành cho khách hàng mới mua lần đầu");
+                        }
+                        break;
+                    case PERSONAL:
+                        boolean isOwner = pggKhachHangRepository.existsByKhachHangIdAndPhieuGiamGiaId(khachHang.getId(), phieu.getId());
+                        if (!isOwner) {
+                            throw new RuntimeException("Mã này không dành cho bạn");
+                        }
+                        break;
+                    case HOLIDAY:
+                        // Đã check ngayBatDau và ngayKetThuc ở trên
+                        break;
+                    default:
+                        break;
+                }
             }
 
             BigDecimal tongTienHang = request.getTongTienHang();

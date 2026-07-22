@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.util.Date;
+import com.gxsneaker.gxsneaker.enums.HangThanhVien;
 
 @Entity
 @Table(name = "khach_hang")
@@ -47,6 +48,10 @@ public class KhachHang {
     @Column(name = "da_xac_thuc")
     private Boolean daXacThuc;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "hang_thanh_vien")
+    private HangThanhVien hangThanhVien;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "ngay_tao")
     private Date ngayTao;
@@ -58,6 +63,9 @@ public class KhachHang {
     @PrePersist
     public void prePersist() {
         ngayTao = new Date();
+        if (hangThanhVien == null) {
+            hangThanhVien = HangThanhVien.BRONZE;
+        }
     }
 
     @PreUpdate

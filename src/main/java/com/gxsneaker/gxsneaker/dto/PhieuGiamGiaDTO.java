@@ -19,4 +19,6 @@ public class PhieuGiamGiaDTO {
     private Boolean trangThai;
     private Date ngayTao;
     private Date ngayCapNhat;
+    private String kieuPhieu;
+    private String dieuKienHangThanhVien;
 }

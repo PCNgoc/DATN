@@ -11,4 +11,6 @@ public class ApDungMaGiamGiaRequest {
 
     private BigDecimal tongTienHang;
 
+    private Long idKhachHang;
+
 }

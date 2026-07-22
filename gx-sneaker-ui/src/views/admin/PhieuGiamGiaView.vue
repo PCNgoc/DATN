@@ -18,7 +18,9 @@ const form = ref({
   soLuong: 0,
   ngayBatDau: "",
   ngayKetThuc: "",
-  trangThai: true
+  trangThai: true,
+  kieuPhieu: "PUBLIC",
+  dieuKienHangThanhVien: "BRONZE"
 })
 
 // FORMAT CURRENCY / PERCENT
@@ -80,7 +82,9 @@ const reset = () => {
     soLuong: 0,
     ngayBatDau: "",
     ngayKetThuc: "",
-    trangThai: true
+    trangThai: true,
+    kieuPhieu: "PUBLIC",
+    dieuKienHangThanhVien: "BRONZE"
   }
 }
 
@@ -207,6 +211,34 @@ const changePage = (p) => {
           </select>
         </div>
         <div class="form-group">
+          <label>Kiểu phiếu / Đối tượng</label>
+          <select v-model="form.kieuPhieu">
+            <option value="PUBLIC">Tất cả mọi người (PUBLIC)</option>
+            <option value="NEW_CUSTOMER">Khách hàng mới (NEW_CUSTOMER)</option>
+            <option value="MEMBER_ONLY">Chỉ dành cho Hội viên (MEMBER_ONLY)</option>
+            <option value="HOLIDAY">Dịp lễ hội (HOLIDAY)</option>
+            <option value="PERSONAL">Tặng riêng cá nhân (PERSONAL)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="grid" v-if="form.kieuPhieu === 'MEMBER_ONLY'">
+        <div class="form-group">
+          <label>Hạng thẻ yêu cầu</label>
+          <select v-model="form.dieuKienHangThanhVien">
+            <option value="BRONZE">Đồng (BRONZE)</option>
+            <option value="SILVER">Bạc (SILVER)</option>
+            <option value="GOLD">Vàng (GOLD)</option>
+            <option value="DIAMOND">Kim cương (DIAMOND)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <!-- Placeholder to maintain grid -->
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="form-group">
           <label>Giá trị giảm <span class="required">*</span></label>
           <input v-model="form.giaTriGiam" type="number" :placeholder="form.loaiGiamGia ? 'Nhập % giảm (Ví dụ: 10)' : 'Nhập số tiền giảm (Ví dụ: 50000)'" />
         </div>
@@ -280,6 +312,7 @@ const changePage = (p) => {
             <th>Số lượng</th>
             <th>Ngày bắt đầu</th>
             <th>Ngày kết thúc</th>
+            <th>Loại phiếu</th>
             <th>Trạng thái</th>
             <th>Hành động</th>
           </tr>
@@ -293,6 +326,12 @@ const changePage = (p) => {
             <td>{{ i.soLuong }}</td>
             <td>{{ formatDate(i.ngayBatDau) }}</td>
             <td>{{ formatDate(i.ngayKetThuc) }}</td>
+            <td>
+              <span class="badge bg-secondary">{{ i.kieuPhieu }}</span>
+              <div v-if="i.kieuPhieu === 'MEMBER_ONLY'" style="font-size: 11px; color: #666;">
+                Hạng: {{ i.dieuKienHangThanhVien }}
+              </div>
+            </td>
             <td>
               <span :class="i.trangThai ? 'active' : 'hidden'">
                 {{ i.trangThai ? "Đang chạy" : "Đã đóng" }}
