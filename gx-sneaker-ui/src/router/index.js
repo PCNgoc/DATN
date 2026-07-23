@@ -45,27 +45,36 @@ import ContactView from '@/views/user/ContactView.vue'
 
 // Khác
 import FavoriteView from '@/views/FavoriteView.vue'
-import BanHangTaiQuayView from "@/views/admin/BanHangTaiQuayView.vue";
-import HoaDonTaiQuayView from "@/views/admin/HoaDonTaiQuayView.vue";
-
-// Bán tại quầy
-import("@/views/admin/BanHangTaiQuayView.vue")
+import BanHangTaiQuayView from '@/views/admin/BanHangTaiQuayView.vue'
+import HoaDonTaiQuayView from '@/views/admin/HoaDonTaiQuayView.vue'
 
 const normalizeRole = (role) => {
   if (!role) return ''
 
-  let value = String(role).trim().toUpperCase()
+  let value = String(role)
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 
   if (value.startsWith('ROLE_')) {
     value = value.replace('ROLE_', '')
   }
 
-  if (value === 'NHAN_VIEN') {
-    value = 'STAFF'
+  if (
+    value === 'NHAN_VIEN' ||
+    value === 'STAFF' ||
+    value === 'EMPLOYEE'
+  ) {
+    return 'STAFF'
   }
 
-  if (value === 'QUAN_TRI' || value === 'ADMINISTRATOR') {
-    value = 'ADMIN'
+  if (
+    value === 'ADMIN' ||
+    value === 'QUAN_TRI' ||
+    value === 'ADMINISTRATOR'
+  ) {
+    return 'ADMIN'
   }
 
   return value
@@ -225,7 +234,7 @@ const router = createRouter({
           redirect: () => getDefaultAdminPath(),
         },
 
-        // ADMIN ONLY
+        // ================= ADMIN ONLY =================
         {
           path: 'dashboard',
           name: 'AdminDashboard',
@@ -258,22 +267,12 @@ const router = createRouter({
             roles: ['ADMIN'],
           },
         },
-
-        // ADMIN + STAFF
-        {
-          path: 'hoa-don',
-          name: 'AdminHoaDon',
-          component: HoaDonView,
-          meta: {
-            roles: ['ADMIN', 'STAFF'],
-          },
-        },
         {
           path: 'san-pham',
           name: 'AdminSanPham',
           component: SanPhamView,
           meta: {
-            roles: ['ADMIN', 'STAFF'],
+            roles: ['ADMIN'],
           },
         },
         {
@@ -281,7 +280,7 @@ const router = createRouter({
           name: 'chi-tiet-san-pham',
           component: ChiTietSanPhamView,
           meta: {
-            roles: ['ADMIN', 'STAFF'],
+            roles: ['ADMIN'],
           },
         },
         {
@@ -289,7 +288,7 @@ const router = createRouter({
           name: 'AdminDanhMuc',
           component: DanhMucView,
           meta: {
-            roles: ['ADMIN', 'STAFF'],
+            roles: ['ADMIN'],
           },
         },
         {
@@ -297,7 +296,7 @@ const router = createRouter({
           name: 'AdminThuongHieu',
           component: ThuongHieuView,
           meta: {
-            roles: ['ADMIN', 'STAFF'],
+            roles: ['ADMIN'],
           },
         },
         {
@@ -305,7 +304,7 @@ const router = createRouter({
           name: 'AdminChatLieu',
           component: ChatLieuView,
           meta: {
-            roles: ['ADMIN', 'STAFF'],
+            roles: ['ADMIN'],
           },
         },
         {
@@ -313,7 +312,7 @@ const router = createRouter({
           name: 'AdminCoGiay',
           component: CoGiayView,
           meta: {
-            roles: ['ADMIN', 'STAFF'],
+            roles: ['ADMIN'],
           },
         },
         {
@@ -321,7 +320,7 @@ const router = createRouter({
           name: 'AdminDeGiay',
           component: DeGiayView,
           meta: {
-            roles: ['ADMIN', 'STAFF'],
+            roles: ['ADMIN'],
           },
         },
         {
@@ -329,7 +328,7 @@ const router = createRouter({
           name: 'AdminMauSac',
           component: MauSacView,
           meta: {
-            roles: ['ADMIN', 'STAFF'],
+            roles: ['ADMIN'],
           },
         },
         {
@@ -337,13 +336,31 @@ const router = createRouter({
           name: 'AdminKichThuoc',
           component: KichThuocView,
           meta: {
-            roles: ['ADMIN', 'STAFF'],
+            roles: ['ADMIN'],
           },
         },
         {
           path: 'xuat-xu',
           name: 'AdminXuatXu',
           component: XuatXuView,
+          meta: {
+            roles: ['ADMIN'],
+          },
+        },
+        {
+          path: 'hoa-don-tai-quay',
+          name: 'HoaDonTaiQuay',
+          component: HoaDonTaiQuayView,
+          meta: {
+            roles: ['ADMIN'],
+          },
+        },
+
+        // ================= ADMIN + STAFF =================
+        {
+          path: 'hoa-don',
+          name: 'AdminHoaDon',
+          component: HoaDonView,
           meta: {
             roles: ['ADMIN', 'STAFF'],
           },
@@ -357,28 +374,17 @@ const router = createRouter({
           },
         },
         {
-          path: "hoa-don-tai-quay",
-          name: "HoaDonTaiQuay",
-          component: HoaDonTaiQuayView,
-          meta: {
-            roles: ["ADMIN", "STAFF"],
-          },
-        },
-
-        {
-          path: "ban-hang",
-          name: "BanHangTaiQuay",
+          path: 'ban-hang',
+          name: 'BanHangTaiQuay',
           component: BanHangTaiQuayView,
           meta: {
-            roles: ["ADMIN", "STAFF"],
+            roles: ['ADMIN', 'STAFF'],
           },
-        }
+        },
       ],
     },
 
     // ================= STAFF OLD PATH SUPPORT =================
-    // Nếu AdminLoginView cũ vẫn redirect STAFF sang /staff/dashboard
-    // thì route này sẽ đưa STAFF về /admin/hoa-don
     {
       path: '/staff',
       redirect: '/admin/hoa-don',
@@ -388,12 +394,11 @@ const router = createRouter({
       redirect: '/admin/hoa-don',
     },
 
-    // Nếu có link cũ /dashboard thì đưa về thống kê admin
+    // ================= OLD DASHBOARD PATH =================
     {
       path: '/dashboard',
       redirect: '/admin/thong-ke',
     },
-
   ],
 })
 

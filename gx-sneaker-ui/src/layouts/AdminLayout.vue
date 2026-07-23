@@ -8,18 +8,22 @@ const route = useRoute()
 const normalizeRole = (role) => {
   if (!role) return ''
 
-  let value = String(role).trim().toUpperCase()
+  let value = String(role)
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 
   if (value.startsWith('ROLE_')) {
     value = value.replace('ROLE_', '')
   }
 
-  if (value === 'NHAN_VIEN') {
-    value = 'STAFF'
+  if (value === 'NHAN_VIEN' || value === 'STAFF' || value === 'EMPLOYEE') {
+    return 'STAFF'
   }
 
-  if (value === 'QUAN_TRI' || value === 'ADMINISTRATOR') {
-    value = 'ADMIN'
+  if (value === 'QUAN_TRI' || value === 'ADMIN' || value === 'ADMINISTRATOR') {
+    return 'ADMIN'
   }
 
   return value
@@ -85,20 +89,19 @@ const menuItems = computed(() => [
     label: 'Quản lý hóa đơn',
     icon: '🧾',
     path: '/admin/hoa-don-tai-quay',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
-
   {
     label: 'Quản lý sản phẩm',
     icon: '👟',
     path: '/admin/san-pham',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
   {
-    label: "Bán tại quầy",
-    icon: "🛒",
-    path: "/admin/ban-hang",
-    roles: ["ADMIN", "STAFF"],
+    label: 'Thanh toán',
+    icon: '💳',
+    path: '/admin/ban-hang',
+    roles: ['ADMIN', 'STAFF'],
   },
   {
     label: 'Khách hàng',
@@ -124,42 +127,42 @@ const productAttributeItems = computed(() => [
   {
     label: 'Danh mục',
     path: '/admin/danh-muc',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
   {
     label: 'Thương hiệu',
     path: '/admin/thuong-hieu',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
   {
     label: 'Chất liệu',
     path: '/admin/chat-lieu',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
   {
     label: 'Cổ giày',
     path: '/admin/co-giay',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
   {
     label: 'Đế giày',
     path: '/admin/de-giay',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
   {
     label: 'Màu sắc',
     path: '/admin/mau-sac',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
   {
     label: 'Kích thước',
     path: '/admin/kich-thuoc',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
   {
     label: 'Xuất xứ',
     path: '/admin/xuat-xu',
-    roles: ['ADMIN', 'STAFF'],
+    roles: ['ADMIN'],
   },
 ])
 
@@ -292,7 +295,7 @@ onMounted(() => {
             {{
               isAdmin
                 ? 'Quản lý toàn bộ hệ thống GX Sneaker'
-                : 'Xử lý đơn hàng và nghiệp vụ bán hàng'
+                : 'Xử lý đơn hàng, khách hàng và thanh toán'
             }}
           </p>
         </div>
