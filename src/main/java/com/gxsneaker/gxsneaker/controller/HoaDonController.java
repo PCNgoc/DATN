@@ -10,6 +10,11 @@ import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.LichSuTrangThaiHoaDonRepository;
 import com.gxsneaker.gxsneaker.repository.PhieuGiamGiaRepository;
 import com.gxsneaker.gxsneaker.service.HoaDonService;
+import com.gxsneaker.gxsneaker.service.VNPayService;
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.Calendar;
+import java.util.Map;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,6 +53,9 @@ public class HoaDonController {
     
     @Autowired
     private com.gxsneaker.gxsneaker.repository.PhieuGiamGiaKhachHangRepository pggKhachHangRepository;
+
+    @Autowired
+    private VNPayService vnPayService;
 
     @GetMapping
     public List<HoaDon> getAll() {
@@ -594,6 +602,58 @@ public class HoaDonController {
 
         return ResponseEntity.ok().build();
 
+    }
+
+    @PostMapping("/{id}/thanh-toan-vnpay")
+    public ResponseEntity<?> thanhToanVnpayTaiQuay(
+            @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+        HoaDon hoaDon = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+
+        if (!"TAI_QUAY".equalsIgnoreCase(String.valueOf(hoaDon.getLoaiDon()))) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("message", "Chỉ áp dụng VNPAY cho hóa đơn tại quầy")
+            );
+        }
+
+        BigDecimal tongTien = hoaDon.getTongTienThanhToan() == null
+                ? BigDecimal.ZERO
+                : hoaDon.getTongTienThanhToan();
+
+        if (tongTien.compareTo(BigDecimal.ZERO) <= 0) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("message", "Hóa đơn chưa có sản phẩm hoặc tổng tiền không hợp lệ")
+            );
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, 30);
+
+        hoaDon.setPhuongThucThanhToan("VNPAY");
+        hoaDon.setTrangThai("CHO_THANH_TOAN");
+        hoaDon.setTrangThaiThanhToan("CHO_THANH_TOAN");
+        hoaDon.setHanThanhToan(calendar.getTime());
+        hoaDon.setNgayCapNhat(new Date());
+        hoaDon.setNguoiCapNhat("STAFF");
+
+        String checkoutUrl = vnPayService.createPaymentUrl(
+                hoaDon.getId(),
+                tongTien,
+                request.getRemoteAddr()
+        );
+
+        hoaDon.setCheckoutUrl(checkoutUrl);
+        repository.save(hoaDon);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "id", hoaDon.getId(),
+                        "maHoaDon", hoaDon.getMaHoaDon(),
+                        "checkoutUrl", checkoutUrl
+                )
+        );
     }
 
     @GetMapping("/tai-quay")

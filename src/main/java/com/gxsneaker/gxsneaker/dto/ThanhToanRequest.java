@@ -9,4 +9,6 @@ public class ThanhToanRequest {
 
     private BigDecimal tienKhachDua;
 
+    private String phuongThucThanhToan;
+
 }

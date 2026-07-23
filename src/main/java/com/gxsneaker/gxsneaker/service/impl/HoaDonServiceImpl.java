@@ -778,7 +778,6 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
     @Override
-
     @Transactional
     public void xacNhanThanhToanVnpay(Long hoaDonId, String maGiaoDich) {
         HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
@@ -792,10 +791,15 @@ public class HoaDonServiceImpl implements HoaDonService {
             throw new RuntimeException("Đơn hàng đã hủy");
         }
 
-        hoaDon.setTrangThai("CHO_XAC_NHAN");
+        if ("TAI_QUAY".equalsIgnoreCase(String.valueOf(hoaDon.getLoaiDon()))) {
+            hoaDon.setTrangThai("HOAN_THANH");
+            hoaDon.setNgayHoanThanh(new Date());
+            hoaDon.setNgayThanhToan(new Date());
+        } else {
+            hoaDon.setTrangThai("CHO_XAC_NHAN");
+        }
+
         hoaDon.setTrangThaiThanhToan("DA_THANH_TOAN");
-        hoaDon.setNgayCapNhat(new Date());
-        hoaDon.setNguoiCapNhat("DA_THANH_TOAN");
         hoaDon.setNgayCapNhat(new Date());
         hoaDon.setNguoiCapNhat("VNPAY");
         hoaDon.setGhiChu(

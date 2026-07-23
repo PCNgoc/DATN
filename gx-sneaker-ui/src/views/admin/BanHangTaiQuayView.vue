@@ -1,642 +1,458 @@
 <script setup>
-import { ref, onMounted, computed,watch } from "vue";
+import { ref, onMounted, computed, watch } from 'vue'
+
+// import {
+//   taoHoaDonCho,
+//   getHoaDonCho,
+//   themSanPham,
+//   getChiTietHoaDon,
+//   doiKhachHang,
+// } from '@/services/hoaDonService.js'
 
 import {
   taoHoaDonCho,
   getHoaDonCho,
   themSanPham,
   getChiTietHoaDon,
-  doiKhachHang
-} from "@/services/hoaDonService.js";
+  doiKhachHang,
+  thanhToanVnpayTaiQuay,
+} from '@/services/hoaDonService.js'
 
-import {
-  getBanTaiQuay
-} from "@/services/chiTietSanPhamService";
+import { getBanTaiQuay } from '@/services/chiTietSanPhamService'
 
-import {
+import { capNhatSoLuong } from '@/services/hoaDonService.js'
 
-  capNhatSoLuong
+import { getKhachHangBanTaiQuay } from '@/services/khachHangService'
 
-} from "@/services/hoaDonService.js";
-
-import {
-  getKhachHangBanTaiQuay
-} from "@/services/khachHangService";
-
-import {
-
-  xoaSanPham
-
-} from "@/services/hoaDonService";
-import {
-
-  thanhToanTienMat
-
-} from "@/services/hoaDonService";
+import { xoaSanPham } from '@/services/hoaDonService'
+import { thanhToanTienMat } from '@/services/hoaDonService'
 
 //=====================
 // HÓA ĐƠN CHỜ
 //=====================
 
-const hoaDonCho = ref([]);
-const selectedHoaDon = ref(null);
+const hoaDonCho = ref([])
+const selectedHoaDon = ref(null)
 
 const loadHoaDonCho = async () => {
   try {
-    const res = await getHoaDonCho();
-    hoaDonCho.value = res.data;
+    const res = await getHoaDonCho()
+    hoaDonCho.value = res.data
   } catch (e) {
-    console.log(e);
+    console.log(e)
   }
-};
+}
 
 const taoHoaDon = async () => {
-  await taoHoaDonCho();
-  await loadHoaDonCho();
-};
+  await taoHoaDonCho()
+  await loadHoaDonCho()
+}
 
 //=====================
 // DANH SÁCH SẢN PHẨM
 //=====================
 
-const sanPham = ref([]);
-const keyword = ref("");
+const sanPham = ref([])
+const keyword = ref('')
 
 const loadSanPham = async () => {
   try {
-    const res = await getBanTaiQuay();
-    sanPham.value = res.data;
+    const res = await getBanTaiQuay()
+    sanPham.value = res.data
   } catch (e) {
-    console.log(e);
+    console.log(e)
   }
-};
+}
 
 const sanPhamFilter = computed(() => {
-
   if (!keyword.value) {
-    return sanPham.value;
+    return sanPham.value
   }
 
-  return sanPham.value.filter(sp =>
-    sp.sanPham?.tenSanPham
-      ?.toLowerCase()
-      .includes(keyword.value.toLowerCase())
-  );
-
-});
+  return sanPham.value.filter((sp) =>
+    sp.sanPham?.tenSanPham?.toLowerCase().includes(keyword.value.toLowerCase()),
+  )
+})
 
 //=====================
 // GIỎ HÀNG
 //=====================
 
-const gioHang = ref([]);
+const gioHang = ref([])
 
 const loadGioHang = async () => {
-
   if (!selectedHoaDon.value) {
+    gioHang.value = []
 
-    gioHang.value = [];
-
-    return;
-
+    return
   }
 
-  const res = await getChiTietHoaDon(selectedHoaDon.value.id);
+  const res = await getChiTietHoaDon(selectedHoaDon.value.id)
 
-  gioHang.value = res.data;
-
+  gioHang.value = res.data
 }
 
 const chonHoaDon = async (hd) => {
+  selectedHoaDon.value = hd
 
-  selectedHoaDon.value = hd;
-
-  await loadGioHang();
-
-};
+  await loadGioHang()
+}
 
 //=====================
 // THÊM SẢN PHẨM
 //=====================
 
 const themSanPhamVaoHoaDon = async (sp) => {
-
   if (!selectedHoaDon.value) {
+    alert('Vui lòng chọn hóa đơn trước!')
 
-    alert("Vui lòng chọn hóa đơn trước!");
-
-    return;
-
+    return
   }
 
   try {
-
     await themSanPham(selectedHoaDon.value.id, {
-
       chiTietSanPhamId: sp.id,
 
-      soLuong: 1
-
-    });
+      soLuong: 1,
+    })
 
     // Load lại giỏ hàng
-    await loadGioHang();
+    await loadGioHang()
 
     // Load lại danh sách hóa đơn
-    await reloadHoaDonDangChon();
+    await reloadHoaDonDangChon()
 
     // Load lại tồn kho
-    await loadSanPham();
-
+    await loadSanPham()
   } catch (e) {
+    console.error(e)
 
-    console.error(e);
-
-    alert("Không thể thêm sản phẩm");
-
+    alert('Không thể thêm sản phẩm')
   }
-
-};
+}
 
 //=====================
 // FORMAT
 //=====================
 
 const formatMoney = (money) => {
+  if (!money) return '0 đ'
 
-  if (!money) return "0 đ";
-
-  return new Intl.NumberFormat("vi-VN").format(money) + " đ";
-
-};
+  return new Intl.NumberFormat('vi-VN').format(money) + ' đ'
+}
 
 const tangSoLuong = async (item) => {
+  await capNhatSoLuong(item.id, item.soLuong + 1)
 
-  await capNhatSoLuong(
-    item.id,
-    item.soLuong + 1
-  );
+  await loadGioHang()
 
-  await loadGioHang();
+  await reloadHoaDonDangChon()
 
-  await reloadHoaDonDangChon();
-
-  await loadSanPham();
-
+  await loadSanPham()
 }
 
 const giamSoLuong = async (item) => {
+  if (item.soLuong <= 1) return
 
-  if(item.soLuong <= 1) return;
+  await capNhatSoLuong(item.id, item.soLuong - 1)
 
-  await capNhatSoLuong(
-    item.id,
-    item.soLuong - 1
-  );
+  await loadGioHang()
 
-  await loadGioHang();
+  await reloadHoaDonDangChon()
 
-  await reloadHoaDonDangChon();
-
-  await loadSanPham();
-
+  await loadSanPham()
 }
 
 const reloadHoaDonDangChon = async () => {
+  await loadHoaDonCho()
 
-  await loadHoaDonCho();
-
-  selectedHoaDon.value =
-    hoaDonCho.value.find(
-      hd => hd.id === selectedHoaDon.value.id
-    );
-
+  selectedHoaDon.value = hoaDonCho.value.find((hd) => hd.id === selectedHoaDon.value.id)
 }
 
-const khachHangs = ref([]);
+const khachHangs = ref([])
 
-const selectedKhachHang = ref(null);
+const selectedKhachHang = ref(null)
 
 const loadKhachHang = async () => {
+  const res = await getKhachHangBanTaiQuay()
 
-  const res = await getKhachHangBanTaiQuay();
-
-  khachHangs.value = res.data;
-
+  khachHangs.value = res.data
 }
 
 watch(selectedKhachHang, async (val) => {
+  if (!selectedHoaDon.value) return
 
-  if (!selectedHoaDon.value) return;
+  await doiKhachHang(selectedHoaDon.value.id, val?.id)
 
-  await doiKhachHang(
-    selectedHoaDon.value.id,
-    val?.id
-  );
+  await loadHoaDonCho()
 
-  await loadHoaDonCho();
-
-  selectedHoaDon.value =
-    hoaDonCho.value.find(
-      h => h.id === selectedHoaDon.value.id
-    );
-
-});
+  selectedHoaDon.value = hoaDonCho.value.find((h) => h.id === selectedHoaDon.value.id)
+})
 
 const xoaKhoiGio = async (item) => {
+  if (!confirm('Xóa sản phẩm khỏi hóa đơn?')) return
 
-  if (!confirm("Xóa sản phẩm khỏi hóa đơn?")) return;
+  await xoaSanPham(item.id)
 
-  await xoaSanPham(item.id);
+  await loadGioHang()
 
-  await loadGioHang();
+  await loadSanPham()
 
-  await loadSanPham();
+  await loadHoaDonCho()
 
-  await loadHoaDonCho();
-
-  selectedHoaDon.value =
-    hoaDonCho.value.find(
-      h => h.id === selectedHoaDon.value.id
-    );
-
+  selectedHoaDon.value = hoaDonCho.value.find((h) => h.id === selectedHoaDon.value.id)
 }
 
-const showThanhToan = ref(false);
+const showThanhToan = ref(false)
 
-const tienKhachDua = ref(0);
+const tienKhachDua = ref(0)
+
+const phuongThucThanhToan = ref('TIEN_MAT')
+const vnpayCheckoutUrl = ref('')
+
+const vnpayQrUrl = computed(() => {
+  if (!vnpayCheckoutUrl.value) return ''
+
+  return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
+    vnpayCheckoutUrl.value,
+  )}`
+})
 
 const tienThua = computed(() => {
-
-  if (!selectedHoaDon.value) return 0;
+  if (!selectedHoaDon.value) return 0
 
   return Math.max(
-
     0,
 
-    tienKhachDua.value -
-
-    (selectedHoaDon.value.tongTienThanhToan || 0)
-
-  );
-
-});
+    tienKhachDua.value - (selectedHoaDon.value.tongTienThanhToan || 0),
+  )
+})
 
 const xacNhanThanhToan = async () => {
+  if (!selectedHoaDon.value) return
 
-  if (!selectedHoaDon.value) return;
+  if (!gioHang.value || gioHang.value.length === 0) {
+    alert('Hóa đơn chưa có sản phẩm')
+    return
+  }
 
   try {
+    if (phuongThucThanhToan.value === 'VNPAY') {
+      const res = await thanhToanVnpayTaiQuay(selectedHoaDon.value.id)
 
-    await thanhToanTienMat(
+      vnpayCheckoutUrl.value = res.data?.checkoutUrl
 
-      selectedHoaDon.value.id,
+      if (!vnpayCheckoutUrl.value) {
+        alert('Không nhận được link thanh toán VNPAY')
+        return
+      }
 
-      tienKhachDua.value
+      window.open(vnpayCheckoutUrl.value, '_blank')
+      return
+    }
 
-    );
+    await thanhToanTienMat(selectedHoaDon.value.id, tienKhachDua.value)
 
-    alert("Thanh toán thành công");
+    alert('Thanh toán thành công')
 
-    showThanhToan.value = false;
+    showThanhToan.value = false
+    tienKhachDua.value = 0
+    phuongThucThanhToan.value = 'TIEN_MAT'
+    vnpayCheckoutUrl.value = ''
+    selectedHoaDon.value = null
+    gioHang.value = []
 
-    tienKhachDua.value = 0;
-
-    selectedHoaDon.value = null;
-
-    gioHang.value = [];
-
-    await loadHoaDonCho();
-
-    await loadSanPham();
-
+    await loadHoaDonCho()
+    await loadSanPham()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Thanh toán thất bại')
   }
+}
 
-  catch(e){
+const hoanTatThanhToanVnpay = async () => {
+  showThanhToan.value = false
+  tienKhachDua.value = 0
+  phuongThucThanhToan.value = 'TIEN_MAT'
+  vnpayCheckoutUrl.value = ''
+  selectedHoaDon.value = null
+  gioHang.value = []
 
-    alert(e.response?.data?.message || "Thanh toán thất bại");
-
-  }
-
+  await loadHoaDonCho()
+  await loadSanPham()
 }
 
 //=====================
 
 onMounted(async () => {
+  await loadHoaDonCho()
 
-  await loadHoaDonCho();
-
-  await loadSanPham();
-  await loadKhachHang();
-
-});
+  await loadSanPham()
+  await loadKhachHang()
+})
 </script>
 
 <template>
-
-
-
-
   <div class="banhang">
-
     <!-- Hóa đơn -->
 
     <div class="invoice-bar">
-
-      <button
-        class="btn btn-primary"
-        @click="taoHoaDon"
-      >
-        + Hóa đơn mới
-      </button>
+      <button class="btn btn-primary" @click="taoHoaDon">+ Hóa đơn mới</button>
 
       <div class="invoice-list">
-
         <div
           v-for="hd in hoaDonCho"
           :key="hd.id"
           class="invoice-item"
-          :class="{active:selectedHoaDon?.id===hd.id}"
+          :class="{ active: selectedHoaDon?.id === hd.id }"
           @click="chonHoaDon(hd)"
         >
-
           {{ hd.maHoaDon }}
-
         </div>
-
       </div>
-
     </div>
 
     <div class="main-content">
-
       <!-- LEFT -->
 
       <div class="left-panel">
-
-
         <div class="product-header">
-
           <h4>Danh sách sản phẩm</h4>
 
-          <input
-            v-model="keyword"
-            class="form-control"
-            placeholder="Tìm sản phẩm..."
-          >
-
+          <input v-model="keyword" class="form-control" placeholder="Tìm sản phẩm..." />
         </div>
 
         <!-- Card -->
 
         <div class="product-grid">
-
           <!-- để nguyên v-for sản phẩm của bạn -->
 
+          <div class="product-card" v-for="sp in sanPhamFilter" :key="sp.id">
+            <img
+              class="img-fluid rounded mb-3"
+              :src="
+                sp.sanPham?.anhDaiDien
+                  ? '/images/' + sp.sanPham.anhDaiDien
+                  : 'https://placehold.co/250x250'
+              "
+            />
 
+            <h6 class="fw-bold mb-2">
+              {{ sp.sanPham?.tenSanPham }}
+            </h6>
 
-            <div
-              class="product-card"
-              v-for="sp in sanPhamFilter"
-              :key="sp.id"
-            >
+            <small>
+              {{ sp.mauSac?.ten }}
 
-              <img
-                class="img-fluid rounded mb-3"
-                :src="sp.sanPham?.anhDaiDien
-      ? '/images/' + sp.sanPham.anhDaiDien
-      : 'https://placehold.co/250x250'"
-              />
+              - Size {{ sp.kichThuoc?.size }}
+            </small>
 
-              <h6 class="fw-bold mb-2">
-                {{ sp.sanPham?.tenSanPham }}
-              </h6>
-
-              <small>
-
-                {{ sp.mauSac?.ten }}
-
-                -
-
-                Size {{ sp.kichThuoc?.size }}
-
-              </small>
-
-              <div class="price text-danger fw-bold fs-5">
-
-                {{ formatMoney(sp.giaBan) }}
-
-              </div>
-
-              <div class="stock text-success mb-2">
-
-                Còn {{ sp.soLuongTon }}
-
-              </div>
-
-              <button
-                class="btn btn-success w-100"
-                @click="themSanPhamVaoHoaDon(sp)"
-              >
-                Thêm
-              </button>
-
+            <div class="price text-danger fw-bold fs-5">
+              {{ formatMoney(sp.giaBan) }}
             </div>
 
+            <div class="stock text-success mb-2">Còn {{ sp.soLuongTon }}</div>
 
-
+            <button class="btn btn-success w-100" @click="themSanPhamVaoHoaDon(sp)">Thêm</button>
+          </div>
         </div>
-
-
       </div>
 
       <!-- RIGHT -->
 
-
-
       <div class="right-panel">
-
         <h4>Giỏ hàng</h4>
         <div class="mb-3">
+          <label class="fw-bold"> Khách hàng </label>
 
-          <label class="fw-bold">
+          <select v-model="selectedKhachHang" class="form-select">
+            <option :value="null">Khách lẻ</option>
 
-            Khách hàng
-
-          </label>
-
-          <select
-            v-model="selectedKhachHang"
-            class="form-select"
-          >
-
-            <option :value="null">
-
-              Khách lẻ
-
-            </option>
-
-            <option
-              v-for="kh in khachHangs"
-              :key="kh.id"
-              :value="kh"
-            >
-
+            <option v-for="kh in khachHangs" :key="kh.id" :value="kh">
               {{ kh.hoTen }}
 
               -
 
               {{ kh.soDienThoai }}
-
             </option>
-
           </select>
-
         </div>
 
         <table class="table table-hover align-middle mb-0">
-
           <thead>
+            <tr>
+              <th style="width: 70px"></th>
 
-          <tr>
+              <th style="width: 45%">Tên sản phẩm</th>
 
-            <th style="width:70px"></th>
+              <th style="width: 70px" class="text-center">SL</th>
 
-            <th style="width:45%">Tên sản phẩm</th>
+              <th style="width: 120px">Đơn giá</th>
 
-            <th style="width:70px" class="text-center">
-              SL
-            </th>
-
-            <th style="width:120px">
-              Đơn giá
-            </th>
-
-            <th style="width:140px">
-              Thành tiền
-            </th>
-            <th style="width:60px">Xóa</th>
-
-          </tr>
-
+              <th style="width: 140px">Thành tiền</th>
+              <th style="width: 60px">Xóa</th>
+            </tr>
           </thead>
 
           <tbody>
+            <tr v-for="item in gioHang" :key="item.id">
+              <!-- Ảnh -->
 
-          <tr
-            v-for="item in gioHang"
-            :key="item.id"
-          >
+              <td>
+                <img
+                  :src="'/images/' + item.anh"
+                  style="width: 55px; height: 55px; object-fit: cover"
+                  class="rounded border"
+                />
+              </td>
 
-            <!-- Ảnh -->
+              <!-- Tên -->
 
-            <td>
+              <td>
+                <div class="fw-bold">
+                  {{ item.tenSanPham }}
+                </div>
 
-              <img
-                :src="'/images/' + item.anh"
-                style="width:55px;height:55px;object-fit:cover"
-                class="rounded border"
-              >
+                <div class="text-secondary small">
+                  {{ item.mauSac }}
 
-            </td>
+                  - Size {{ item.size }}
+                </div>
+              </td>
 
-            <!-- Tên -->
+              <!-- SL -->
 
-            <td>
+              <td>
+                <div class="quantity-box">
+                  <button class="btn btn-sm btn-outline-secondary" @click="giamSoLuong(item)">
+                    -
+                  </button>
 
-              <div class="fw-bold">
+                  <span>
+                    {{ item.soLuong }}
+                  </span>
 
-                {{ item.tenSanPham }}
+                  <button class="btn btn-sm btn-outline-secondary" @click="tangSoLuong(item)">
+                    +
+                  </button>
+                </div>
+              </td>
 
-              </div>
+              <!-- Đơn giá -->
 
-              <div class="text-secondary small">
+              <td>
+                {{ formatMoney(item.donGia) }}
+              </td>
 
-                {{ item.mauSac }}
+              <!-- Thành tiền -->
 
-                -
-
-                Size {{ item.size }}
-
-              </div>
-
-            </td>
-
-            <!-- SL -->
-
-            <td>
-
-              <div class="quantity-box">
-
-                <button
-
-                  class="btn btn-sm btn-outline-secondary"
-
-                  @click="giamSoLuong(item)"
-
-                >
-
-                  -
-
-                </button>
-
-                <span>
-
-            {{ item.soLuong }}
-
-        </span>
-
-                <button
-
-                  class="btn btn-sm btn-outline-secondary"
-
-                  @click="tangSoLuong(item)"
-
-                >
-
-                  +
-
-                </button>
-
-              </div>
-
-            </td>
-
-            <!-- Đơn giá -->
-
-            <td>
-
-              {{ formatMoney(item.donGia) }}
-
-            </td>
-
-            <!-- Thành tiền -->
-
-            <td class="text-danger fw-bold">
-
-              {{ formatMoney(item.thanhTien) }}
-
-            </td>
-            <td>
-
-              <button
-
-                class="btn btn-danger btn-sm"
-
-                @click="xoaKhoiGio(item)"
-
-              >
-
-                🗑
-
-              </button>
-
-            </td>
-
-          </tr>
-
+              <td class="text-danger fw-bold">
+                {{ formatMoney(item.thanhTien) }}
+              </td>
+              <td>
+                <button class="btn btn-danger btn-sm" @click="xoaKhoiGio(item)">🗑</button>
+              </td>
+            </tr>
           </tbody>
-
         </table>
 
         <!-- bảng -->
@@ -646,418 +462,388 @@ onMounted(async () => {
         <!-- tổng tiền -->
 
         <div class="bill-total">
-
           <div class="d-flex justify-content-between">
-
             <span>Tạm tính</span>
 
             <span>
-                        {{ formatMoney(selectedHoaDon?.tongTienHang) }}
-                    </span>
-
+              {{ formatMoney(selectedHoaDon?.tongTienHang) }}
+            </span>
           </div>
 
           <div class="d-flex justify-content-between">
-
             <span>Giảm giá</span>
 
             <span>
-                        {{ formatMoney(selectedHoaDon?.soTienGiam) }}
-                    </span>
-
+              {{ formatMoney(selectedHoaDon?.soTienGiam) }}
+            </span>
           </div>
 
           <div class="d-flex justify-content-between fw-bold fs-5 text-danger">
-
             <span>Thành tiền</span>
 
             <span>
-
-                        {{ formatMoney(selectedHoaDon?.tongTienThanhToan) }}
-
-                    </span>
-
+              {{ formatMoney(selectedHoaDon?.tongTienThanhToan) }}
+            </span>
           </div>
-
         </div>
 
-        <button
-          class="btn btn-success w-100 mt-3"
-          @click="showThanhToan=true"
-        >
-
-          Thanh toán
-
-        </button>
-
+        <button class="btn btn-success w-100 mt-3" @click="showThanhToan = true">Thanh toán</button>
       </div>
-
     </div>
-
   </div>
 
-  <div
-    v-if="showThanhToan"
-    class="popup-bg"
-  >
-
+  <div v-if="showThanhToan" class="popup-bg">
     <div class="popup">
-
-      <h4>Thanh toán tiền mặt</h4>
+      <h4>Thanh toán hóa đơn</h4>
 
       <div class="mb-3">
-
         <label>Tổng tiền</label>
-
         <input
           class="form-control"
           :disabled="true"
           :value="formatMoney(selectedHoaDon?.tongTienThanhToan)"
-        >
-
+        />
       </div>
 
       <div class="mb-3">
+        <label class="fw-bold">Phương thức thanh toán</label>
 
-        <label>Khách đưa</label>
+        <div class="payment-methods">
+          <label class="payment-option">
+            <input type="radio" value="TIEN_MAT" v-model="phuongThucThanhToan" />
+            <span>Tiền mặt</span>
+          </label>
 
-        <input
-          type="number"
-          v-model="tienKhachDua"
-          class="form-control"
-        >
-
+          <label class="payment-option">
+            <input type="radio" value="VNPAY" v-model="phuongThucThanhToan" />
+            <span>VNPAY QR</span>
+          </label>
+        </div>
       </div>
 
-      <div class="mb-3">
+      <div v-if="phuongThucThanhToan === 'TIEN_MAT'">
+        <div class="mb-3">
+          <label>Khách đưa</label>
+          <input type="number" v-model="tienKhachDua" class="form-control" />
+        </div>
 
-        <label>Tiền thừa</label>
+        <div class="mb-3">
+          <label>Tiền thừa</label>
+          <input class="form-control" :disabled="true" :value="formatMoney(tienThua)" />
+        </div>
+      </div>
 
-        <input
-          class="form-control"
-          :disabled="true"
-          :value="formatMoney(tienThua)"
-        >
+      <div v-if="phuongThucThanhToan === 'VNPAY'" class="vnpay-box">
+        <p class="text-secondary mb-2">Bấm xác nhận để tạo mã QR VNPAY cho hóa đơn này.</p>
 
+        <div v-if="vnpayCheckoutUrl" class="qr-wrapper">
+          <img :src="vnpayQrUrl" alt="VNPAY QR" class="vnpay-qr" />
+
+          <a :href="vnpayCheckoutUrl" target="_blank" class="btn btn-primary mt-3">
+            Mở trang thanh toán VNPAY
+          </a>
+
+          <button class="btn btn-success mt-2" @click="hoanTatThanhToanVnpay">
+            Tôi đã thanh toán xong
+          </button>
+        </div>
       </div>
 
       <div class="d-flex gap-2">
+        <button class="btn btn-secondary flex-fill" @click="showThanhToan = false">Hủy</button>
 
-        <button
-          class="btn btn-secondary flex-fill"
-          @click="showThanhToan=false"
-        >
-
-          Hủy
-
+        <button class="btn btn-success flex-fill" @click="xacNhanThanhToan">
+          {{ phuongThucThanhToan === 'VNPAY' ? 'Tạo QR VNPAY' : 'Xác nhận' }}
         </button>
-
-        <button
-          class="btn btn-success flex-fill"
-          @click="xacNhanThanhToan"
-        >
-
-          Xác nhận
-
-        </button>
-
       </div>
-
     </div>
-
   </div>
-
 </template>
 
 <style scoped>
+.banhang {
+  display: flex;
 
-.banhang{
+  flex-direction: column;
 
-  display:flex;
+  height: 100%;
 
-  flex-direction:column;
-
-  height:100%;
-
-  gap:15px;
-
+  gap: 15px;
 }
 
 /* hóa đơn */
 
-.invoice-bar{
+.invoice-bar {
+  background: white;
 
-  background:white;
+  padding: 15px;
 
-  padding:15px;
+  border-radius: 12px;
 
-  border-radius:12px;
-
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
-
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.invoice-list{
+.invoice-list {
+  display: flex;
 
-  display:flex;
+  gap: 10px;
 
-  gap:10px;
+  overflow-x: auto;
 
-  overflow-x:auto;
-
-  margin-top:12px;
-
+  margin-top: 12px;
 }
 
-.invoice-item{
+.invoice-item {
+  min-width: 140px;
 
-  min-width:140px;
+  text-align: center;
 
-  text-align:center;
+  padding: 10px;
 
-  padding:10px;
+  border-radius: 10px;
 
-  border-radius:10px;
+  background: #f4f4f4;
 
-  background:#f4f4f4;
+  cursor: pointer;
 
-  cursor:pointer;
-
-  font-weight:600;
-
+  font-weight: 600;
 }
 
-.invoice-item.active{
+.invoice-item.active {
+  background: #0d6efd;
 
-  background:#0d6efd;
-
-  color:white;
-
+  color: white;
 }
 
 /* nội dung */
 
-.main-content{
+.main-content {
+  display: flex;
 
-  display:flex;
+  gap: 15px;
 
-  gap:15px;
-
-  flex:1;
-
+  flex: 1;
 }
 
-.left-panel{
+.left-panel {
+  flex: 1;
 
-  flex:1;
+  background: white;
 
-  background:white;
+  border-radius: 12px;
 
-  border-radius:12px;
-
-  padding:15px;
-
+  padding: 15px;
 }
 
-.right-panel{
+.right-panel {
+  width: 560px;
 
-  width:560px;
+  background: white;
 
-  background:white;
+  border-radius: 12px;
 
-  border-radius:12px;
-
-  padding:15px;
-
+  padding: 15px;
 }
 
 /* header */
 
-.product-header{
+.product-header {
+  display: flex;
 
-  display:flex;
+  justify-content: space-between;
 
-  justify-content:space-between;
+  align-items: center;
 
-  align-items:center;
-
-  margin-bottom:20px;
-
+  margin-bottom: 20px;
 }
 
-.product-header input{
-
-  width:280px;
-
+.product-header input {
+  width: 280px;
 }
 
 /* sản phẩm */
 
-.product-grid{
-
-  display:grid;
+.product-grid {
+  display: grid;
 
   grid-template-columns: repeat(2, 1fr);
-  gap:18px;
-
+  gap: 18px;
 }
 
 /* card */
 
-.product-card{
-
-  transition:.2s;
-
+.product-card {
+  transition: 0.2s;
 }
 
-.product-card:hover{
+.product-card:hover {
+  transform: translateY(-4px);
 
-  transform:translateY(-4px);
-
-  box-shadow:0 6px 18px rgba(0,0,0,.12);
-
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
 /* tổng tiền */
 
-.bill-total{
+.bill-total {
+  margin-top: 20px;
 
-  margin-top:20px;
+  padding-top: 20px;
 
-  padding-top:20px;
-
-  border-top:1px solid #ddd;
-
+  border-top: 1px solid #ddd;
 }
 
-.product-card{
+.product-card {
+  border-radius: 12px;
 
-  border-radius:12px;
+  border: 1px solid #eee;
 
-  border:1px solid #eee;
+  padding: 15px;
 
-  padding:15px;
-
-  background:white;
-
+  background: white;
 }
 
-.product-card img{
+.product-card img {
+  width: 100%;
 
-  width:100%;
+  height: 170px;
 
-  height:170px;
-
-  object-fit:cover;
-
+  object-fit: cover;
 }
 
-.product-card:hover{
-
-  box-shadow:0 8px 18px rgba(0,0,0,.12);
-
+.product-card:hover {
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
-.invoice-item{
-
-  transition:.2s;
-
+.invoice-item {
+  transition: 0.2s;
 }
 
-.invoice-item:hover{
-
-  background:#dbeafe;
-
+.invoice-item:hover {
+  background: #dbeafe;
 }
 
-.right-panel table td{
-
-  vertical-align:middle;
-
+.right-panel table td {
+  vertical-align: middle;
 }
 
-.quantity-box{
+.quantity-box {
+  display: flex;
 
-  display:flex;
+  align-items: center;
 
-  align-items:center;
+  justify-content: center;
 
-  justify-content:center;
-
-  gap:8px;
-
+  gap: 8px;
 }
 
-.quantity-box span{
+.quantity-box span {
+  width: 30px;
 
-  width:30px;
+  text-align: center;
 
-  text-align:center;
-
-  font-weight:bold;
-
+  font-weight: bold;
 }
 
-.left-panel{
+.left-panel {
+  display: flex;
 
-  display:flex;
+  flex-direction: column;
 
-  flex-direction:column;
-
-  height:calc(100vh - 220px);
-
+  height: calc(100vh - 220px);
 }
 
-.product-grid{
+.product-grid {
+  flex: 1;
 
-  flex:1;
+  overflow-y: auto;
 
-  overflow-y:auto;
+  display: grid;
 
-  display:grid;
+  grid-template-columns: repeat(2, 1fr);
 
-  grid-template-columns:repeat(2,1fr);
+  gap: 18px;
 
-  gap:18px;
-
-  padding-right:8px;
-
+  padding-right: 8px;
 }
 
-.popup-bg{
+.popup-bg {
+  position: fixed;
 
-  position:fixed;
+  top: 0;
 
-  top:0;
+  left: 0;
 
-  left:0;
+  right: 0;
 
-  right:0;
+  bottom: 0;
 
-  bottom:0;
+  background: rgba(0, 0, 0, 0.45);
 
-  background:rgba(0,0,0,.45);
+  display: flex;
 
-  display:flex;
+  justify-content: center;
 
-  justify-content:center;
+  align-items: center;
 
-  align-items:center;
-
-  z-index:999;
-
+  z-index: 999;
 }
 
-.popup{
+.popup {
+  width: 420px;
 
-  width:420px;
+  background: white;
 
-  background:white;
+  padding: 25px;
 
-  padding:25px;
-
-  border-radius:12px;
-
+  border-radius: 12px;
 }
 
+.payment-methods {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.payment-option {
+  flex: 1;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  background: #f9fafb;
+}
+
+.payment-option:hover {
+  border-color: #0d6efd;
+  background: #eff6ff;
+}
+
+.vnpay-box {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px dashed #94a3b8;
+  text-align: center;
+}
+
+.qr-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vnpay-qr {
+  width: 260px;
+  height: 260px;
+  object-fit: contain;
+  background: white;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+}
 </style>

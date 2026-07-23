@@ -144,6 +144,10 @@ export const doiKhachHang = (hoaDonId, khachHangId) => {
 
 };
 
+export const thanhToanVnpayTaiQuay = (hoaDonId) => {
+  return axios.post(`${API_URL}/${hoaDonId}/thanh-toan-vnpay`, {}, getAuthHeader())
+}
+
 
 
 
