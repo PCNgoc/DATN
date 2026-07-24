@@ -26,6 +26,9 @@ import { getKhachHangBanTaiQuay } from '@/services/khachHangService'
 
 import { xoaSanPham } from '@/services/hoaDonService'
 import { thanhToanTienMat } from '@/services/hoaDonService'
+import {
+  exportPdf
+} from "@/services/hoaDonService";
 
 //=====================
 // HÓA ĐƠN CHỜ
@@ -280,6 +283,7 @@ const hoanTatThanhToanVnpay = async () => {
   await loadHoaDonCho()
   await loadSanPham()
 }
+
 
 //=====================
 

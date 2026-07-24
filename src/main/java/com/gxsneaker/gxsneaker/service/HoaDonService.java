@@ -30,7 +30,7 @@ public interface HoaDonService {
 
     ResponseEntity<byte[]> exportPdf(Long id);
 
-    HoaDon taoHoaDonCho();
+    HoaDon taoHoaDonCho(String authHeader);
     List<HoaDon> getHoaDonCho();
 
     void themSanPham(Long hoaDonId, ThemSanPhamRequest request);

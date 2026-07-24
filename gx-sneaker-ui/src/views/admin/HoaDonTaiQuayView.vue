@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from "vue";
-import { getHoaDonTaiQuay } from "@/services/hoaDonService"
+import {exportPdf, getHoaDonTaiQuay} from "@/services/hoaDonService"
 import { getChiTietHoaDon } from "@/services/hoaDonService";
 const hoaDons = ref([]);
 
@@ -38,6 +38,37 @@ const formatMoney = (money) => {
   return new Intl.NumberFormat("vi-VN").format(money) + " đ";
 
 }
+
+const inHoaDon = async () => {
+
+  if (!selectedHoaDon.value) {
+    alert("Vui lòng chọn hóa đơn");
+    return;
+  }
+
+  try {
+
+    const response = await exportPdf(selectedHoaDon.value.id);
+
+    const blob = new Blob(
+      [response.data],
+      { type: "application/pdf" }
+    );
+
+    const url = window.URL.createObjectURL(blob);
+
+    window.open(url);
+
+  } catch (e) {
+
+    console.log(e);
+
+    alert("Không thể in hóa đơn");
+
+  }
+
+}
+
 onMounted(() => {
 
   loadHoaDon();
@@ -343,6 +374,7 @@ onMounted(() => {
 
               <button
                 class="btn btn-success w-100"
+                @click="inHoaDon"
               >
 
                 <i class="bi bi-printer me-2"></i>

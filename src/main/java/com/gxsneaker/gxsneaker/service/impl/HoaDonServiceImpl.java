@@ -4,6 +4,7 @@ import com.gxsneaker.gxsneaker.dto.*;
 import com.gxsneaker.gxsneaker.entity.*;
 import com.gxsneaker.gxsneaker.repository.*;
 import com.gxsneaker.gxsneaker.service.HoaDonService;
+import com.gxsneaker.gxsneaker.service.JwtService;
 import com.gxsneaker.gxsneaker.service.VNPayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
@@ -17,17 +18,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import com.itextpdf.text.pdf.BaseFont;
-import java.io.ByteArrayOutputStream;
+
+import java.io.*;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.io.File;
 
 import com.gxsneaker.gxsneaker.service.ShippingFeeService;
-import java.io.InputStream;
+
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import com.gxsneaker.gxsneaker.repository.ChiTietSanPhamRepository;
@@ -35,6 +36,7 @@ import com.gxsneaker.gxsneaker.repository.KhachHangRepository;
 import com.gxsneaker.gxsneaker.repository.PhieuGiamGiaKhachHangRepository;
 import com.gxsneaker.gxsneaker.repository.NhanVienRepository;
 import com.gxsneaker.gxsneaker.dto.HoaDonTaiQuayDTO;
+
 @Service
 @RequiredArgsConstructor
 public class HoaDonServiceImpl implements HoaDonService {
@@ -49,6 +51,8 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final KhachHangRepository khachHangRepository;
     private final NhanVienRepository nhanVienRepository;
     private final PhieuGiamGiaKhachHangRepository pggKhachHangRepository;
+    private final JwtService jwtService;
+
 
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0(3|5|7|8|9)[0-9]{8}$");
@@ -643,93 +647,386 @@ public class HoaDonServiceImpl implements HoaDonService {
 
             document.open();
 
+
             BaseFont bf = getBaseFont();
 
             Font title = new Font(bf, 20, Font.BOLD);
-
             Font normal = new Font(bf, 12);
-
             Font bold = new Font(bf, 12, Font.BOLD);
 
-            Paragraph p = new Paragraph("GX SNEAKER\n HÓA ĐƠN BÁN HÀNG", title);
-            p.setAlignment(Element.ALIGN_CENTER);
-            document.add(p);
+
+            // =========================
+            // HEADER
+            // =========================
+
+            Paragraph header = new Paragraph(
+                    "GX SNEAKER\nHÓA ĐƠN BÁN HÀNG",
+                    title
+            );
+
+            header.setAlignment(Element.ALIGN_CENTER);
+
+            document.add(header);
+
 
             document.add(new Paragraph(" "));
 
-            document.add(new Paragraph("Mã hóa đơn: " + hoaDon.getMaHoaDon(), normal));
-            document.add(new Paragraph("Ngày đặt: " + formatDate(hoaDon.getNgayDatHang()), normal));
-//            document.add(new Paragraph("Khách hàng: " + hoaDon.getTenNguoiNhan(), normal));
-//            document.add(new Paragraph("Email: " + hoaDon.getKhachHang().getEmail(), normal));
-//            document.add(new Paragraph("SĐT: " + hoaDon.getSoDienThoaiNguoiNhan(), normal));
-//            document.add(new Paragraph("Địa chỉ: " + hoaDon.getDiaChiNguoiNhan(), normal));
-            document.add(new Paragraph(
-                    "Khách hàng: " +
-                            (hoaDon.getTenNguoiNhan() == null ? "Khách lẻ" : hoaDon.getTenNguoiNhan()),
-                    normal));
 
             document.add(new Paragraph(
-                    "Email: " +
-                            (hoaDon.getKhachHang() == null ? "" : hoaDon.getKhachHang().getEmail()),
-                    normal));
+                    "Mã hóa đơn: " + hoaDon.getMaHoaDon(),
+                    normal
+            ));
 
-            document.add(new Paragraph(
-                    "SĐT: " +
-                            (hoaDon.getSoDienThoaiNguoiNhan() == null ? "" : hoaDon.getSoDienThoaiNguoiNhan()),
-                    normal));
+            String labelNgay;
+            String valueNgay;
 
-            document.add(new Paragraph(
-                    "Địa chỉ: " +
-                            (hoaDon.getDiaChiNguoiNhan() == null ? "" : hoaDon.getDiaChiNguoiNhan()),
-                    normal));
 
-            document.add(new Paragraph(" "));
+            if ("ONLINE".equalsIgnoreCase(hoaDon.getLoaiDon())) {
 
-            PdfPTable table = new PdfPTable(5);
-            table.setWidthPercentage(100);
+                labelNgay = "Ngày đặt hàng";
+                valueNgay = formatDate(hoaDon.getNgayDatHang());
 
-            table.addCell(new PdfPCell(new Phrase("Sản phẩm", bold)));
-            table.addCell(new PdfPCell(new Phrase("Size", bold)));
-            table.addCell(new PdfPCell(new Phrase("Màu", bold)));
-            table.addCell(new PdfPCell(new Phrase("SL", bold)));
-            table.addCell(new PdfPCell(new Phrase("Thành tiền", bold)));
+            } else {
 
-            for (HoaDonChiTiet ct : hoaDon.getHoaDonChiTiets()) {
-
-                table.addCell(ct.getChiTietSanPham().getSanPham().getTenSanPham());
-                table.addCell(String.valueOf(ct.getChiTietSanPham().getKichThuoc().getSize()));
-                table.addCell(ct.getChiTietSanPham().getMauSac().getTen());
-                table.addCell(String.valueOf(ct.getSoLuong()));
-                table.addCell(formatMoney(ct.getThanhTien()));
+                labelNgay = "Ngày tạo hóa đơn";
+                valueNgay = formatDate(hoaDon.getNgayTao());
 
             }
 
+            document.add(new Paragraph(
+                    labelNgay + ": " + valueNgay,
+                    normal
+            ));
+
+
+            document.add(new Paragraph(" "));
+
+
+            // =========================
+            // THÔNG TIN KHÁCH HÀNG
+            // =========================
+
+            if ("ONLINE".equalsIgnoreCase(hoaDon.getLoaiDon())) {
+
+
+                document.add(new Paragraph(
+                        "Loại đơn: Online",
+                        bold
+                ));
+
+
+                document.add(new Paragraph(
+                        "Người nhận: "
+                                + safe(
+                                hoaDon.getTenNguoiNhan(),
+                                "Khách lẻ"
+                        ),
+                        normal
+                ));
+
+
+                document.add(new Paragraph(
+                        "SĐT: "
+                                + safe(
+                                hoaDon.getSoDienThoaiNguoiNhan(),
+                                ""
+                        ),
+                        normal
+                ));
+
+
+                document.add(new Paragraph(
+                        "Địa chỉ nhận hàng: "
+                                + safe(
+                                hoaDon.getDiaChiNguoiNhan(),
+                                ""
+                        ),
+                        normal
+                ));
+
+
+
+                document.add(new Paragraph(
+                        "Mã vận đơn: "
+                                + safe(
+                                hoaDon.getMaVanDon(),
+                                ""
+                        ),
+                        normal
+                ));
+
+
+            } else {
+
+
+                document.add(new Paragraph(
+                        "Loại đơn: Tại quầy",
+                        bold
+                ));
+
+
+                if (hoaDon.getKhachHang() != null) {
+
+
+                    document.add(new Paragraph(
+                            "Khách hàng: "
+                                    + hoaDon.getKhachHang().getHoTen(),
+                            normal
+                    ));
+
+
+                    document.add(new Paragraph(
+                            "SĐT: "
+                                    + safe(
+                                    hoaDon.getKhachHang().getSoDienThoai(),
+                                    ""
+                            ),
+                            normal
+                    ));
+
+
+                } else {
+
+
+                    document.add(new Paragraph(
+                            "Khách hàng: Khách lẻ",
+                            normal
+                    ));
+
+                }
+
+            }
+
+
+
+            document.add(new Paragraph(" "));
+
+
+            // =========================
+            // CHI TIẾT HÓA ĐƠN
+            // =========================
+
+            PdfPTable table = new PdfPTable(5);
+
+            table.setWidthPercentage(100);
+
+            table.setWidths(new float[]{
+                    3,
+                    1,
+                    1.5f,
+                    1,
+                    2
+            });
+
+
+
+            String[] headers = {
+                    "Sản phẩm",
+                    "Size",
+                    "Màu",
+                    "SL",
+                    "Thành tiền"
+            };
+
+
+            for(String h : headers){
+
+                PdfPCell cell = new PdfPCell(
+                        new Phrase(h,bold)
+                );
+
+                cell.setHorizontalAlignment(
+                        Element.ALIGN_CENTER
+                );
+
+                table.addCell(cell);
+
+            }
+
+
+
+            for(HoaDonChiTiet ct : hoaDon.getHoaDonChiTiets()){
+
+
+                table.addCell(
+                        ct.getChiTietSanPham()
+                                .getSanPham()
+                                .getTenSanPham()
+                );
+
+
+                table.addCell(
+                        String.valueOf(
+                                ct.getChiTietSanPham()
+                                        .getKichThuoc()
+                                        .getSize())
+                );
+
+
+                table.addCell(
+                        ct.getChiTietSanPham()
+                                .getMauSac()
+                                .getTen()
+                );
+
+
+                table.addCell(
+                        String.valueOf(
+                                ct.getSoLuong())
+                );
+
+
+                table.addCell(
+                        formatMoney(
+                                ct.getThanhTien())
+                );
+
+            }
+
+
+
             document.add(table);
 
-            document.add(new Paragraph(" "));
 
-            document.add(new Paragraph("Tổng tiền hàng: " + formatMoney(hoaDon.getTongTienHang()), bold));
-            document.add(new Paragraph("Giảm giá: -" + formatMoney(hoaDon.getSoTienGiam()), bold));
-            document.add(new Paragraph("Phí vận chuyển: " + formatMoney(hoaDon.getPhiVanChuyen()), bold));
-            document.add(new Paragraph("Tổng thanh toán: " + formatMoney(hoaDon.getTongTienThanhToan()), bold));
 
             document.add(new Paragraph(" "));
 
-            document.add(new Paragraph("Phương thức thanh toán: " + hoaDon.getPhuongThucThanhToan(), normal));
-            document.add(new Paragraph("Trạng thái đơn: " + hoaDon.getTrangThai(), normal));
-            document.add(new Paragraph("Trạng thái thanh toán: " + hoaDon.getTrangThaiThanhToan(), normal));
+
+
+            // =========================
+            // TIỀN
+            // =========================
+
+
+            document.add(new Paragraph(
+                    "Tổng tiền hàng: "
+                            + formatMoney(
+                            hoaDon.getTongTienHang()
+                    ),
+                    bold
+            ));
+
+
+
+            document.add(new Paragraph(
+                    "Giảm giá: -"
+                            + formatMoney(
+                            hoaDon.getSoTienGiam()
+                    ),
+                    bold
+            ));
+
+
+
+            // chỉ online mới có ship
+
+            if("ONLINE".equalsIgnoreCase(
+                    hoaDon.getLoaiDon()
+            )){
+
+
+                document.add(new Paragraph(
+                        "Phí vận chuyển: "
+                                + formatMoney(
+                                hoaDon.getPhiVanChuyen()
+                        ),
+                        bold
+                ));
+
+            }
+
+
+
+            document.add(new Paragraph(
+                    "Tổng thanh toán: "
+                            + formatMoney(
+                            hoaDon.getTongTienThanhToan()
+                    ),
+                    bold
+            ));
+
+
+
+            document.add(new Paragraph(" "));
+
+
+
+            document.add(new Paragraph(
+                    "Phương thức thanh toán: "
+                            + hoaDon.getPhuongThucThanhToan(),
+                    normal
+            ));
+
+
+
+            document.add(new Paragraph(
+                    "Trạng thái đơn: "
+                            + hoaDon.getTrangThai(),
+                    normal
+            ));
+
+
+
+            document.add(new Paragraph(
+                    "Trạng thái thanh toán: "
+                            + hoaDon.getTrangThaiThanhToan(),
+                    normal
+            ));
+
+
+
+            document.add(new Paragraph(" "));
+
+
+
+            Paragraph thank = new Paragraph(
+                    "Xin cảm ơn Quý khách đã mua hàng tại GX Sneaker!",
+                    bold
+            );
+
+            thank.setAlignment(
+                    Element.ALIGN_CENTER
+            );
+
+            document.add(thank);
+
+
 
             document.close();
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+
+
+        }catch(Exception e){
+
+            throw new RuntimeException(
+                    "Lỗi xuất PDF: " + e.getMessage(),
+                    e
+            );
+
         }
 
+
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=HoaDon_" + hoaDon.getMaHoaDon() + ".pdf")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(out.toByteArray());
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=HoaDon_"
+                                + hoaDon.getMaHoaDon()
+                                + ".pdf"
+                )
+                .contentType(
+                        MediaType.APPLICATION_PDF
+                )
+                .body(
+                        out.toByteArray()
+                );
+    }
+    private String safe(Object value, String defaultValue){
+
+        return value == null
+                ? defaultValue
+                : value.toString();
+
     }
 
     private String formatDate(Date date) {
@@ -755,23 +1052,18 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     private BaseFont getBaseFont() throws Exception {
 
-        System.out.println("WorkingDir = " + System.getProperty("user.dir"));
-
-        System.out.println("ClassLoader = "
-                + HoaDonServiceImpl.class.getClassLoader().getResource("fonts/arial.ttf"));
-
         ClassPathResource resource = new ClassPathResource("fonts/arial.ttf");
 
-        System.out.println("Exists = " + resource.exists());
+        File temp = File.createTempFile("arial", ".ttf");
+        temp.deleteOnExit();
 
-        File file = new File("target/classes/fonts/arial.ttf");
-
-        System.out.println("File Exists = " + file.exists());
-
-        System.out.println(file.getAbsolutePath());
+        try (InputStream in = resource.getInputStream();
+             OutputStream out = new FileOutputStream(temp)) {
+            in.transferTo(out);
+        }
 
         return BaseFont.createFont(
-                file.getAbsolutePath(),
+                temp.getAbsolutePath(),
                 BaseFont.IDENTITY_H,
                 BaseFont.EMBEDDED
         );
@@ -810,7 +1102,19 @@ public class HoaDonServiceImpl implements HoaDonService {
         hoaDonRepository.save(hoaDon);
     }
 
-    public HoaDon taoHoaDonCho() {
+    @Override
+    @Transactional
+    public HoaDon taoHoaDonCho(String authHeader) {
+
+        // Lấy token
+        String token = authHeader.replace("Bearer ", "");
+
+        // Lấy email từ JWT
+        String email = jwtService.extractUsername(token);
+
+        // Tìm nhân viên đăng nhập
+        NhanVien nhanVien = nhanVienRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên"));
 
         HoaDon hd = new HoaDon();
 
@@ -827,10 +1131,12 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         hd.setNgayTao(new Date());
 
-        hd.setNguoiTao("Admin");
+        // ====== Quan trọng ======
+        hd.setIdNhanVien(nhanVien.getId().longValue());
+        hd.setNguoiTao(nhanVien.getHoTen());
+        // ========================
 
         return hoaDonRepository.save(hd);
-
     }
 
     private String generateMaHoaDon() {
@@ -1117,10 +1423,8 @@ public class HoaDonServiceImpl implements HoaDonService {
                 khachHangRepository
                         .findById(hd.getIdKhachHang().intValue())
                         .ifPresent(kh -> {
-
                             dto.setTenKhachHang(kh.getHoTen());
                             dto.setSoDienThoai(kh.getSoDienThoai());
-
                         });
 
             } else {
@@ -1134,18 +1438,13 @@ public class HoaDonServiceImpl implements HoaDonService {
 
                 nhanVienRepository
                         .findById(hd.getIdNhanVien().intValue())
-                        .ifPresent(nv -> {
-
-                            dto.setTenNhanVien(nv.getHoTen());
-
-                        });
+                        .ifPresent(nv -> dto.setTenNhanVien(nv.getHoTen()));
 
             }
 
             return dto;
 
         }).toList();
-
     }
 
 

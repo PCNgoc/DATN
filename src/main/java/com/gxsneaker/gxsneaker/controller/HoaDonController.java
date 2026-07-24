@@ -514,12 +514,13 @@ public class HoaDonController {
     }
 
     @PostMapping("/tao-hoa-don-cho")
-    public ResponseEntity<HoaDon> taoHoaDonCho() {
+    public ResponseEntity<?> taoHoaDonCho(
+            @RequestHeader("Authorization") String authHeader
+    ) {
 
-        HoaDon hoaDon = hoaDonService.taoHoaDonCho();
-
-        return ResponseEntity.ok(hoaDon);
-
+        return ResponseEntity.ok(
+                hoaDonService.taoHoaDonCho(authHeader)
+        );
     }
 
     @GetMapping("/hoa-don-cho")

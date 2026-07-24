@@ -58,8 +58,8 @@ export const taoHoaDonCho = () => {
     `${API_URL}/tao-hoa-don-cho`,
     {},
     getAuthHeader()
-  );
-};
+  )
+}
 
 export const getHoaDonCho = () => {
   return axios.get(
