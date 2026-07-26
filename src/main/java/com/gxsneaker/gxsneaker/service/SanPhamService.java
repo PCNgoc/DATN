@@ -22,4 +22,15 @@ public interface SanPhamService {
     List<SanPhamDTO> getNewestProducts();
     void stopSelling(Long id);
     List<SanPhamDTO> getAllActive();
+
+    List<SanPhamDTO> filter(
+            String keyword,
+            Long brandId,
+            Long categoryId,
+            Long xuatXuId,
+            Long chatLieuId,
+            Long coGiayId,
+            Long deGiayId,
+            String gioiTinh
+    );
 }

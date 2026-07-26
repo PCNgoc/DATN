@@ -68,12 +68,6 @@ const roleLabel = computed(() => {
 
 const menuItems = computed(() => [
   {
-    label: 'Tổng quan',
-    icon: '📊',
-    path: '/admin/dashboard',
-    roles: ['ADMIN'],
-  },
-  {
     label: 'Thống kê',
     icon: '📈',
     path: '/admin/thong-ke',
@@ -188,7 +182,7 @@ const isProductAttributeActive = computed(() => {
 
 const goToHomeByRole = () => {
   if (isAdmin.value) {
-    router.push('/admin/dashboard')
+    router.push('/admin/thong-ke')
     return
   }
 

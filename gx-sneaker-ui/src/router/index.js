@@ -13,7 +13,6 @@ import PayOSWaitingView from '@/views/user/PayOSWaitingView.vue'
 
 // Admin
 import AdminLoginView from '@/views/admin/AdminLoginView.vue'
-import AdminDashboardView from '@/views/admin/AdminDashboardView.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import NhanVienView from '@/views/admin/NhanVienView.vue'
 import HoaDonView from '@/views/admin/HoaDonView.vue'
@@ -88,7 +87,7 @@ const getDefaultAdminPath = () => {
   const role = getAdminRole()
 
   if (role === 'ADMIN') {
-    return '/admin/dashboard'
+    return '/admin/thong-ke'
   }
 
   if (role === 'STAFF') {
@@ -235,14 +234,6 @@ const router = createRouter({
         },
 
         // ================= ADMIN ONLY =================
-        {
-          path: 'dashboard',
-          name: 'AdminDashboard',
-          component: AdminDashboardView,
-          meta: {
-            roles: ['ADMIN'],
-          },
-        },
         {
           path: 'thong-ke',
           name: 'AdminThongKe',
@@ -457,7 +448,7 @@ router.beforeEach((to) => {
       }
 
       if (adminRole === 'ADMIN') {
-        return '/admin/dashboard'
+        return '/admin/thong-ke'
       }
 
       return '/admin/login'

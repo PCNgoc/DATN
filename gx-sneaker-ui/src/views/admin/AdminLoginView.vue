@@ -12,7 +12,7 @@ const errorMessage = ref('')
 
 const goHomeByRole = (role) => {
   if (role === 'ADMIN') {
-    router.push('/admin/dashboard')
+    router.push('/admin/thong-ke')
     return
   }
 

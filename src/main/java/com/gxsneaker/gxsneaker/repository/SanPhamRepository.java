@@ -35,4 +35,66 @@ LIKE LOWER(CONCAT('%',:keyword,'%'))
     List<SanPham> findTop12ByTrangThaiTrue();
 
     List<SanPham> findByTrangThaiTrue();
+
+
+    @Query("""
+SELECT sp
+FROM SanPham sp
+WHERE sp.trangThai = true
+
+AND (
+    :keyword IS NULL
+    OR :keyword = ''
+    OR LOWER(sp.tenSanPham) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    OR LOWER(sp.maSanPham) LIKE LOWER(CONCAT('%', :keyword, '%'))
+)
+
+AND (
+    :brandId IS NULL
+    OR sp.thuongHieu.id = :brandId
+)
+
+AND (
+    :categoryId IS NULL
+    OR sp.danhMuc.id = :categoryId
+)
+
+AND (
+    :xuatXuId IS NULL
+    OR sp.xuatXu.id = :xuatXuId
+)
+
+AND (
+    :chatLieuId IS NULL
+    OR sp.chatLieu.id = :chatLieuId
+)
+
+AND (
+    :coGiayId IS NULL
+    OR sp.coGiay.id = :coGiayId
+)
+
+AND (
+    :deGiayId IS NULL
+    OR sp.deGiay.id = :deGiayId
+)
+
+AND (
+    :gioiTinh IS NULL
+    OR :gioiTinh = ''
+    OR sp.gioiTinh = :gioiTinh
+)
+
+ORDER BY sp.ngayTao DESC
+""")
+    List<SanPham> filter(
+            String keyword,
+            Long brandId,
+            Long categoryId,
+            Long xuatXuId,
+            Long chatLieuId,
+            Long coGiayId,
+            Long deGiayId,
+            String gioiTinh
+    );
 }

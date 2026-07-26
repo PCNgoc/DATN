@@ -1,224 +1,203 @@
 <script setup>
-
 import { ref, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
-
 
 import { getProducts } from "@/services/productService"
 import { getAllThuongHieu } from "@/services/thuongHieuService"
 import { getAll as getDanhMuc } from "@/services/danhMucService"
-
-
+import { getAll as getXuatXu } from "@/services/xuatXuService"
+import { getAll as getChatLieu } from "@/services/chatLieuService"
+import { getAll as getCoGiay } from "@/services/coGiayService"
+import { getAll as getDeGiay } from "@/services/deGiayService"
 
 const router = useRouter()
 
-
 const products = ref([])
+
 const brands = ref([])
 const categories = ref([])
-
+const origins = ref([])
+const materials = ref([])
+const collars = ref([])
+const soles = ref([])
 
 const loading = ref(true)
 
-
-
-// tìm kiếm + lọc
+// ==========================
+// FILTER
+// ==========================
 
 const keyword = ref("")
 const selectedBrand = ref("")
 const selectedCategory = ref("")
+const selectedOrigin = ref("")
+const selectedMaterial = ref("")
+const selectedCollar = ref("")
+const selectedSole = ref("")
+const selectedGender = ref("")
+
 const sortBy = ref("newest")
 
-
-
 // ==========================
-// YÊU THÍCH
+// FAVORITES
 // ==========================
 
 const favorites = ref([])
 
-
-
-// load danh sách yêu thích
-
-const loadFavorites = ()=>{
+const loadFavorites = () => {
 
   favorites.value =
-    JSON.parse(
-      localStorage.getItem("favorites")
-    ) || []
+    JSON.parse(localStorage.getItem("favorites")) || []
 
 }
 
+const isFavorite = (product) => {
 
-
-
-// kiểm tra sản phẩm đã thích chưa
-
-const isFavorite = (product)=>{
-
-  return favorites.value.some(
-    item=>item.id === product.id
-  )
+  return favorites.value.some(item => item.id === product.id)
 
 }
 
-
-
-// thêm / xóa yêu thích
-
-const toggleFavorite = (product)=>{
-
+const toggleFavorite = (product) => {
 
   let list =
-    JSON.parse(
-      localStorage.getItem("favorites")
-    ) || []
-
-
+    JSON.parse(localStorage.getItem("favorites")) || []
 
   const exists =
-    list.some(
-      item=>item.id === product.id
-    )
+    list.some(item => item.id === product.id)
 
+  if (exists) {
 
+    list = list.filter(item => item.id !== product.id)
 
-  if(exists){
-
-
-    list =
-      list.filter(
-        item=>item.id !== product.id
-      )
-
-
-  }else{
-
+  } else {
 
     list.push(product)
 
-
   }
-
-
 
   localStorage.setItem(
     "favorites",
     JSON.stringify(list)
   )
 
-
   loadFavorites()
 
 }
 
-
-
-
-
-
 // ==========================
-// LOAD DATA
+// LOAD FILTER
 // ==========================
 
+const loadFilters = async () => {
 
-const loadData = async ()=>{
-
-
-  try{
-
-
-    loading.value=true
-
-
+  try {
 
     const [
-      sp,
       th,
-      dm
+      dm,
+      xx,
+      cl,
+      cg,
+      dg
     ] = await Promise.all([
-
-      getProducts(),
 
       getAllThuongHieu(),
 
-      getDanhMuc()
+      getDanhMuc(),
+
+      getXuatXu(),
+
+      getChatLieu(),
+
+      getCoGiay(),
+
+      getDeGiay()
 
     ])
 
-
-
-    products.value = sp.data
-
     brands.value = th.data
-
     categories.value = dm.data
+    origins.value = xx.data
+    materials.value = cl.data
+    collars.value = cg.data
+    soles.value = dg.data
 
+  } catch (e) {
 
-
-  }catch(error){
-
-    console.error(error)
-
-  }
-
-  finally{
-
-    loading.value=false
+    console.error(e)
 
   }
-
 
 }
 
-
-
-
-
-
 // ==========================
-// FILTER
+// LOAD PRODUCT
 // ==========================
 
+const loadProducts = async () => {
 
-const filteredProducts = computed(()=>{
+  try {
 
+    loading.value = true
 
-  return products.value.filter(sp=>{
+    const res = await getProducts()
 
+    products.value = res.data
+
+    console.log(products.value)
+  } catch (e) {
+
+    console.error(e)
+
+  } finally {
+
+    loading.value = false
+
+  }
+
+}
+
+// ==========================
+// FILTER PRODUCT
+// ==========================
+
+const filteredProducts = computed(() => {
+
+  return products.value.filter(sp => {
 
     const matchKeyword =
-
       !keyword.value ||
-
       sp.tenSanPham
         ?.toLowerCase()
-        .includes(
-          keyword.value.toLowerCase()
-        )
-
-
+        .includes(keyword.value.toLowerCase())
 
     const matchBrand =
-
       !selectedBrand.value ||
-
-      sp.idThuongHieu ==
-      selectedBrand.value
-
-
-
+      sp.idThuongHieu == selectedBrand.value
 
     const matchCategory =
-
       !selectedCategory.value ||
+      sp.idDanhMuc == selectedCategory.value
 
-      sp.idDanhMuc ==
-      selectedCategory.value
+    const matchOrigin =
+      !selectedOrigin.value ||
+      sp.idXuatXu == selectedOrigin.value
 
+    const matchMaterial =
+      !selectedMaterial.value ||
+      sp.idChatLieu == selectedMaterial.value
 
+    const matchCollar =
+      !selectedCollar.value ||
+      sp.idCoGiay == selectedCollar.value
 
+    const matchSole =
+      !selectedSole.value ||
+      sp.idDeGiay == selectedSole.value
+
+    const matchGender =
+      !selectedGender.value ||
+      sp.gioiTinh == selectedGender.value
 
     return (
 
@@ -226,15 +205,28 @@ const filteredProducts = computed(()=>{
 
       matchBrand &&
 
-      matchCategory
+      matchCategory &&
+
+      matchOrigin &&
+
+      matchMaterial &&
+
+      matchCollar &&
+
+      matchSole &&
+
+      matchGender
 
     )
 
-
   })
 
-
 })
+
+// ==========================
+// SORT
+// ==========================
+
 const displayProducts = computed(() => {
 
   const list = [...filteredProducts.value]
@@ -242,55 +234,48 @@ const displayProducts = computed(() => {
   switch (sortBy.value) {
 
     case "az":
+
       return list.sort((a, b) =>
         a.tenSanPham.localeCompare(b.tenSanPham)
       )
 
     case "za":
+
       return list.sort((a, b) =>
         b.tenSanPham.localeCompare(a.tenSanPham)
       )
 
     default:
+
       return list
 
   }
 
 })
 
-
-
-
 // ==========================
 // DETAIL
 // ==========================
 
+const detail = (id) => {
 
-const detail=(id)=>{
-
-
-  router.push(
-    `/products/${id}`
-  )
-
+  router.push(`/products/${id}`)
 
 }
 
+// ==========================
+// INIT
+// ==========================
 
+onMounted(async () => {
 
+  await loadFilters()
 
-onMounted(()=>{
-
-
-  loadData()
+  await loadProducts()
 
   loadFavorites()
 
-
 })
-
-
-
 </script>
 <template>
 
@@ -345,111 +330,145 @@ onMounted(()=>{
 
         <aside class="sidebar">
 
+          <h3>Bộ lọc</h3>
 
-          <h3>
-            Bộ lọc
-          </h3>
-
-
-
+          <!-- Tìm kiếm -->
           <input
-
             v-model="keyword"
-
             placeholder="Tìm sản phẩm..."
-
             class="search-input"
-
           />
 
-
-
-
+          <!-- Giới tính -->
           <div class="filter-group">
+            <label>Giới tính</label>
 
+            <select v-model="selectedGender">
+              <option value="">Tất cả</option>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+              <option value="Unisex">Unisex</option>
+            </select>
+          </div>
 
-            <label>
-              Thương hiệu
-            </label>
-
-
+          <!-- Thương hiệu -->
+          <div class="filter-group">
+            <label>Thương hiệu</label>
 
             <select v-model="selectedBrand">
-
-
-              <option value="">
-                Tất cả
-              </option>
-
-
+              <option value="">Tất cả</option>
 
               <option
-
                 v-for="item in brands"
-
                 :key="item.id"
-
                 :value="item.id"
-
               >
-
                 {{ item.ten }}
-
               </option>
-
-
             </select>
-
-
           </div>
 
-
-
-
-
+          <!-- Danh mục -->
           <div class="filter-group">
-
-
-            <label>
-              Danh mục
-            </label>
-
-
+            <label>Danh mục</label>
 
             <select v-model="selectedCategory">
-
-
-              <option value="">
-                Tất cả
-              </option>
-
-
-
+              <option value="">Tất cả</option>
 
               <option
-
                 v-for="item in categories"
-
                 :key="item.id"
-
                 :value="item.id"
-
               >
-
                 {{ item.ten }}
-
               </option>
-
-
-
             </select>
-
-
-
           </div>
 
+          <!-- Xuất xứ -->
+          <div class="filter-group">
+            <label>Xuất xứ</label>
 
+            <select v-model="selectedOrigin">
+              <option value="">Tất cả</option>
 
+              <option
+                v-for="item in origins"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.ten }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Chất liệu -->
+          <div class="filter-group">
+            <label>Chất liệu</label>
+
+            <select v-model="selectedMaterial">
+              <option value="">Tất cả</option>
+
+              <option
+                v-for="item in materials"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.ten }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Cổ giày -->
+          <div class="filter-group">
+            <label>Cổ giày</label>
+
+            <select v-model="selectedCollar">
+              <option value="">Tất cả</option>
+
+              <option
+                v-for="item in collars"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.ten }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Đế giày -->
+          <div class="filter-group">
+            <label>Đế giày</label>
+
+            <select v-model="selectedSole">
+              <option value="">Tất cả</option>
+
+              <option
+                v-for="item in soles"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.ten }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Xóa bộ lọc -->
+          <button
+            class="clear-filter-btn"
+            @click="
+      keyword='';
+      selectedBrand='';
+      selectedCategory='';
+      selectedOrigin='';
+      selectedMaterial='';
+      selectedCollar='';
+      selectedSole='';
+      selectedGender='';
+    "
+          >
+            Xóa bộ lọc
+          </button>
 
         </aside>
 
@@ -544,7 +563,7 @@ onMounted(()=>{
 
           <div
 
-            v-else-if="filteredProducts.length===0"
+            v-else-if="displayProducts.length===0"
 
             class="empty-state"
 
@@ -874,8 +893,11 @@ onMounted(()=>{
 ===================================================== */
 
 .product-page{
+
   min-height:100vh;
+
   background:#f8f9fb;
+
 }
 
 /* =====================================================
@@ -889,7 +911,9 @@ onMounted(()=>{
   height:430px;
 
   display:flex;
+
   justify-content:center;
+
   align-items:center;
 
   overflow:hidden;
@@ -902,12 +926,15 @@ onMounted(()=>{
     url("/images/banner.jpg");
 
   background-size:cover;
+
   background-position:center;
+
 }
 
 .hero-overlay{
 
   position:absolute;
+
   inset:0;
 
   background:rgba(0,0,0,.25);
@@ -917,6 +944,7 @@ onMounted(()=>{
 .hero-content{
 
   position:relative;
+
   z-index:5;
 
   max-width:900px;
@@ -1042,15 +1070,18 @@ onMounted(()=>{
 
   box-shadow:0 10px 25px rgba(0,0,0,.06);
 
-  height:fit-content;
-
   position:sticky;
 
-  top:100px;
+  top:90px;
 
-  align-self:start;
+  max-height:calc(100vh - 120px);
+
+  overflow-y:auto;
+
+  transition:.35s;
 
 }
+
 .sidebar h3{
 
   font-size:24px;
@@ -1059,9 +1090,15 @@ onMounted(()=>{
 
   margin-bottom:25px;
 
+  text-align:center;
+
   color:#111;
 
 }
+
+/* ==========================
+   INPUT + SELECT
+========================== */
 
 .search-input,
 .sidebar select{
@@ -1076,25 +1113,17 @@ onMounted(()=>{
 
   border-radius:12px;
 
+  background:#fafafa;
+
   outline:none;
 
   font-size:14px;
 
-  background:#fff;
-
   transition:.3s;
 
-  margin-bottom:20px;
+  cursor:pointer;
 
-}
-
-.search-input:focus,
-.sidebar select:focus{
-
-  border-color:#111;
-
-  box-shadow:
-    0 0 0 4px rgba(0,0,0,.05);
+  appearance:none;
 
 }
 
@@ -1103,11 +1132,40 @@ onMounted(()=>{
 
   border-color:#111;
 
+  background:#fff;
+
 }
+
+.search-input:focus,
+.sidebar select:focus{
+
+  border-color:#111;
+
+  background:#fff;
+
+  box-shadow:0 0 0 5px rgba(0,0,0,.05);
+
+}
+
+/* ==========================
+   FILTER
+========================== */
 
 .filter-group{
 
   margin-bottom:22px;
+
+  padding-bottom:18px;
+
+  border-bottom:1px solid #efefef;
+
+  animation:fadeUp .4s ease;
+
+}
+
+.filter-group:last-child{
+
+  border-bottom:none;
 
 }
 
@@ -1115,21 +1173,125 @@ onMounted(()=>{
 
   display:block;
 
-  font-weight:600;
+  font-size:15px;
+
+  font-weight:700;
+
+  color:#111;
 
   margin-bottom:10px;
 
-  color:#333;
+}
+
+/* ==========================
+   CLEAR FILTER
+========================== */
+
+.clear-filter-btn{
+
+  width:100%;
+
+  height:50px;
+
+  border:none;
+
+  border-radius:14px;
+
+  background:#111;
+
+  color:#fff;
+
+  font-size:15px;
+
+  font-weight:700;
+
+  cursor:pointer;
+
+  transition:.3s;
+
+  margin-top:15px;
 
 }
 
+.clear-filter-btn:hover{
+
+  background:#d62828;
+
+  transform:translateY(-2px);
+
+}
+
+/* ==========================
+   FILTER COUNT
+========================== */
+
+.filter-count{
+
+  float:right;
+
+  color:#999;
+
+  font-size:13px;
+
+}
+
+/* ==========================
+   SCROLLBAR
+========================== */
+
+.sidebar::-webkit-scrollbar{
+
+  width:6px;
+
+}
+
+.sidebar::-webkit-scrollbar-thumb{
+
+  background:#d8d8d8;
+
+  border-radius:20px;
+
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover{
+
+  background:#999;
+
+}
+
+/* ==========================
+   ANIMATION
+========================== */
+
+@keyframes fadeUp{
+
+  from{
+
+    opacity:0;
+
+    transform:translateY(12px);
+
+  }
+
+  to{
+
+    opacity:1;
+
+    transform:translateY(0);
+
+  }
+
+}
 /* =====================================================
    CONTENT
 ===================================================== */
 
 .content{
+
   display:flex;
+
   flex-direction:column;
+
 }
 
 /* =====================================================
@@ -1144,7 +1306,7 @@ onMounted(()=>{
 
   align-items:center;
 
-  background:white;
+  background:#fff;
 
   padding:24px 30px;
 
@@ -1153,7 +1315,6 @@ onMounted(()=>{
   margin-bottom:35px;
 
   box-shadow:
-
     0 12px 35px rgba(0,0,0,.06);
 
 }
@@ -1164,11 +1325,13 @@ onMounted(()=>{
 
   font-weight:800;
 
+  color:#111;
+
 }
 
 .content-header span{
 
-  color:#888;
+  color:#777;
 
   font-size:15px;
 
@@ -1176,7 +1339,7 @@ onMounted(()=>{
 
 .content-header select{
 
-  width:180px;
+  width:190px;
 
   height:46px;
 
@@ -1184,13 +1347,15 @@ onMounted(()=>{
 
   border-radius:12px;
 
-  padding:0 12px;
+  padding:0 15px;
 
   outline:none;
 
-  cursor:pointer;
+  background:#fff;
 
   transition:.3s;
+
+  cursor:pointer;
 
 }
 
@@ -1204,6 +1369,8 @@ onMounted(()=>{
 
   border-color:#111;
 
+  box-shadow:0 0 0 4px rgba(0,0,0,.05);
+
 }
 
 /* =====================================================
@@ -1214,10 +1381,9 @@ onMounted(()=>{
 
   display:grid;
 
-  grid-template-columns:
-        repeat(auto-fill,minmax(280px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
 
-  gap:32px;
+  gap:30px;
 
 }
 
@@ -1227,28 +1393,27 @@ onMounted(()=>{
 
 .product-card{
 
-  background:white;
+  background:#fff;
 
   border-radius:24px;
 
   overflow:hidden;
 
+  cursor:pointer;
+
   transition:.35s;
 
-  box-shadow:
+  border:1px solid #eee;
 
-    0 8px 20px rgba(0,0,0,.05);
-
-  border:none;
+  box-shadow:0 8px 20px rgba(0,0,0,.05);
 
 }
+
 .product-card:hover{
 
-  transform:translateY(-12px);
+  transform:translateY(-10px);
 
-  box-shadow:
-
-    0 20px 45px rgba(0,0,0,.12);
+  box-shadow:0 18px 40px rgba(0,0,0,.12);
 
 }
 
@@ -1280,7 +1445,7 @@ onMounted(()=>{
 
 .product-card:hover img{
 
-  transform:scale(1.05);
+  transform:scale(1.08);
 
 }
 
@@ -1292,9 +1457,9 @@ onMounted(()=>{
 
   position:absolute;
 
-  top:16px;
+  top:15px;
 
-  right:16px;
+  right:15px;
 
   width:44px;
 
@@ -1318,8 +1483,7 @@ onMounted(()=>{
 
   z-index:5;
 
-  box-shadow:
-    0 8px 18px rgba(0,0,0,.15);
+  box-shadow:0 8px 18px rgba(0,0,0,.15);
 
 }
 
@@ -1333,7 +1497,7 @@ onMounted(()=>{
 
   font-size:20px;
 
-  color:#555;
+  color:#666;
 
   transition:.3s;
 
@@ -1355,29 +1519,29 @@ onMounted(()=>{
 
   inset:0;
 
-  background:
-    linear-gradient(
-      rgba(0,0,0,.15),
-      rgba(0,0,0,.55)
-    );
-
-  color:#fff;
-
   display:flex;
 
   justify-content:center;
 
   align-items:center;
 
-  opacity:0;
-
-  transition:.35s;
+  color:#fff;
 
   font-size:17px;
 
   font-weight:700;
 
   letter-spacing:.5px;
+
+  opacity:0;
+
+  transition:.35s;
+
+  background:
+    linear-gradient(
+      rgba(0,0,0,.15),
+      rgba(0,0,0,.6)
+    );
 
 }
 
@@ -1407,7 +1571,7 @@ onMounted(()=>{
 
   text-transform:uppercase;
 
-  color:#888;
+  color:#999;
 
   letter-spacing:1px;
 
@@ -1427,7 +1591,7 @@ onMounted(()=>{
 
   margin-bottom:10px;
 
-  min-height:56px;
+  min-height:58px;
 
   transition:.3s;
 
@@ -1435,17 +1599,17 @@ onMounted(()=>{
 
 .product-card:hover h4{
 
-  color:#e53935;
+  color:#d62828;
 
 }
 
 .product-info p{
 
-  font-size:14px;
-
   color:#777;
 
-  margin-bottom:18px;
+  font-size:14px;
+
+  margin-bottom:15px;
 
 }
 
@@ -1486,13 +1650,13 @@ onMounted(()=>{
     linear-gradient(
       90deg,
       #ececec 25%,
-      #f6f6f6 50%,
+      #f7f7f7 50%,
       #ececec 75%
     );
 
   background-size:400% 100%;
 
-  animation:skeleton-loading 1.3s infinite linear;
+  animation:skeleton-loading 1.2s linear infinite;
 
 }
 
@@ -1522,7 +1686,7 @@ onMounted(()=>{
 
   border-radius:20px;
 
-  padding:100px 30px;
+  padding:90px 30px;
 
   text-align:center;
 
@@ -1531,11 +1695,23 @@ onMounted(()=>{
   box-shadow:
     0 12px 30px rgba(0,0,0,.05);
 
+}
+
+.empty-state h3{
+
+  font-size:28px;
+
+  margin-bottom:15px;
+
+  color:#111;
+
+}
+
+.empty-state p{
+
   color:#777;
 
-  font-size:18px;
-
-  font-weight:600;
+  font-size:16px;
 
 }
 
@@ -1549,7 +1725,7 @@ onMounted(()=>{
 
   max-width:1500px;
 
-  margin:90px auto 70px;
+  margin:80px auto;
 
   display:grid;
 
@@ -1563,9 +1739,9 @@ onMounted(()=>{
 
   background:#fff;
 
-  border-radius:20px;
+  border-radius:22px;
 
-  padding:38px 25px;
+  padding:40px 25px;
 
   text-align:center;
 
@@ -1583,17 +1759,17 @@ onMounted(()=>{
   transform:translateY(-8px);
 
   box-shadow:
-    0 20px 45px rgba(0,0,0,.12);
+    0 18px 40px rgba(0,0,0,.12);
 
 }
 
 .service-item i{
 
-  font-size:36px;
+  font-size:38px;
 
   color:#111;
 
-  margin-bottom:18px;
+  margin-bottom:20px;
 
 }
 
@@ -1601,9 +1777,9 @@ onMounted(()=>{
 
   font-size:20px;
 
-  margin-bottom:12px;
+  font-weight:700;
 
-  color:#111;
+  margin-bottom:10px;
 
 }
 
@@ -1613,10 +1789,12 @@ onMounted(()=>{
 
   line-height:1.7;
 
+  font-size:15px;
+
 }
 
 /* =====================================================
-   SCROLLBAR
+   GLOBAL SCROLLBAR
 ===================================================== */
 
 ::-webkit-scrollbar{
@@ -1627,9 +1805,9 @@ onMounted(()=>{
 
 ::-webkit-scrollbar-thumb{
 
-  background:#d4d4d4;
+  background:#cfcfcf;
 
-  border-radius:20px;
+  border-radius:30px;
 
 }
 
@@ -1649,7 +1827,7 @@ onMounted(()=>{
 
     grid-template-columns:260px 1fr;
 
-    gap:30px;
+    gap:25px;
 
   }
 
@@ -1665,7 +1843,15 @@ onMounted(()=>{
 
   .sidebar{
 
+    width:100%;
+
     position:static;
+
+    max-height:none;
+
+    overflow:visible;
+
+    margin-bottom:30px;
 
   }
 
@@ -1699,7 +1885,7 @@ onMounted(()=>{
 
   .hero h1{
 
-    font-size:42px;
+    font-size:44px;
 
   }
 
@@ -1716,7 +1902,13 @@ onMounted(()=>{
   .product-grid{
 
     grid-template-columns:
-            repeat(auto-fill,minmax(240px,1fr));
+        repeat(auto-fill,minmax(240px,1fr));
+
+  }
+
+  .sidebar{
+
+    padding:20px;
 
   }
 
@@ -1726,7 +1918,7 @@ onMounted(()=>{
 
   .hero{
 
-    height:300px;
+    height:290px;
 
   }
 
@@ -1774,7 +1966,7 @@ onMounted(()=>{
 
   .service-item{
 
-    padding:30px 20px;
+    padding:28px 18px;
 
   }
 

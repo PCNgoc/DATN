@@ -256,4 +256,31 @@ public class SanPhamServiceImpl implements SanPhamService {
                 .toList();
 
     }
+
+    @Override
+    public List<SanPhamDTO> filter(
+            String keyword,
+            Long brandId,
+            Long categoryId,
+            Long xuatXuId,
+            Long chatLieuId,
+            Long coGiayId,
+            Long deGiayId,
+            String gioiTinh
+    ) {
+
+        return sanPhamRepository.filter(
+                        keyword,
+                        brandId,
+                        categoryId,
+                        xuatXuId,
+                        chatLieuId,
+                        coGiayId,
+                        deGiayId,
+                        gioiTinh
+                )
+                .stream()
+                .map(SanPhamMapper::toDTO)
+                .toList();
+    }
 }

@@ -18,8 +18,37 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<SanPhamDTO> getAll() {
-        return sanPhamService.getAllActive();
+    public List<SanPhamDTO> getAll(
+
+            @RequestParam(required = false) String keyword,
+
+            @RequestParam(required = false) Long brandId,
+
+            @RequestParam(required = false) Long categoryId,
+
+            @RequestParam(required = false) Long xuatXuId,
+
+            @RequestParam(required = false) Long chatLieuId,
+
+            @RequestParam(required = false) Long coGiayId,
+
+            @RequestParam(required = false) Long deGiayId,
+
+            @RequestParam(required = false) String gioiTinh
+
+    ) {
+
+        return sanPhamService.filter(
+                keyword,
+                brandId,
+                categoryId,
+                xuatXuId,
+                chatLieuId,
+                coGiayId,
+                deGiayId,
+                gioiTinh
+        );
+
     }
 
     @GetMapping("/{id}")
