@@ -96,39 +96,35 @@ public class HoaDonController {
     }
     @GetMapping("/search")
     public List<HoaDon> search(
-            @RequestParam(required = false) String maHoaDon,
-            @RequestParam(required = false) String trangThai
+
+            @RequestParam(defaultValue = "")
+            String keyword,
+
+            @RequestParam(defaultValue = "")
+            String trangThai,
+
+            @RequestParam(defaultValue = "")
+            String tuNgay,
+
+            @RequestParam(defaultValue = "")
+            String denNgay
+
     ) {
 
-        String loaiDon = "ONLINE";
+        return repository.timHoaDonOnline(
 
-        if ((maHoaDon == null || maHoaDon.isBlank())
-                && (trangThai == null || trangThai.isBlank())) {
+                "ONLINE",
 
-            return repository.findByLoaiDonOrderByNgayTaoDesc(loaiDon);
-        }
+                keyword,
 
-        if (trangThai == null || trangThai.isBlank()) {
+                trangThai,
 
-            return repository.findByLoaiDonAndMaHoaDonContainingOrderByNgayTaoDesc(
-                    loaiDon,
-                    maHoaDon
-            );
-        }
+                tuNgay,
 
-        if (maHoaDon == null || maHoaDon.isBlank()) {
+                denNgay
 
-            return repository.findByLoaiDonAndTrangThaiOrderByNgayTaoDesc(
-                    loaiDon,
-                    trangThai
-            );
-        }
-
-        return repository.findByLoaiDonAndMaHoaDonContainingAndTrangThaiOrderByNgayTaoDesc(
-                loaiDon,
-                maHoaDon,
-                trangThai
         );
+
     }
 
     @GetMapping("/page")
@@ -658,10 +654,38 @@ public class HoaDonController {
     }
 
     @GetMapping("/tai-quay")
-    public ResponseEntity<?> getHoaDonTaiQuay() {
+    public ResponseEntity<?> getHoaDonTaiQuay(
+
+            @RequestParam(defaultValue = "")
+            String keyword,
+
+            @RequestParam(defaultValue = "")
+            String trangThaiThanhToan,
+
+            @RequestParam(required = false)
+            String tuNgay,
+
+            @RequestParam(required = false)
+            String denNgay
+
+    ) {
+
         return ResponseEntity.ok(
-                hoaDonService.getHoaDonTaiQuay()
+
+                hoaDonService.getHoaDonTaiQuay(
+
+                        keyword,
+
+                        trangThaiThanhToan,
+
+                        tuNgay,
+
+                        denNgay
+
+                )
+
         );
+
     }
 
     @GetMapping("/online")

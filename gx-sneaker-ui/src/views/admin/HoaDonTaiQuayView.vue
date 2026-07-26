@@ -4,9 +4,16 @@ import {exportPdf, getHoaDonTaiQuay} from "@/services/hoaDonService"
 import { getChiTietHoaDon } from "@/services/hoaDonService";
 const hoaDons = ref([]);
 
+const keyword = ref("");
 const loadHoaDon = async () => {
 
-  const res = await getHoaDonTaiQuay();
+  const res = await getHoaDonTaiQuay(
+    keyword.value,
+    trangThaiThanhToan.value,
+    tuNgay.value,
+    denNgay.value
+
+  );
 
   hoaDons.value = res.data;
 
@@ -15,6 +22,7 @@ const selectedHoaDon = ref(null);
 
 const chiTietHoaDon = ref([]);
 const xemChiTiet = async (hd) => {
+
 
   selectedHoaDon.value = hd;
 
@@ -68,6 +76,40 @@ const inHoaDon = async () => {
   }
 
 }
+const isRefreshing = ref(false)
+const refreshHoaDon = async () => {
+
+  isRefreshing.value = true
+
+  // Xóa tìm kiếm
+  keyword.value = ""
+
+  // Xóa trạng thái thanh toán
+  trangThaiThanhToan.value = ""
+
+  // Xóa khoảng ngày
+  tuNgay.value = ""
+  denNgay.value = ""
+
+  // Bỏ chọn hóa đơn
+  selectedHoaDon.value = null
+
+  // Xóa chi tiết hóa đơn
+  chiTietHoaDon.value = []
+
+  // Load lại danh sách
+  await loadHoaDon()
+
+  setTimeout(() => {
+    isRefreshing.value = false
+  }, 300)
+
+}
+
+
+const trangThaiThanhToan = ref("")
+const tuNgay = ref("")
+const denNgay = ref("")
 
 onMounted(() => {
 
@@ -85,9 +127,81 @@ onMounted(() => {
       <!-- DANH SÁCH HÓA ĐƠN -->
       <div class="col-lg-8">
 
-        <h3 class="mb-4">
+        <!-- Tiêu đề -->
+        <h3 class="mb-3">
           Quản lý hóa đơn bán tại quầy
         </h3>
+
+        <!-- Thanh công cụ -->
+        <div class="toolbar">
+        <div class="d-flex align-items-center gap-2 mb-4">
+
+          <!-- Ô tìm kiếm -->
+          <input
+            v-model="keyword"
+            class="form-control"
+            placeholder="Tìm theo mã HĐ / khách hàng / SĐT..."
+            style="width:300px"
+            @keyup.enter="loadHoaDon"
+          >
+
+          <!--          Trạng thái-->
+          <select
+            v-model="trangThaiThanhToan"
+            class="form-select"
+            style="width:220px"
+            @change="loadHoaDon"
+          >
+            <option value="">Tất cả</option>
+            <option value="CHUA_THANH_TOAN">Chưa thanh toán</option>
+            <option value="DA_THANH_TOAN">Đã thanh toán</option>
+          </select>
+
+
+
+          <!-- Nút tìm kiếm -->
+          <button
+            class="btn btn-primary"
+            @click="loadHoaDon"
+          >
+            <i class="bi bi-search"></i>
+            Tìm kiếm
+          </button>
+
+
+
+          <!-- Nút làm mới -->
+          <button
+            class="btn btn-outline-secondary"
+            @click="refreshHoaDon"
+            title="Làm mới"
+          >
+            <i
+              class="bi bi-arrow-clockwise"
+              :class="{ rotate: isRefreshing }"
+            ></i>
+          </button>
+
+        </div>
+        <div class="d-flex gap-2 mt-2">
+
+          <input
+            type="date"
+            class="form-control"
+            v-model="tuNgay"
+            @change="loadHoaDon"
+          />
+
+          <input
+            type="date"
+            class="form-control"
+            v-model="denNgay"
+            @change="loadHoaDon"
+          />
+
+        </div>
+        </div>
+
 
         <table class="table table-bordered table-hover align-middle">
 
@@ -98,6 +212,8 @@ onMounted(() => {
             <th>Mã HĐ</th>
 
             <th>Khách hàng</th>
+
+            <th>Số Điện thoại</th>
 
             <th>Ngày tạo</th>
 
@@ -126,6 +242,10 @@ onMounted(() => {
             </td>
 
             <td>
+              {{ hd.soDienThoai || "Không có " }}
+            </td>
+
+            <td>
               {{ formatDate(hd.ngayTao) }}
             </td>
 
@@ -134,18 +254,19 @@ onMounted(() => {
             </td>
 
             <td>
-
-              <span
-                class="badge"
-                :class="hd.trangThaiThanhToan === 'DA_THANH_TOAN'
-                  ? 'bg-success'
-                  : 'bg-warning text-dark'"
-              >
-
-                {{ hd.trangThaiThanhToan }}
-
-              </span>
-
+  <span
+    :class="
+      hd.trangThaiThanhToan === 'DA_THANH_TOAN'
+        ? 'status-paid'
+        : 'status-unpaid'
+    "
+  >
+    {{
+      hd.trangThaiThanhToan === 'DA_THANH_TOAN'
+        ? 'Đã thanh toán'
+        : 'Chưa thanh toán'
+    }}
+  </span>
             </td>
 
             <td>
@@ -220,13 +341,13 @@ onMounted(() => {
 
                 <strong>Số điện thoại:</strong>
 
-                {{ selectedHoaDon.soDienThoai || "Null" }}
+                {{ selectedHoaDon.soDienThoai || "Không có" }}
 
               </div>
 
               <div class="mb-3">
 
-                <strong>Nhân viên:</strong>
+                <strong>Người tạo:</strong>
 
                 {{ selectedHoaDon.tenNhanVien || selectedHoaDon.nguoiTao || "Nhân viên" }}
 
@@ -339,24 +460,33 @@ onMounted(() => {
 
               <hr>
 
-              <div class="mb-2">
+              <div class="mb-3">
 
                 <strong>Trạng thái:</strong>
 
                 <span
-                  class="badge ms-2"
-                  :class="selectedHoaDon.trangThaiThanhToan==='DA_THANH_TOAN'
-                    ? 'bg-success'
-                    : 'bg-warning text-dark'"
+                  :style="{
+      backgroundColor:
+        selectedHoaDon.trangThaiThanhToan === 'DA_THANH_TOAN'
+          ? '#198754'
+          : '#ffc107',
+      color:
+        selectedHoaDon.trangThaiThanhToan === 'DA_THANH_TOAN'
+          ? '#fff'
+          : '#000',
+      padding: '4px 8px',
+      borderRadius: '20px',
+      fontWeight: '600',
+      marginLeft: '10px',
+      display: 'inline-block'
+    }"
                 >
-
-                  {{
-                    selectedHoaDon.trangThaiThanhToan === 'DA_THANH_TOAN'
-                      ? 'Đã thanh toán'
-                      : 'Chưa thanh toán'
+    {{
+                    selectedHoaDon.trangThaiThanhToan === "DA_THANH_TOAN"
+                      ? "Đã thanh toán"
+                      : "Chưa thanh toán"
                   }}
-
-                </span>
+  </span>
 
               </div>
 
@@ -364,11 +494,28 @@ onMounted(() => {
 
                 <strong>Phương thức:</strong>
 
-                {{
-                  selectedHoaDon.phuongThucThanhToan === "TIEN_MAT"
-                    ? "Tiền mặt"
-                    : selectedHoaDon.phuongThucThanhToan
-                }}
+                <span
+                  :style="{
+      backgroundColor:
+        selectedHoaDon.phuongThucThanhToan === 'TIEN_MAT'
+          ? '#0d6efd'
+          : '#6f42c1',
+      color: '#fff',
+      padding: '4px 8px',
+      borderRadius: '20px',
+      fontWeight: '600',
+      marginLeft: '10px',
+      display: 'inline-block'
+    }"
+                >
+    {{
+                    selectedHoaDon.phuongThucThanhToan === "TIEN_MAT"
+                      ? "Tiền mặt"
+                      : selectedHoaDon.phuongThucThanhToan === "VNPAY"
+                        ? "Thanh toán QR VNPay"
+                        : "Chưa chọn"
+                  }}
+  </span>
 
               </div>
 
@@ -408,5 +555,40 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.rotate{
+  animation: spin .5s linear;
+}
+
+@keyframes spin{
+  from{
+    transform: rotate(0deg);
+  }
+  to{
+    transform: rotate(360deg);
+  }
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.toolbar input[type="text"],
+.toolbar .form-control {
+  height: 42px;
+  border-radius: 10px;
+}
+
+.toolbar .form-select {
+  height: 42px;
+  border-radius: 10px;
+}
+.toolbar .btn {
+  height: 42px;
+  border-radius: 10px;
+  padding: 0 18px;
+}
 
 </style>

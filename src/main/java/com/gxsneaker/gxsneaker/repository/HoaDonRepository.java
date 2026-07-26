@@ -5,6 +5,8 @@ import com.gxsneaker.gxsneaker.entity.HoaDon;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDate;
 import java.util.Optional;
 
 import java.awt.print.Pageable;
@@ -16,17 +18,17 @@ import org.springframework.data.jpa.repository.Query;
 
 
 public interface HoaDonRepository extends JpaRepository<HoaDon, Long> {
-    List<HoaDon> findByMaHoaDonContaining(String maHoaDon);
-
-    List<HoaDon> findByTrangThai(String trangThai);
+//    List<HoaDon> findByMaHoaDonContaining(String maHoaDon);
+//
+//    List<HoaDon> findByTrangThai(String trangThai);
     List<HoaDon> findByIdKhachHangOrderByNgayDatHangDesc(Long idKhachHang);
     long countByIdKhachHang(Long idKhachHang);
 
-    List<HoaDon> findByMaHoaDonContainingAndTrangThai(
-            String maHoaDon,
-            String trangThai
-    );
-    List<HoaDon> findByLoaiDonOrderByIdDesc(String loaiDon);
+//    List<HoaDon> findByMaHoaDonContainingAndTrangThai(
+//            String maHoaDon,
+//            String trangThai
+//    );
+//    List<HoaDon> findByLoaiDonOrderByIdDesc(String loaiDon);
     List<HoaDon> findByLoaiDonOrderByNgayTaoDesc(String loaiDon);
 
     List<HoaDon> findByLoaiDonAndTrangThaiOrderByNgayTaoDesc(
@@ -263,6 +265,98 @@ SELECT MAX(h.id)
 FROM HoaDon h
 """)
     Long getMaxId();
+
+
+@Query("""
+SELECT h
+FROM HoaDon h
+LEFT JOIN h.khachHang k
+WHERE h.loaiDon = :loaiDon
+
+AND (
+    :keyword = ''
+    OR LOWER(h.maHoaDon) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    OR LOWER(k.hoTen) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    OR k.soDienThoai LIKE CONCAT('%', :keyword, '%')
+)
+
+AND (
+    :trangThaiThanhToan = ''
+    OR h.trangThaiThanhToan = :trangThaiThanhToan
+)
+
+AND (
+    :tuNgay IS NULL
+    OR h.ngayTao >= :tuNgay
+)
+
+AND (
+    :denNgay IS NULL
+    OR h.ngayTao <= :denNgay
+)
+
+ORDER BY h.ngayTao DESC
+""")
+List<HoaDon> timHoaDonTaiQuay(
+
+        @Param("loaiDon") String loaiDon,
+
+        @Param("keyword") String keyword,
+
+        @Param("trangThaiThanhToan") String trangThaiThanhToan,
+
+        @Param("tuNgay") Date tuNgay,
+
+        @Param("denNgay") Date denNgay
+
+);
+
+
+
+    @Query("""
+SELECT h
+FROM HoaDon h
+LEFT JOIN h.khachHang k
+WHERE h.loaiDon = :loaiDon
+
+AND (
+    :keyword = ''
+    OR LOWER(h.maHoaDon) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    OR LOWER(k.hoTen) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    OR k.soDienThoai LIKE CONCAT('%', :keyword, '%')
+)
+
+AND (
+    :trangThai = ''
+    OR h.trangThai = :trangThai
+)
+
+AND (
+    :tuNgay = ''
+    OR h.ngayTao >= CAST(:tuNgay AS timestamp)
+)
+
+AND (
+    :denNgay = ''
+    OR h.ngayTao <= CAST(:denNgay AS timestamp)
+)
+
+ORDER BY h.ngayTao DESC
+""")
+    List<HoaDon> timHoaDonOnline(
+
+            @Param("loaiDon") String loaiDon,
+
+            @Param("keyword") String keyword,
+
+            @Param("trangThai") String trangThai,
+
+            @Param("tuNgay") String tuNgay,
+
+            @Param("denNgay") String denNgay
+
+
+    );
 
 
 }

@@ -103,22 +103,55 @@ export const xoaSanPham = (id) => {
 
 }
 
-export const getHoaDonTaiQuay = () => {
-  return axios.get(`${API_URL}/tai-quay`)
+export const getHoaDonTaiQuay = (
+  keyword = "",
+  trangThaiThanhToan = "",
+  tuNgay = "",
+  denNgay = ""
+) => {
+
+  return axios.get(`${API_URL}/tai-quay`, {
+
+    params: {
+
+      keyword,
+      trangThaiThanhToan,
+      tuNgay,
+      denNgay
+
+    }
+
+  });
+
 }
 
-export const getHoaDonOnline = () =>
-  axios.get("/hoa-don/online");
+export const getHoaDonOnline = (
+  keyword = "",
+  trangThai = "",
+  tuNgay = "",
+  denNgay = ""
+) => {
 
-export const thanhToanTienMat = (hoaDonId, tienKhachDua) => {
+  return axios.get("http://localhost:8080/api/hoa-don/search", {
+
+    params: {
+      keyword,
+      trangThai,
+      tuNgay,
+      denNgay
+    }
+
+  });
+
+};
+
+export const thanhToanTienMat = (hoaDonId, data) => {
 
   return axios.post(
 
     `${API_URL}/${hoaDonId}/thanh-toan`,
 
-    {
-      tienKhachDua
-    },
+    data,
 
     getAuthHeader()
 

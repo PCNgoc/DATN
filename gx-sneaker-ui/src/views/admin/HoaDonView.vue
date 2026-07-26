@@ -13,60 +13,78 @@
           <div class="search-box-container mx-auto my-4">
             <div class="search-toolbar">
 
+              <!-- Tìm kiếm -->
               <div class="search-item search-input-box">
                 <div class="search-input-wrapper">
                   <i class="bi bi-search search-icon"></i>
 
                   <input
-                    v-model="searchMaHD"
+                    v-model="keyword"
                     type="text"
                     class="form-control search-input-modern"
-                    placeholder="Nhập mã hóa đơn..."
+                    placeholder="Nhập mã HĐ / tên KH / SĐT..."
                     @keyup.enter="handleSearch"
                   />
                 </div>
               </div>
 
+              <!-- Trạng thái -->
               <div class="search-item status-box">
                 <select
-                  v-model="searchStatus"
+                  v-model="trangThai"
                   class="form-select search-select"
                 >
                   <option value="">-- Tất cả trạng thái --</option>
-                  <option value="CHO_XAC_NHAN">CHỜ XÁC NHẬN</option>
-                  <option value="DA_XAC_NHAN">ĐÃ XÁC NHẬN</option>
-                  <option value="DANG_GIAO">ĐANG GIAO</option>
-                  <option value="HOAN_THANH">HOÀN THÀNH</option>
-                  <option value="DA_HUY">ĐÃ HỦY</option>
+                  <option value="CHO_XAC_NHAN">Chờ xác nhận</option>
+                  <option value="DA_XAC_NHAN">Đã xác nhận</option>
+                  <option value="DANG_GIAO">Đang giao</option>
+                  <option value="HOAN_THANH">Hoàn thành</option>
+                  <option value="DA_HUY">Đã hủy</option>
                 </select>
               </div>
 
+              <!-- Từ ngày -->
+              <div class="search-item">
+                <input
+                  type="date"
+                  v-model="tuNgay"
+                  class="form-control"
+                />
+              </div>
+
+              <!-- Đến ngày -->
+              <div class="search-item">
+                <input
+                  type="date"
+                  v-model="denNgay"
+                  class="form-control"
+                />
+              </div>
+
+              <!-- Nút -->
               <div class="search-item button-box">
+
                 <button
-                  @click="handleSearch"
                   class="btn btn-filter"
+                  @click="handleSearch"
                 >
                   <i class="bi bi-funnel-fill me-2"></i>
                   Lọc
                 </button>
 
                 <button
-                  @click="handleReset"
                   class="btn btn-outline-secondary btn-reset"
+                  @click="handleReset"
                 >
                   <i class="bi bi-arrow-counterclockwise"></i>
                 </button>
+
               </div>
 
             </div>
           </div>
 
-<!--          <div class="invoice-action">-->
-<!--            <button class="btn btn-export-lg d-inline-flex align-items-center gap-2">-->
-<!--              <i class="bi bi-download"></i>-->
-<!--              In hóa đơn-->
-<!--            </button>-->
-<!--          </div>-->
+
         </div>
       </div>
 
@@ -537,25 +555,43 @@
 <script setup>
 import axios from 'axios'
 import { ref, onMounted } from 'vue'
-
+import { getHoaDonOnline } from "@/services/hoaDonService";
 
 const hoaDons = ref([])
-const searchMaHD = ref('')
-const searchStatus = ref('')
+const keyword = ref("")
+const trangThai = ref("")
+
+const tuNgay = ref("")
+const denNgay = ref("")
 
 const showModal = ref(false)
 const selectedHoaDon = ref(null)
 const chiTietList = ref([])
 
-const loadHoaDon = async (maHD = '', status = '') => {
+const loadHoaDon = async () => {
+
   try {
-    const response = await axios.get('http://localhost:8080/api/hoa-don/search', {
-      params: { maHoaDon: maHD, trangThai: status }
-    })
+
+    const response = await getHoaDonOnline(
+
+      keyword.value,
+
+      trangThai.value,
+
+      tuNgay.value,
+
+      denNgay.value
+
+    )
+
     hoaDons.value = response.data
+
   } catch (error) {
-    console.error('Lỗi API:', error)
+
+    console.error(error)
+
   }
+
 }
 
 const updateStatus = async (id, trangThaiMoi) => {
@@ -588,10 +624,7 @@ const updateStatus = async (id, trangThaiMoi) => {
       }
     );
 
-    await loadHoaDon(
-      searchMaHD.value,
-      searchStatus.value
-    );
+    await loadHoaDon();
 
     alert("Cập nhật trạng thái thành công!");
 
@@ -651,8 +684,24 @@ const closeModal = () => {
 }
 
 
-const handleSearch = () => { loadHoaDon(searchMaHD.value, searchStatus.value) }
-const handleReset = () => { searchMaHD.value = ''; searchStatus.value = ''; loadHoaDon() }
+const handleSearch = () => {
+
+  loadHoaDon()
+
+}
+const handleReset = () => {
+
+  keyword.value = ""
+
+  trangThai.value = ""
+
+  tuNgay.value = ""
+
+  denNgay.value = ""
+
+  loadHoaDon()
+
+}
 
 const formatMoney = (v) => v ? Number(v).toLocaleString('vi-VN') + ' đ' : '0 đ'
 const formatDate = (s) => s ? `${String(new Date(s).getDate()).padStart(2,'0')}/${String(new Date(s).getMonth()+1).padStart(2,'0')}/${new Date(s).getFullYear()}` : ''
@@ -708,6 +757,8 @@ const exportPDF = async (id) => {
     alert("Không thể xuất hóa đơn");
   }
 }
+
+
 
 onMounted(() => { loadHoaDon() })
 </script>
@@ -1145,6 +1196,8 @@ tfoot td{
 .summary-row small{
   font-size:12px;
 }
+
+
 
 
 .btn-export-lg {

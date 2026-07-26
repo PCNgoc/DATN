@@ -5,6 +5,8 @@ import com.gxsneaker.gxsneaker.entity.HoaDon;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import com.gxsneaker.gxsneaker.dto.ThemSanPhamRequest;
+
+import java.time.LocalDate;
 import java.util.List;
 
 public interface HoaDonService {
@@ -39,6 +41,17 @@ public interface HoaDonService {
     void xoaSanPham(Long hoaDonChiTietId);
     void thanhToan(Long hoaDonId, ThanhToanRequest request);
     List<HoaDon> getHoaDonOnline();
-    List<HoaDonTaiQuayDTO> getHoaDonTaiQuay();
+    List<HoaDonTaiQuayDTO> getHoaDonTaiQuay(
+
+            String keyword,
+
+            String trangThaiThanhToan,
+
+            String tuNgay,
+
+            String denNgay
+
+
+    );
 
 }

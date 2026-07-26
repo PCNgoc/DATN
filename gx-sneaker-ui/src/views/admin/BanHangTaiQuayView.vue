@@ -241,20 +241,29 @@ const xacNhanThanhToan = async () => {
 
   try {
     if (phuongThucThanhToan.value === 'VNPAY') {
+
       const res = await thanhToanVnpayTaiQuay(selectedHoaDon.value.id)
 
       vnpayCheckoutUrl.value = res.data?.checkoutUrl
 
       if (!vnpayCheckoutUrl.value) {
-        alert('Không nhận được link thanh toán VNPAY')
+        alert("Không nhận được link thanh toán VNPAY")
         return
       }
 
-      window.open(vnpayCheckoutUrl.value, '_blank')
+      window.open(vnpayCheckoutUrl.value, "_blank")
       return
     }
 
-    await thanhToanTienMat(selectedHoaDon.value.id, tienKhachDua.value)
+    
+
+    await thanhToanTienMat(
+      selectedHoaDon.value.id,
+      {
+        tienKhachDua: tienKhachDua.value,
+        phuongThucThanhToan: phuongThucThanhToan.value
+      }
+    )
 
     alert('Thanh toán thành công')
 

@@ -698,6 +698,12 @@ public class HoaDonServiceImpl implements HoaDonService {
                     normal
             ));
 
+            document.add(new Paragraph(
+                    "Người lập hóa đơn: " +
+                            (hoaDon.getNguoiTao() == null ? "" : hoaDon.getNguoiTao()),
+                    normal
+            ));
+
 
             document.add(new Paragraph(" "));
 
@@ -952,8 +958,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
             document.add(new Paragraph(
-                    "Phương thức thanh toán: "
-                            + hoaDon.getPhuongThucThanhToan(),
+                    "Phương thức thanh toán: " + getTenPhuongThucThanhToan(hoaDon),
                     normal
             ));
 
@@ -1118,25 +1123,53 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         HoaDon hd = new HoaDon();
 
+        // Thông tin cơ bản
         hd.setMaHoaDon(generateMaHoaDon());
-
         hd.setLoaiDon("TAI_QUAY");
 
+        // Trạng thái hóa đơn
         hd.setTrangThai("CHO_XAC_NHAN");
 
+        // Chưa thanh toán
+        hd.setTrangThaiThanhToan("CHUA_THANH_TOAN");
+
+        // Chưa chọn phương thức thanh toán
+        hd.setPhuongThucThanhToan(null);
+
+        // Tiền
         hd.setTongTienHang(BigDecimal.ZERO);
         hd.setSoTienGiam(BigDecimal.ZERO);
         hd.setPhiVanChuyen(BigDecimal.ZERO);
         hd.setTongTienThanhToan(BigDecimal.ZERO);
 
+        // Thời gian
         hd.setNgayTao(new Date());
 
-        // ====== Quan trọng ======
+        // Nhân viên tạo hóa đơn
         hd.setIdNhanVien(nhanVien.getId().longValue());
         hd.setNguoiTao(nhanVien.getHoTen());
-        // ========================
 
         return hoaDonRepository.save(hd);
+    }
+
+
+    private String getTenPhuongThucThanhToan(HoaDon hoaDon) {
+
+        if (hoaDon.getPhuongThucThanhToan() == null) {
+            return "Chưa thanh toán";
+        }
+
+        switch (hoaDon.getPhuongThucThanhToan()) {
+
+            case "TIEN_MAT":
+                return "Tiền mặt";
+
+            case "VNPAY":
+                return "Thanh toán QR VNPay";
+
+            default:
+                return hoaDon.getPhuongThucThanhToan();
+        }
     }
 
     private String generateMaHoaDon() {
@@ -1377,31 +1410,123 @@ public class HoaDonServiceImpl implements HoaDonService {
         HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
 
-        if (hoaDon.getTongTienThanhToan()
-                .compareTo(request.getTienKhachDua()) > 0) {
-
-            throw new RuntimeException("Khách đưa chưa đủ tiền");
-
+        // Không cho thanh toán lại
+        if ("HOAN_THANH".equalsIgnoreCase(hoaDon.getTrangThai())) {
+            throw new RuntimeException("Hóa đơn đã được thanh toán");
         }
 
-        hoaDon.setTrangThai("HOAN_THANH");
+        // Không cho thanh toán hóa đơn đã hủy
+        if ("DA_HUY".equalsIgnoreCase(hoaDon.getTrangThai())) {
+            throw new RuntimeException("Hóa đơn đã bị hủy");
+        }
+
+        // Kiểm tra phương thức thanh toán
+        if (request.getPhuongThucThanhToan() == null
+                || request.getPhuongThucThanhToan().trim().isEmpty()) {
+
+            throw new RuntimeException("Chưa chọn phương thức thanh toán");
+        }
+
+        String phuongThuc = request.getPhuongThucThanhToan().trim().toUpperCase();
+
+        // Chỉ cho phép 2 phương thức
+        if (!"TIEN_MAT".equals(phuongThuc)
+                && !"VNPAY".equals(phuongThuc)) {
+
+            throw new RuntimeException("Phương thức thanh toán không hợp lệ");
+        }
+
+        // Nếu thanh toán tiền mặt thì kiểm tra tiền khách đưa
+        if ("TIEN_MAT".equals(phuongThuc)) {
+
+            if (request.getTienKhachDua() == null) {
+                throw new RuntimeException("Chưa nhập tiền khách đưa");
+            }
+
+            if (request.getTienKhachDua()
+                    .compareTo(hoaDon.getTongTienThanhToan()) < 0) {
+
+                throw new RuntimeException("Khách đưa chưa đủ tiền");
+            }
+        }
+
+        // ===========================
+        // Cập nhật hóa đơn
+        // ===========================
+
+        hoaDon.setPhuongThucThanhToan(phuongThuc);
 
         hoaDon.setTrangThaiThanhToan("DA_THANH_TOAN");
 
-        hoaDon.setPhuongThucThanhToan("TIEN_MAT");
+        hoaDon.setTrangThai("HOAN_THANH");
 
         hoaDon.setNgayThanhToan(new Date());
 
-        hoaDonRepository.save(hoaDon);
+        hoaDon.setNgayHoanThanh(new Date());
 
+        hoaDon.setNgayCapNhat(new Date());
+
+        hoaDon.setNguoiCapNhat(
+                hoaDon.getNguoiTao()
+        );
+
+        hoaDonRepository.save(hoaDon);
     }
 
     @Override
-    public List<HoaDonTaiQuayDTO> getHoaDonTaiQuay() {
+    public List<HoaDonTaiQuayDTO> getHoaDonTaiQuay(
 
-        List<HoaDon> hoaDons =
-                hoaDonRepository.findByLoaiDonOrderByNgayTaoDesc("TAI_QUAY");
+            String keyword,
 
+            String trangThaiThanhToan,
+
+            String tuNgay,
+
+            String denNgay
+
+    ) {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        Date fromDate = null;
+        Date toDate = null;
+
+        try {
+
+            if (tuNgay != null && !tuNgay.isBlank()) {
+                fromDate = sdf.parse(tuNgay);
+            }
+
+            if (denNgay != null && !denNgay.isBlank()) {
+
+                Calendar cal = Calendar.getInstance();
+
+                cal.setTime(sdf.parse(denNgay));
+
+                cal.add(Calendar.DATE, 1);
+
+                toDate = cal.getTime();
+            }
+
+        } catch (Exception e) {
+
+            throw new RuntimeException("Sai định dạng ngày");
+
+        }
+
+        List<HoaDon> hoaDons = hoaDonRepository.timHoaDonTaiQuay(
+
+                "TAI_QUAY",
+
+                keyword == null ? "" : keyword.trim(),
+
+                trangThaiThanhToan == null ? "" : trangThaiThanhToan.trim(),
+
+                fromDate,
+
+                toDate
+
+        );
         return hoaDons.stream().map(hd -> {
 
             HoaDonTaiQuayDTO dto = new HoaDonTaiQuayDTO();
