@@ -89,7 +89,7 @@ const menuItems = computed(() => [
     label: 'Quản lý hóa đơn',
     icon: '🧾',
     path: '/admin/hoa-don-tai-quay',
-    roles: ['ADMIN'],
+    roles: ['ADMIN', 'STAFF'],
   },
   {
     label: 'Quản lý sản phẩm',
@@ -201,11 +201,17 @@ const goToHomeByRole = () => {
 }
 
 const logout = () => {
+  const confirmed = window.confirm('Bạn có chắc chắn muốn đăng xuất không?')
+
+  if (!confirmed) {
+    return
+  }
+
   localStorage.removeItem('adminToken')
   localStorage.removeItem('adminRole')
   localStorage.removeItem('adminUser')
 
-  router.push('/admin/login')
+  router.replace('/admin/login')
 }
 
 onMounted(() => {
@@ -279,8 +285,6 @@ onMounted(() => {
           </router-link>
         </div>
       </nav>
-
-      <button class="logout-btn" @click="logout">🚪 Đăng xuất</button>
     </aside>
 
     <!-- MAIN -->
@@ -304,6 +308,8 @@ onMounted(() => {
           <span class="current-role">
             {{ roleLabel }}
           </span>
+
+          <button type="button" class="topbar-logout-btn" @click="logout">🚪 Đăng xuất</button>
         </div>
       </header>
 
@@ -588,5 +594,20 @@ onMounted(() => {
   .topbar h1 {
     font-size: 22px;
   }
+}
+
+.topbar-logout-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  background: #dc2626;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.topbar-logout-btn:hover {
+  background: #b91c1c;
 }
 </style>

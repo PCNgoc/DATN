@@ -352,7 +352,7 @@ const router = createRouter({
           name: 'HoaDonTaiQuay',
           component: HoaDonTaiQuayView,
           meta: {
-            roles: ['ADMIN'],
+            roles: ['ADMIN', 'STAFF'],
           },
         },
 
@@ -414,6 +414,12 @@ router.beforeEach((to) => {
 
   // ================= ADMIN LOGIN =================
   if (to.path === '/admin/login') {
+    // Đã đăng nhập thì không mở lại trang login
+    if (adminToken && (adminRole === 'ADMIN' || adminRole === 'STAFF')) {
+      return getDefaultAdminPath()
+    }
+
+    // Chưa đăng nhập mới được vào trang login
     return true
   }
 
