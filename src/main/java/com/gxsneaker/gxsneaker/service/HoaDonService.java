@@ -42,16 +42,12 @@ public interface HoaDonService {
     void thanhToan(Long hoaDonId, ThanhToanRequest request);
     List<HoaDon> getHoaDonOnline();
     List<HoaDonTaiQuayDTO> getHoaDonTaiQuay(
-
             String keyword,
-
             String trangThaiThanhToan,
-
             String tuNgay,
-
             String denNgay
-
-
     );
+    void apDungVoucherTaiQuay(Long hoaDonId, String maVoucher);
+    void xoaVoucherTaiQuay(Long hoaDonId);
 
 }

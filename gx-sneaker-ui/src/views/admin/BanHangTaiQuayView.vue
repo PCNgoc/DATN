@@ -16,6 +16,8 @@ import {
   getChiTietHoaDon,
   doiKhachHang,
   thanhToanVnpayTaiQuay,
+  apDungVoucherTaiQuay,
+  xoaVoucherTaiQuay
 } from '@/services/hoaDonService.js'
 
 import { getBanTaiQuay } from '@/services/chiTietSanPhamService'
@@ -29,6 +31,10 @@ import { thanhToanTienMat } from '@/services/hoaDonService'
 import {
   exportPdf
 } from "@/services/hoaDonService";
+
+import { getAll as getVouchers } from "@/services/phieuGiamGiaService";
+
+import * as bootstrap from 'bootstrap'
 
 //=====================
 // HÓA ĐƠN CHỜ
@@ -50,6 +56,38 @@ const taoHoaDon = async () => {
   await taoHoaDonCho()
   await loadHoaDonCho()
 }
+
+const maVoucherInput = ref("");
+
+const applyVoucher = async () => {
+  if (!selectedHoaDon.value) return;
+  if (!maVoucherInput.value.trim()) {
+    alert("Vui lòng nhập mã giảm giá");
+    return;
+  }
+  
+  try {
+    await apDungVoucherTaiQuay(selectedHoaDon.value.id, maVoucherInput.value.trim());
+    alert("Áp dụng mã giảm giá thành công!");
+    await reloadHoaDonDangChon(); // Reload để lấy lại tổng tiền và thông tin voucher
+    maVoucherInput.value = "";
+  } catch (e) {
+    const errorMsg = e.response?.data?.message || "Lỗi khi áp dụng mã giảm giá";
+    alert(errorMsg);
+  }
+};
+
+const removeVoucher = async () => {
+  if (!selectedHoaDon.value || !selectedHoaDon.value.maPhieuGiamGia) return;
+  try {
+    await xoaVoucherTaiQuay(selectedHoaDon.value.id);
+    alert("Đã gỡ mã giảm giá!");
+    await reloadHoaDonDangChon();
+  } catch (e) {
+    const errorMsg = e.response?.data?.message || "Lỗi khi gỡ mã giảm giá";
+    alert(errorMsg);
+  }
+};
 
 //=====================
 // DANH SÁCH SẢN PHẨM
@@ -172,7 +210,21 @@ const reloadHoaDonDangChon = async () => {
   selectedHoaDon.value = hoaDonCho.value.find((hd) => hd.id === selectedHoaDon.value.id)
 }
 
-const khachHangs = ref([])
+const khachHangs = ref([]);
+const danhSachVoucher = ref([]);
+
+const loadDanhSachVoucher = async () => {
+  try {
+    const res = await getVouchers();
+    if (res.data) {
+      const dataArr = Array.isArray(res.data) ? res.data : (res.data.content || res.data.data || []);
+      // Lọc voucher đang hoạt động và số lượng > 0
+      danhSachVoucher.value = dataArr.filter(v => v.trangThai === true && v.soLuong > 0);
+    }
+  } catch (err) {
+    console.error("Lỗi khi tải mã giảm giá", err);
+  }
+};
 
 const selectedKhachHang = ref(null)
 
@@ -301,6 +353,7 @@ onMounted(async () => {
 
   await loadSanPham()
   await loadKhachHang()
+  await loadDanhSachVoucher()
 })
 </script>
 
@@ -381,11 +434,7 @@ onMounted(async () => {
             <option :value="null">Khách lẻ</option>
 
             <option v-for="kh in khachHangs" :key="kh.id" :value="kh">
-              {{ kh.hoTen }}
-
-              -
-
-              {{ kh.soDienThoai }}
+              {{ kh.hoTen }} - {{ kh.soDienThoai }} ({{ kh.hangThanhVien || 'BRONZE' }})
             </option>
           </select>
         </div>
@@ -471,6 +520,36 @@ onMounted(async () => {
         <!-- bảng -->
 
         <!-- table hiện tại -->
+
+        <!-- Mã giảm giá -->
+        <div class="voucher-section mt-3 mb-3 p-3 border rounded bg-light" v-if="selectedHoaDon">
+          <label class="form-label fw-bold">Phiếu giảm giá:</label>
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Nhập mã giảm giá..." v-model="maVoucherInput">
+            <button class="btn btn-primary" type="button" @click="applyVoucher">Áp dụng</button>
+          </div>
+          
+          <div class="mt-2" v-if="danhSachVoucher && danhSachVoucher.length > 0">
+            <div class="text-muted" style="font-size: 0.85rem; margin-bottom: 8px;">Gợi ý mã giảm giá:</div>
+            <div class="d-flex flex-wrap gap-2">
+              <button v-for="v in danhSachVoucher" :key="'voucher-'+v.id" 
+                    type="button"
+                    class="btn btn-sm btn-outline-primary" 
+                    title="Nhấn để chọn mã này"
+                    @click="maVoucherInput = v.maPhieu">
+                {{ v.maPhieu }} (-{{ v.loaiGiamGia ? v.giaTriGiam + '%' : formatMoney(v.giaTriGiam) }})
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-2 d-flex justify-content-between align-items-center" v-if="selectedHoaDon.maPhieuGiamGia">
+            <span class="text-success">
+              Đang áp dụng: <strong>{{ selectedHoaDon.tenPhieuGiamGia }}</strong> 
+              (Mã: {{ selectedHoaDon.maPhieuGiamGia }})
+            </span>
+            <button class="btn btn-sm btn-outline-danger" @click="removeVoucher" title="Gỡ mã giảm giá">X</button>
+          </div>
+        </div>
 
         <!-- tổng tiền -->
 

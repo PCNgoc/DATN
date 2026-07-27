@@ -86,3 +86,6 @@ Generated files
 *.jar
 *.war
 *.ear
+# Data Sample Seed
+*DataSampleSeed*
+*datasampleseed*

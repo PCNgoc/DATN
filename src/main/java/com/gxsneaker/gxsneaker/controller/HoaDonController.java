@@ -653,6 +653,35 @@ public class HoaDonController {
         );
     }
 
+    @PutMapping("/{id}/ap-dung-voucher")
+    public ResponseEntity<?> apDungVoucherTaiQuay(
+            @PathVariable Long id,
+            @RequestParam String maVoucher
+    ) {
+        try {
+            hoaDonService.apDungVoucherTaiQuay(id, maVoucher);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", e.getMessage())
+            );
+        }
+    }
+
+    @PutMapping("/{id}/xoa-voucher")
+    public ResponseEntity<?> xoaVoucherTaiQuay(
+            @PathVariable Long id
+    ) {
+        try {
+            hoaDonService.xoaVoucherTaiQuay(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", e.getMessage())
+            );
+        }
+    }
+
     @GetMapping("/tai-quay")
     public ResponseEntity<?> getHoaDonTaiQuay(
 

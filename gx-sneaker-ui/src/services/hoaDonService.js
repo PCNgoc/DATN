@@ -184,3 +184,5 @@ export const thanhToanVnpayTaiQuay = (hoaDonId) => {
 
 
 
+export const apDungVoucherTaiQuay = (hoaDonId, maVoucher) => { return axios.put(`${API_URL}/${hoaDonId}/ap-dung-voucher`, null, { params: { maVoucher }, ...getAuthHeader() }); };
+export const xoaVoucherTaiQuay = (hoaDonId) => { return axios.put(`${API_URL}/${hoaDonId}/xoa-voucher`, null, { ...getAuthHeader() }); };

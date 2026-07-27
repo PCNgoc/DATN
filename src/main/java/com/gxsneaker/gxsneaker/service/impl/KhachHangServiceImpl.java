@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.math.BigDecimal;
+import com.gxsneaker.gxsneaker.enums.HangThanhVien;
 
 @Service
 public class KhachHangServiceImpl implements KhachHangService {
@@ -98,6 +100,35 @@ public class KhachHangServiceImpl implements KhachHangService {
     @Override
     public void deleteKhachHang(Integer id) {
         khachHangRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void capNhatHangThanhVien(Long khachHangId) {
+        if (khachHangId == null) return;
+        
+        KhachHang khachHang = khachHangRepository.findById(khachHangId.intValue())
+                .orElse(null);
+        if (khachHang == null) return;
+
+        // Tính tổng tiền thanh toán của các đơn hàng HOAN_THANH
+        BigDecimal tongChiTieu = hoaDonRepository.sumTongChiTieu(khachHangId, "HOAN_THANH");
+        if (tongChiTieu == null) tongChiTieu = BigDecimal.ZERO;
+
+        HangThanhVien hangMoi = HangThanhVien.BRONZE;
+        
+        if (tongChiTieu.compareTo(new BigDecimal("30000000")) >= 0) {
+            hangMoi = HangThanhVien.DIAMOND;
+        } else if (tongChiTieu.compareTo(new BigDecimal("15000000")) >= 0) {
+            hangMoi = HangThanhVien.GOLD;
+        } else if (tongChiTieu.compareTo(new BigDecimal("5000000")) >= 0) {
+            hangMoi = HangThanhVien.SILVER;
+        }
+
+        if (khachHang.getHangThanhVien() != hangMoi) {
+            khachHang.setHangThanhVien(hangMoi);
+            khachHangRepository.save(khachHang);
+        }
     }
 
 

@@ -181,10 +181,15 @@ const formatMoneyCompact = (value) => {
   return String(number)
 }
 
-const getPotentialDiscount = (coupon, total) => {
-  if (!coupon) return 0
+  const getPotentialDiscount = (coupon, total) => {
+    if (!coupon) return 0
+    
+    // Nếu API trả về trực tiếp số tiền giảm
+    if (coupon.soTienGiam !== undefined) {
+      return Number(coupon.soTienGiam)
+    }
 
-  const totalValue = Number(total || 0)
+    const totalValue = Number(total || 0)
   const discountValue = Number(coupon.giaTriGiam || 0)
   let discount = 0
 
@@ -284,22 +289,24 @@ const applyCoupon = async () => {
     const requestData = {
       maPhieuGiamGia: couponCode.value.trim(),
       tongTienHang: totalMoney.value,
-      idKhachHang: getUserId() || null
+      idKhachHang: getCustomerId() || null
     };
     
     const res = await apDungMaGiamGia(requestData);
     const apiResponse = res.data;
     
-    // API returns ApDungMaGiamGiaResponse with soTienGiam and phieuGiamGia
-    if (apiResponse && apiResponse.phieuGiamGia) {
-      appliedCoupon.value = apiResponse.phieuGiamGia;
-      couponCode.value = getCouponCode(apiResponse.phieuGiamGia);
+    // API returns ApDungMaGiamGiaResponse with soTienGiam and maPhieuGiamGia
+    if (apiResponse && apiResponse.maPhieuGiamGia) {
+      appliedCoupon.value = apiResponse;
+      couponCode.value = apiResponse.maPhieuGiamGia;
+      discountAmount.value = apiResponse.soTienGiam || 0;
       couponSuccess.value = `Áp dụng mã ${couponCode.value} thành công. Bạn được giảm ${formatMoney(apiResponse.soTienGiam)}`;
     } else {
       throw new Error("Không thể áp dụng mã");
     }
   } catch (err) {
     appliedCoupon.value = null
+    discountAmount.value = 0
     couponError.value =
       err.response?.data?.message || err.response?.data || err.message || 'Mã giảm giá không hợp lệ'
   } finally {

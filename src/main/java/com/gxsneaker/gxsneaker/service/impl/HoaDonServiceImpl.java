@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import com.gxsneaker.gxsneaker.service.ShippingFeeService;
-
+import com.gxsneaker.gxsneaker.service.KhachHangService;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import com.gxsneaker.gxsneaker.repository.ChiTietSanPhamRepository;
@@ -52,7 +53,7 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final NhanVienRepository nhanVienRepository;
     private final PhieuGiamGiaKhachHangRepository pggKhachHangRepository;
     private final JwtService jwtService;
-
+    private final KhachHangService khachHangService;
 
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0(3|5|7|8|9)[0-9]{8}$");
@@ -310,13 +311,15 @@ public class HoaDonServiceImpl implements HoaDonService {
         BigDecimal soTienGiam;
         if (Boolean.TRUE.equals(phieu.getLoaiGiamGia())) {
             soTienGiam = tongTienHang.multiply(phieu.getGiaTriGiam()).divide(BigDecimal.valueOf(100));
+            if (phieu.getGiaTriGiamToiDa() != null 
+                    && phieu.getGiaTriGiamToiDa().compareTo(BigDecimal.ZERO) > 0 
+                    && soTienGiam.compareTo(phieu.getGiaTriGiamToiDa()) > 0) {
+                soTienGiam = phieu.getGiaTriGiamToiDa();
+            }
         } else {
             soTienGiam = phieu.getGiaTriGiam();
         }
 
-        if (phieu.getGiaTriGiamToiDa() != null && soTienGiam.compareTo(phieu.getGiaTriGiamToiDa()) > 0) {
-            soTienGiam = phieu.getGiaTriGiamToiDa();
-        }
         if (soTienGiam.compareTo(tongTienHang) > 0) soTienGiam = tongTienHang;
         if (soTienGiam.compareTo(BigDecimal.ZERO) < 0) soTienGiam = BigDecimal.ZERO;
 
@@ -340,7 +343,14 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         if ("DA_XAC_NHAN".equals(trangThaiMoi)) hoaDon.setNgayXacNhan(new Date());
         if ("DANG_GIAO".equals(trangThaiMoi)) hoaDon.setNgayGiaoHang(new Date());
-        if ("HOAN_THANH".equals(trangThaiMoi)) hoaDon.setNgayHoanThanh(new Date());
+        if ("HOAN_THANH".equals(trangThaiMoi)) {
+            hoaDon.setNgayHoanThanh(new Date());
+            
+            // Cập nhật hạng hội viên nếu đây là khách hàng thành viên
+            if (hoaDon.getIdKhachHang() != null) {
+                khachHangService.capNhatHangThanhVien(hoaDon.getIdKhachHang());
+            }
+        }
 
         if ("DA_HUY".equals(trangThaiMoi) || "HUY".equals(trangThaiMoi)) {
             hoaDon.setTrangThai("DA_HUY");
@@ -1260,6 +1270,8 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         hoaDon.setTongTienHang(tongTien);
 
+        revalidateVoucherTaiQuay(hoaDon);
+
         BigDecimal giamGia = hoaDon.getSoTienGiam() == null
                 ? BigDecimal.ZERO
                 : hoaDon.getSoTienGiam();
@@ -1276,6 +1288,60 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         hoaDonRepository.save(hoaDon);
 
+    }
+
+    private void revalidateVoucherTaiQuay(HoaDon hoaDon) {
+        if (hoaDon.getPhieuGiamGia() == null) return;
+        
+        PhieuGiamGia phieu = hoaDon.getPhieuGiamGia();
+        BigDecimal tongTien = hoaDon.getTongTienHang() == null ? BigDecimal.ZERO : hoaDon.getTongTienHang();
+        
+        // Điều kiện 1: Tối thiểu
+        if (tongTien.compareTo(phieu.getGiaTriDonHangToiThieu()) < 0) {
+            clearVoucher(hoaDon);
+            return;
+        }
+
+        // Điều kiện 2: Kiểm tra kiểu phiếu
+        if (phieu.getKieuPhieu() != com.gxsneaker.gxsneaker.enums.KieuPhieuGiamGia.PUBLIC) {
+            if (hoaDon.getIdKhachHang() == null) {
+                clearVoucher(hoaDon);
+                return;
+            }
+            
+            KhachHang kh = khachHangRepository.findById(hoaDon.getIdKhachHang().intValue()).orElse(null);
+            if (kh == null) {
+                clearVoucher(hoaDon);
+                return;
+            }
+
+            if (phieu.getKieuPhieu() == com.gxsneaker.gxsneaker.enums.KieuPhieuGiamGia.MEMBER_ONLY) {
+                if (kh.getHangThanhVien() == null || kh.getHangThanhVien().ordinal() < phieu.getDieuKienHangThanhVien().ordinal()) {
+                    clearVoucher(hoaDon);
+                    return;
+                }
+            } else if (phieu.getKieuPhieu() == com.gxsneaker.gxsneaker.enums.KieuPhieuGiamGia.NEW_CUSTOMER) {
+                boolean hasOrder = hoaDonRepository.existsByIdKhachHangAndTrangThai(kh.getId().longValue(), "HOAN_THANH");
+                if (hasOrder) {
+                    clearVoucher(hoaDon);
+                    return;
+                }
+            } else if (phieu.getKieuPhieu() == com.gxsneaker.gxsneaker.enums.KieuPhieuGiamGia.PERSONAL) {
+                boolean belongsToCustomer = pggKhachHangRepository.existsByKhachHangIdAndPhieuGiamGiaIdAndDaSuDungFalse(kh.getId(), phieu.getId());
+                if (!belongsToCustomer) {
+                    clearVoucher(hoaDon);
+                    return;
+                }
+            }
+        }
+        
+        // Tính lại tiền giảm
+        hoaDon.setSoTienGiam(tinhTienGiam(phieu, tongTien));
+    }
+
+    private void clearVoucher(HoaDon hoaDon) {
+        hoaDon.setPhieuGiamGia(null);
+        hoaDon.setSoTienGiam(BigDecimal.ZERO);
     }
 
     @Override
@@ -1357,6 +1423,9 @@ public class HoaDonServiceImpl implements HoaDonService {
             hoaDon.setSoDienThoaiNguoiNhan(null);
 
             hoaDon.setEmailNguoiNhan(null);
+            
+            revalidateVoucherTaiQuay(hoaDon);
+            capNhatTongTienHoaDon(hoaDon);
 
             hoaDonRepository.save(hoaDon);
 
@@ -1374,6 +1443,11 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         hoaDon.setEmailNguoiNhan(kh.getEmail());
 
+        hoaDon.setKhachHang(kh);
+        
+        revalidateVoucherTaiQuay(hoaDon);
+        capNhatTongTienHoaDon(hoaDon);
+        
         hoaDonRepository.save(hoaDon);
     }
 
@@ -1463,6 +1537,30 @@ public class HoaDonServiceImpl implements HoaDonService {
         hoaDon.setNgayThanhToan(new Date());
 
         hoaDon.setNgayHoanThanh(new Date());
+
+        // Trừ số lượng voucher và cập nhật trạng thái nếu là phiếu cá nhân
+        if (hoaDon.getPhieuGiamGia() != null) {
+            PhieuGiamGia phieu = hoaDon.getPhieuGiamGia();
+            if (phieu.getSoLuong() != null && phieu.getSoLuong() > 0) {
+                phieu.setSoLuong(phieu.getSoLuong() - 1);
+                phieuGiamGiaRepository.save(phieu);
+            }
+            
+            if (phieu.getKieuPhieu() == com.gxsneaker.gxsneaker.enums.KieuPhieuGiamGia.PERSONAL && hoaDon.getIdKhachHang() != null) {
+                pggKhachHangRepository.findByKhachHangIdAndPhieuGiamGiaId(hoaDon.getIdKhachHang().intValue(), phieu.getId())
+                    .ifPresent(pkh -> {
+                        pkh.setDaSuDung(true); // Đã sử dụng
+                        pggKhachHangRepository.save(pkh);
+                    });
+            }
+        }
+
+        hoaDonRepository.save(hoaDon);
+        
+        // Cập nhật hạng hội viên khi thanh toán thành công (Bán Hàng Tại Quầy)
+        if (hoaDon.getIdKhachHang() != null) {
+            khachHangService.capNhatHangThanhVien(hoaDon.getIdKhachHang());
+        }
 
         hoaDon.setNgayCapNhat(new Date());
 
@@ -1578,5 +1676,62 @@ public class HoaDonServiceImpl implements HoaDonService {
         return hoaDonRepository.findByLoaiDonOrderByNgayTaoDesc("ONLINE");
     }
 
+    @Override
+    @Transactional
+    public void apDungVoucherTaiQuay(Long hoaDonId, String maVoucher) {
+        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+
+        if (!"TAI_QUAY".equalsIgnoreCase(hoaDon.getLoaiDon())) {
+            throw new RuntimeException("Chỉ áp dụng cho hóa đơn tại quầy");
+        }
+
+        if (maVoucher == null || maVoucher.trim().isEmpty()) {
+            throw new RuntimeException("Vui lòng nhập mã giảm giá");
+        }
+
+        PhieuGiamGia phieu = phieuGiamGiaRepository.findByMaPhieuIgnoreCase(maVoucher.trim())
+                .orElseThrow(() -> new RuntimeException("Mã giảm giá không tồn tại"));
+
+        if (phieu.getTrangThai() == null || !phieu.getTrangThai()) {
+            throw new RuntimeException("Mã giảm giá không hoạt động");
+        }
+
+        Date now = new Date();
+        if (phieu.getNgayBatDau() != null && now.before(phieu.getNgayBatDau())) {
+            throw new RuntimeException("Mã giảm giá chưa đến thời gian sử dụng");
+        }
+        if (phieu.getNgayKetThuc() != null && now.after(phieu.getNgayKetThuc())) {
+            throw new RuntimeException("Mã giảm giá đã hết hạn");
+        }
+        if (phieu.getSoLuong() != null && phieu.getSoLuong() <= 0) {
+            throw new RuntimeException("Mã giảm giá đã hết lượt sử dụng");
+        }
+
+        hoaDon.setPhieuGiamGia(phieu);
+        
+        // Tái tính toán
+        revalidateVoucherTaiQuay(hoaDon);
+        
+        if (hoaDon.getPhieuGiamGia() == null) {
+            throw new RuntimeException("Đơn hàng hoặc khách hàng không đủ điều kiện sử dụng mã này");
+        }
+        
+        capNhatTongTienHoaDon(hoaDon);
+    }
+
+    @Override
+    @Transactional
+    public void xoaVoucherTaiQuay(Long hoaDonId) {
+        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+
+        if (!"TAI_QUAY".equalsIgnoreCase(hoaDon.getLoaiDon())) {
+            throw new RuntimeException("Chỉ áp dụng cho hóa đơn tại quầy");
+        }
+
+        clearVoucher(hoaDon);
+        capNhatTongTienHoaDon(hoaDon);
+    }
 
 }

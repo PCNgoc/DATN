@@ -2,6 +2,8 @@ package com.gxsneaker.gxsneaker.mapper;
 
 import com.gxsneaker.gxsneaker.dto.PhieuGiamGiaDTO;
 import com.gxsneaker.gxsneaker.entity.PhieuGiamGia;
+import com.gxsneaker.gxsneaker.enums.KieuPhieuGiamGia;
+import com.gxsneaker.gxsneaker.enums.HangThanhVien;
 
 public class PhieuGiamGiaMapper {
 
@@ -21,6 +23,14 @@ public class PhieuGiamGiaMapper {
         dto.setTrangThai(p.getTrangThai());
         dto.setNgayTao(p.getNgayTao());
         dto.setNgayCapNhat(p.getNgayCapNhat());
+        
+        if (p.getKieuPhieu() != null) {
+            dto.setKieuPhieu(p.getKieuPhieu().name());
+        }
+        if (p.getDieuKienHangThanhVien() != null) {
+            dto.setDieuKienHangThanhVien(p.getDieuKienHangThanhVien().name());
+        }
+        
         return dto;
     }
 
@@ -40,6 +50,14 @@ public class PhieuGiamGiaMapper {
         p.setTrangThai(dto.getTrangThai());
         p.setNgayTao(dto.getNgayTao());
         p.setNgayCapNhat(dto.getNgayCapNhat());
+        
+        if (dto.getKieuPhieu() != null) {
+            p.setKieuPhieu(KieuPhieuGiamGia.valueOf(dto.getKieuPhieu()));
+        }
+        if (dto.getDieuKienHangThanhVien() != null) {
+            p.setDieuKienHangThanhVien(HangThanhVien.valueOf(dto.getDieuKienHangThanhVien()));
+        }
+        
         return p;
     }
 }

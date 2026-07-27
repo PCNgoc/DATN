@@ -7,6 +7,7 @@ import com.gxsneaker.gxsneaker.entity.OtpXacThuc;
 import com.gxsneaker.gxsneaker.repository.KhachHangRepository;
 import com.gxsneaker.gxsneaker.repository.NhanVienRepository;
 import com.gxsneaker.gxsneaker.repository.OtpXacThucRepository;
+import com.gxsneaker.gxsneaker.repository.HoaDonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class AuthService {
     private final KhachHangRepository khachHangRepository;
     private final NhanVienRepository nhanVienRepository;
     private final OtpXacThucRepository otpXacThucRepository;
+    private final HoaDonRepository hoaDonRepository;
     private final EmailService emailService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
@@ -60,6 +62,9 @@ public class AuthService {
                 kh.get().getEmail(),
                 "CUSTOMER"
         );
+        
+        java.math.BigDecimal tongChiTieu = hoaDonRepository.sumTongChiTieu(kh.get().getId().longValue(), "HOAN_THANH");
+        if (tongChiTieu == null) tongChiTieu = java.math.BigDecimal.ZERO;
 
         return new LoginResponse(
                 kh.get().getId(),
@@ -69,7 +74,9 @@ public class AuthService {
                 kh.get().getSoDienThoai(),
                 "Đăng nhập thành công",
                 "CUSTOMER",
-                token
+                token,
+                kh.get().getHangThanhVien() != null ? kh.get().getHangThanhVien().name() : "BRONZE",
+                tongChiTieu
         );
     }
 
@@ -112,7 +119,9 @@ public class AuthService {
                 nv.get().getSoDienThoai(),
                 "Đăng nhập nhân viên thành công",
                 role,
-                token
+                token,
+                null,
+                null
         );
     }
 
@@ -168,6 +177,9 @@ public class AuthService {
 
         KhachHang kh = khachHangRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
+                
+        java.math.BigDecimal tongChiTieu = hoaDonRepository.sumTongChiTieu(kh.getId().longValue(), "HOAN_THANH");
+        if (tongChiTieu == null) tongChiTieu = java.math.BigDecimal.ZERO;
 
         return new LoginResponse(
                 kh.getId(),
@@ -177,7 +189,9 @@ public class AuthService {
                 kh.getSoDienThoai(),
                 "Lấy thông tin thành công",
                 "CUSTOMER",
-                token
+                token,
+                kh.getHangThanhVien() != null ? kh.getHangThanhVien().name() : "BRONZE",
+                tongChiTieu
         );
     }
 

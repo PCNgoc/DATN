@@ -54,6 +54,17 @@ const formatDateTimeLocal = (date) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+const formatKieuPhieu = (kieuPhieu) => {
+  const map = {
+    'PUBLIC': 'Tất cả mọi người',
+    'NEW_CUSTOMER': 'Khách hàng mới',
+    'MEMBER_ONLY': 'Chỉ Hội viên',
+    'HOLIDAY': 'Dịp lễ hội',
+    'PERSONAL': 'Cá nhân'
+  }
+  return map[kieuPhieu] || kieuPhieu
+}
+
 // LOAD DATA
 const load = async () => {
   loading.value = true
@@ -312,7 +323,7 @@ const changePage = (p) => {
             <th>Số lượng</th>
             <th>Ngày bắt đầu</th>
             <th>Ngày kết thúc</th>
-            <th>Loại phiếu</th>
+            <th>Đối tượng</th>
             <th>Trạng thái</th>
             <th>Hành động</th>
           </tr>
@@ -327,8 +338,8 @@ const changePage = (p) => {
             <td>{{ formatDate(i.ngayBatDau) }}</td>
             <td>{{ formatDate(i.ngayKetThuc) }}</td>
             <td>
-              <span class="badge bg-secondary">{{ i.kieuPhieu }}</span>
-              <div v-if="i.kieuPhieu === 'MEMBER_ONLY'" style="font-size: 11px; color: #666;">
+              <div style="font-weight: 600; color: #0d6efd; font-size: 13px;">{{ formatKieuPhieu(i.kieuPhieu) }}</div>
+              <div v-if="i.kieuPhieu === 'MEMBER_ONLY'" style="font-size: 11px; color: #666; margin-top: 4px;">
                 Hạng: {{ i.dieuKienHangThanhVien }}
               </div>
             </td>

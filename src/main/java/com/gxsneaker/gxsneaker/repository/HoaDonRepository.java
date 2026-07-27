@@ -23,6 +23,10 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Long> {
 //    List<HoaDon> findByTrangThai(String trangThai);
     List<HoaDon> findByIdKhachHangOrderByNgayDatHangDesc(Long idKhachHang);
     long countByIdKhachHang(Long idKhachHang);
+    boolean existsByIdKhachHangAndTrangThai(Long idKhachHang, String trangThai);
+
+    @Query("SELECT COALESCE(SUM(h.tongTienThanhToan), 0) FROM HoaDon h WHERE h.idKhachHang = :idKhachHang AND h.trangThai = :trangThai")
+    BigDecimal sumTongChiTieu(@Param("idKhachHang") Long idKhachHang, @Param("trangThai") String trangThai);
 
 //    List<HoaDon> findByMaHoaDonContainingAndTrangThai(
 //            String maHoaDon,

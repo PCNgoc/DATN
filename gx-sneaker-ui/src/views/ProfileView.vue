@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { getMeApi } from '@/api/authApi'
+import { update as updateProfile } from '@/services/khachHangService'
 import {
   getByKhachHangId as getAddresses,
   create as createAddress,
@@ -12,6 +13,63 @@ const user = ref(null)
 const errorMessage = ref('')
 const addressList = ref([])
 const showForm = ref(false)
+
+const showProfileForm = ref(false)
+const profileForm = ref({
+  hoTen: '',
+  soDienThoai: '',
+  gioiTinh: true,
+  ngaySinh: ''
+})
+
+const editProfile = () => {
+  profileForm.value = {
+    hoTen: user.value.hoTen || '',
+    soDienThoai: user.value.soDienThoai || '',
+    gioiTinh: user.value.gioiTinh !== false, // default true
+    ngaySinh: user.value.ngaySinh ? new Date(user.value.ngaySinh).toISOString().split('T')[0] : ''
+  }
+  showProfileForm.value = true
+}
+
+const cancelEditProfile = () => {
+  showProfileForm.value = false
+}
+
+const saveProfile = async () => {
+  if (!profileForm.value.hoTen || !profileForm.value.hoTen.trim()) {
+    alert('Họ và tên không được để trống!')
+    return
+  }
+  try {
+    const data = {
+      ...user.value,
+      hoTen: profileForm.value.hoTen,
+      soDienThoai: profileForm.value.soDienThoai,
+      gioiTinh: profileForm.value.gioiTinh,
+      ngaySinh: profileForm.value.ngaySinh || null
+    }
+    await updateProfile(user.value.id, data)
+    alert('Cập nhật hồ sơ thành công!')
+    showProfileForm.value = false
+    
+    // Update local storage user data
+    const localUserStr = localStorage.getItem('user')
+    if (localUserStr) {
+      const localUser = JSON.parse(localUserStr)
+      localUser.hoTen = data.hoTen
+      localUser.soDienThoai = data.soDienThoai
+      localUser.gioiTinh = data.gioiTinh
+      localUser.ngaySinh = data.ngaySinh
+      localStorage.setItem('user', JSON.stringify(localUser))
+    }
+    
+    await loadProfileAndAddresses()
+  } catch (error) {
+    console.error(error)
+    alert('Lỗi khi cập nhật hồ sơ! ' + (error.response?.data?.message || ''))
+  }
+}
 
 const addressForm = ref({
   id: null,
@@ -37,6 +95,44 @@ const loadProfileAndAddresses = async () => {
     console.error(error)
   }
 }
+
+const formatCurrency = (value) => {
+  if (!value) return '0 ₫'
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
+}
+
+const tierProgress = computed(() => {
+  if (!user.value) return { currentSpent: 0, currentTier: 'BRONZE', nextTier: 'SILVER', max: 5000000, percent: 0, remaining: 5000000 }
+  const spent = user.value.tongChiTieu || 0
+  let max = 5000000
+  let currentTier = 'BRONZE'
+  let nextTier = 'SILVER'
+  let min = 0
+
+  if (spent < 5000000) {
+    max = 5000000
+    currentTier = 'BRONZE'
+    nextTier = 'SILVER'
+    min = 0
+  } else if (spent < 15000000) {
+    max = 15000000
+    currentTier = 'SILVER'
+    nextTier = 'GOLD'
+    min = 5000000
+  } else if (spent < 30000000) {
+    max = 30000000
+    currentTier = 'GOLD'
+    nextTier = 'DIAMOND'
+    min = 15000000
+  } else {
+    return { currentSpent: spent, currentTier: 'DIAMOND', nextTier: 'MAX', max: spent, percent: 100, remaining: 0 }
+  }
+
+  const percent = Math.min(((spent - min) / (max - min)) * 100, 100)
+  const remaining = max - spent
+
+  return { currentSpent: spent, currentTier, nextTier, max, percent, remaining }
+})
 
 onMounted(loadProfileAndAddresses)
 
@@ -128,30 +224,79 @@ const deleteAddress = async (addrId) => {
     <div class="profile-grid" v-if="user">
       <!-- Cột trái: Thông tin tài khoản -->
       <div class="profile-card info-section">
-        <h3>Thông tin cá nhân</h3>
+        <div class="section-header">
+          <h3>Thông tin cá nhân</h3>
+          <button v-if="!showProfileForm" class="btn-add" @click="editProfile">
+            ✏️ Chỉnh sửa
+          </button>
+        </div>
         <div class="info-group">
           <label>Mã khách hàng:</label>
           <span>{{ user.maKhachHang }}</span>
         </div>
         <div class="info-group">
-          <label>Họ và tên:</label>
-          <span>{{ user.hoTen }}</span>
+          <label>Hạng hội viên:</label>
+          <span :class="['badge-hang', user.hangThanhVien]">{{ user.hangThanhVien || 'BRONZE' }}</span>
         </div>
-        <div class="info-group">
-          <label>Email:</label>
-          <span>{{ user.email }}</span>
+        
+        <!-- Thanh tiến trình hạng hội viên -->
+        <div class="tier-progress-box" v-if="user">
+          <div class="progress-labels">
+            <span>Đã chi tiêu: <strong>{{ formatCurrency(tierProgress.currentSpent) }}</strong></span>
+            <span v-if="tierProgress.nextTier !== 'MAX'">Cần <strong>{{ formatCurrency(tierProgress.remaining) }}</strong> để lên <strong>{{ tierProgress.nextTier }}</strong></span>
+            <span v-else>Đạt cấp độ cao nhất</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" :style="{ width: tierProgress.percent + '%' }"></div>
+          </div>
         </div>
-        <div class="info-group">
-          <label>Số điện thoại:</label>
-          <span>{{ user.soDienThoai }}</span>
+
+        <div v-if="!showProfileForm">
+          <div class="info-group">
+            <label>Họ và tên:</label>
+            <span>{{ user.hoTen }}</span>
+          </div>
+          <div class="info-group">
+            <label>Email:</label>
+            <span>{{ user.email }}</span>
+          </div>
+          <div class="info-group">
+            <label>Số điện thoại:</label>
+            <span>{{ user.soDienThoai }}</span>
+          </div>
+          <div class="info-group">
+            <label>Giới tính:</label>
+            <span>{{ user.gioiTinh === false ? 'Nữ' : 'Nam' }}</span>
+          </div>
+          <div class="info-group" v-if="user.ngaySinh">
+            <label>Ngày sinh:</label>
+            <span>{{ new Date(user.ngaySinh).toLocaleDateString('vi-VN') }}</span>
+          </div>
         </div>
-        <div class="info-group">
-          <label>Giới tính:</label>
-          <span>{{ user.gioiTinh ? 'Nam' : 'Nữ' }}</span>
-        </div>
-        <div class="info-group" v-if="user.ngaySinh">
-          <label>Ngày sinh:</label>
-          <span>{{ new Date(user.ngaySinh).toLocaleDateString('vi-VN') }}</span>
+
+        <!-- Form Edit Profile -->
+        <div v-if="showProfileForm" class="address-form-box" style="margin-top: 20px;">
+          <div class="form-item">
+            <label>Họ và tên <span class="req">*</span></label>
+            <input v-model="profileForm.hoTen" placeholder="Nhập họ tên" />
+          </div>
+          <div class="form-item">
+            <label>Số điện thoại</label>
+            <input v-model="profileForm.soDienThoai" placeholder="Nhập số điện thoại" />
+          </div>
+          <div class="form-grid">
+            <div class="form-item" style="grid-column: span 2;">
+              <label>Giới tính</label>
+              <select v-model="profileForm.gioiTinh" class="address-select">
+                <option :value="true">Nam</option>
+                <option :value="false">Nữ</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 15px;">
+            <button class="btn-save" @click="saveProfile">💾 Lưu hồ sơ</button>
+            <button class="btn-cancel" @click="cancelEditProfile">Hủy</button>
+          </div>
         </div>
       </div>
 
@@ -312,6 +457,75 @@ const deleteAddress = async (addrId) => {
 .info-group span {
   color: #1e293b;
   font-weight: 500;
+}
+
+.badge-hang {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700 !important;
+  display: inline-block;
+  line-height: 1;
+}
+
+.badge-hang.BRONZE {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+.badge-hang.SILVER {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 1px solid #cbd5e1;
+  background-image: linear-gradient(to right, #e2e8f0, #f8fafc);
+}
+
+.badge-hang.GOLD {
+  background: #fef08a;
+  color: #854d0e;
+  border: 1px solid #fde047;
+}
+
+.badge-hang.DIAMOND {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+}
+
+.tier-progress-box {
+  margin: 16px 0 24px 0;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.progress-labels strong {
+  color: #0ea5e9;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #2563eb);
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .section-header {

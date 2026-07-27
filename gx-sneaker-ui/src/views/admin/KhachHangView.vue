@@ -283,6 +283,7 @@ const changePage = (p) => {
             <th>Họ Tên</th>
             <th>Email</th>
             <th>Số điện thoại</th>
+            <th>Hạng hội viên</th>
             <th>Giới tính</th>
             <th>Ngày sinh</th>
             <th>Trạng thái</th>
@@ -295,6 +296,9 @@ const changePage = (p) => {
             <td>{{ i.hoTen }}</td>
             <td>{{ i.email }}</td>
             <td>{{ i.soDienThoai }}</td>
+            <td>
+              <span :class="['badge-hang', i.hangThanhVien]">{{ i.hangThanhVien || 'BRONZE' }}</span>
+            </td>
             <td>{{ i.gioiTinh ? "Nam" : "Nữ" }}</td>
             <td>{{ formatDate(i.ngaySinh) }}</td>
             <td>
@@ -479,6 +483,16 @@ th, td {
 .btn-group button:hover {
   background: #e0e0e0;
 }
+.badge-hang {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+.badge-hang.BRONZE { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+.badge-hang.SILVER { background: #f1f5f9; color: #94a3b8; border: 1px solid #cbd5e1; }
+.badge-hang.GOLD { background: #fef08a; color: #854d0e; border: 1px solid #fde047; }
+.badge-hang.DIAMOND { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
 .modal-overlay {
   position: fixed;
   top: 0;
