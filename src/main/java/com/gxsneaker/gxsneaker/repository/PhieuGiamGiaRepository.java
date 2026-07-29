@@ -19,4 +19,9 @@ public interface PhieuGiamGiaRepository extends JpaRepository<PhieuGiamGia, Inte
     @Modifying
     @Query("UPDATE PhieuGiamGia p SET p.soLuong = p.soLuong - 1 WHERE p.id = :id AND p.soLuong > 0")
     int decrementSoLuong(@Param("id") Integer id);
+
+    @Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("UPDATE PhieuGiamGia p SET p.trangThai = false WHERE p.ngayKetThuc < CURRENT_TIMESTAMP AND p.trangThai = true")
+    int updateTrangThaiHetHan();
 }

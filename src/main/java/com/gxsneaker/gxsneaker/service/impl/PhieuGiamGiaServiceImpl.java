@@ -93,6 +93,18 @@ public class PhieuGiamGiaServiceImpl implements PhieuGiamGiaService {
         if (p.getNgayKetThuc().before(p.getNgayBatDau())) {
             throw new RuntimeException("Ngày kết thúc phải sau ngày bắt đầu!");
         }
+
+        java.util.Date now = new java.util.Date();
+        if (excludeId == null) {
+            // Khi thêm mới: Ngày kết thúc phải trong tương lai. 
+            // Ngày bắt đầu cho phép độ trễ tối đa 5 phút (300.000 ms) để tránh lỗi timeout/delay khi chọn trên giao diện.
+            if (p.getNgayBatDau().getTime() < (now.getTime() - 5 * 60 * 1000)) {
+                throw new RuntimeException("Ngày bắt đầu không được chọn ở trong quá khứ!");
+            }
+            if (p.getNgayKetThuc().before(now)) {
+                throw new RuntimeException("Ngày kết thúc phải lớn hơn thời gian hiện tại!");
+            }
+        }
     }
 
     @Override
