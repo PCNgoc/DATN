@@ -5,7 +5,9 @@ import com.gxsneaker.gxsneaker.entity.HoaDon;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import com.gxsneaker.gxsneaker.dto.ThemSanPhamRequest;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -40,7 +42,21 @@ public interface HoaDonService {
     void doiKhachHang(Long hoaDonId, Long khachHangId);
     void xoaSanPham(Long hoaDonChiTietId);
     void thanhToan(Long hoaDonId, ThanhToanRequest request);
-    List<HoaDon> getHoaDonOnline();
+    Page<HoaDon> getHoaDonOnline(
+
+            String keyword,
+
+            String trangThai,
+
+            String tuNgay,
+
+            String denNgay,
+
+            Integer page,
+
+            Integer size
+
+    );
     List<HoaDonTaiQuayDTO> getHoaDonTaiQuay(
             String keyword,
             String trangThaiThanhToan,

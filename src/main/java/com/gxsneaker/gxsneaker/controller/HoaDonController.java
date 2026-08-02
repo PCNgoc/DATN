@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import com.gxsneaker.gxsneaker.dto.ThanhToanRequest;
 
+
 @RestController
 @RequestMapping("/api/hoa-don")
 @CrossOrigin("*")
@@ -94,38 +95,7 @@ public class HoaDonController {
     public void delete(@PathVariable Long id) {
         repository.deleteById(id);
     }
-    @GetMapping("/search")
-    public List<HoaDon> search(
 
-            @RequestParam(defaultValue = "")
-            String keyword,
-
-            @RequestParam(defaultValue = "")
-            String trangThai,
-
-            @RequestParam(defaultValue = "")
-            String tuNgay,
-
-            @RequestParam(defaultValue = "")
-            String denNgay
-
-    ) {
-
-        return repository.timHoaDonOnline(
-
-                "ONLINE",
-
-                keyword,
-
-                trangThai,
-
-                tuNgay,
-
-                denNgay
-
-        );
-
-    }
 
     @GetMapping("/page")
     public Page<HoaDon> getPage(
@@ -717,10 +687,41 @@ public class HoaDonController {
 
     }
 
-    @GetMapping("/online")
-    public List<HoaDon> getHoaDonOnline() {
-        return hoaDonService.getHoaDonOnline();
-    }
 
+
+    @GetMapping("/online")
+    public Page<HoaDon> getHoaDonOnline(
+
+            @RequestParam(defaultValue = "") String keyword,
+
+            @RequestParam(defaultValue = "") String trangThai,
+
+            @RequestParam(defaultValue = "") String tuNgay,
+
+            @RequestParam(defaultValue = "") String denNgay,
+
+            @RequestParam(defaultValue = "0") Integer page,
+
+            @RequestParam(defaultValue = "10") Integer size
+
+    ) {
+
+        return hoaDonService.getHoaDonOnline(
+
+                keyword,
+
+                trangThai,
+
+                tuNgay,
+
+                denNgay,
+
+                page,
+
+                size
+
+        );
+
+    }
 
 }

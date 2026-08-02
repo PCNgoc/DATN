@@ -9,13 +9,15 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import java.awt.print.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Date;
 import com.gxsneaker.gxsneaker.dto.HoaDonTaiQuayDTO;
 import org.springframework.data.jpa.repository.Query;
 
+import org.springframework.data.domain.Pageable;
 
 public interface HoaDonRepository extends JpaRepository<HoaDon, Long> {
 //    List<HoaDon> findByMaHoaDonContaining(String maHoaDon);
@@ -347,7 +349,7 @@ AND (
 
 ORDER BY h.ngayTao DESC
 """)
-    List<HoaDon> timHoaDonOnline(
+    Page<HoaDon> timHoaDonOnline(
 
             @Param("loaiDon") String loaiDon,
 
@@ -357,8 +359,9 @@ ORDER BY h.ngayTao DESC
 
             @Param("tuNgay") String tuNgay,
 
-            @Param("denNgay") String denNgay
+            @Param("denNgay") String denNgay,
 
+            Pageable pageable
 
     );
 

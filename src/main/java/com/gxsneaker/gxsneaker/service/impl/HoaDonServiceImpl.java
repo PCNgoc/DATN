@@ -37,6 +37,9 @@ import com.gxsneaker.gxsneaker.repository.KhachHangRepository;
 import com.gxsneaker.gxsneaker.repository.PhieuGiamGiaKhachHangRepository;
 import com.gxsneaker.gxsneaker.repository.NhanVienRepository;
 import com.gxsneaker.gxsneaker.dto.HoaDonTaiQuayDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -1672,8 +1675,40 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
     @Override
-    public List<HoaDon> getHoaDonOnline() {
-        return hoaDonRepository.findByLoaiDonOrderByNgayTaoDesc("ONLINE");
+    public Page<HoaDon> getHoaDonOnline(
+
+            String keyword,
+
+            String trangThai,
+
+            String tuNgay,
+
+            String denNgay,
+
+            Integer page,
+
+            Integer size
+
+    ) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return hoaDonRepository.timHoaDonOnline(
+
+                "ONLINE",
+
+                keyword == null ? "" : keyword.trim(),
+
+                trangThai == null ? "" : trangThai.trim(),
+
+                tuNgay == null ? "" : tuNgay,
+
+                denNgay == null ? "" : denNgay,
+
+                pageable
+
+        );
+
     }
 
     @Override

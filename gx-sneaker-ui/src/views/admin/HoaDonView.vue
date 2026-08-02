@@ -88,6 +88,7 @@
         </div>
       </div>
 
+
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table mb-0 align-middle">
@@ -182,9 +183,66 @@
             </tr>
             </tbody>
           </table>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+
+            <div>
+              Tổng:
+              <strong>{{ totalElements }}</strong>
+              hóa đơn
+            </div>
+
+            <nav>
+
+              <ul class="pagination mb-0">
+
+                <li
+                  class="page-item"
+                  :class="{ disabled: currentPage === 0 }"
+                >
+                  <button
+                    class="page-link"
+                    @click="changePage(currentPage - 1)"
+                  >
+                    «
+                  </button>
+                </li>
+
+                <li
+                  v-for="page in totalPages"
+                  :key="page"
+                  class="page-item"
+                  :class="{ active: currentPage === page - 1 }"
+                >
+                  <button
+                    class="page-link"
+                    @click="changePage(page - 1)"
+                  >
+                    {{ page }}
+                  </button>
+                </li>
+
+                <li
+                  class="page-item"
+                  :class="{ disabled: currentPage === totalPages - 1 }"
+                >
+                  <button
+                    class="page-link"
+                    @click="changePage(currentPage + 1)"
+                  >
+                    »
+                  </button>
+                </li>
+
+              </ul>
+
+            </nav>
+
+          </div>
         </div>
       </div>
     </div>
+
+
 
     <div v-if="showModal" class="custom-modal-overlay" @click.self="closeModal">
       <div class="modal-content-card animate-slide-up">
@@ -568,6 +626,11 @@ const showModal = ref(false)
 const selectedHoaDon = ref(null)
 const chiTietList = ref([])
 
+const currentPage = ref(0)
+const pageSize = ref(10)
+
+const totalPages = ref(0)
+const totalElements = ref(0)
 const loadHoaDon = async () => {
 
   try {
@@ -580,17 +643,37 @@ const loadHoaDon = async () => {
 
       tuNgay.value,
 
-      denNgay.value
+      denNgay.value,
+
+      currentPage.value,
+
+      pageSize.value
 
     )
 
-    hoaDons.value = response.data
+    hoaDons.value = response.data.content
+
+    totalPages.value = response.data.totalPages
+
+    totalElements.value = response.data.totalElements
 
   } catch (error) {
 
     console.error(error)
 
   }
+
+}
+
+const changePage = (page) => {
+
+  if (page < 0) return
+
+  if (page >= totalPages.value) return
+
+  currentPage.value = page
+
+  loadHoaDon()
 
 }
 
@@ -686,6 +769,8 @@ const closeModal = () => {
 
 const handleSearch = () => {
 
+  currentPage.value = 0
+
   loadHoaDon()
 
 }
@@ -699,10 +784,11 @@ const handleReset = () => {
 
   denNgay.value = ""
 
+  currentPage.value = 0
+
   loadHoaDon()
 
 }
-
 const formatMoney = (v) => v ? Number(v).toLocaleString('vi-VN') + ' đ' : '0 đ'
 const formatDate = (s) => s ? `${String(new Date(s).getDate()).padStart(2,'0')}/${String(new Date(s).getMonth()+1).padStart(2,'0')}/${new Date(s).getFullYear()}` : ''
 const formatTime = (s) => s ? `${String(new Date(s).getHours()).padStart(2,'0')}:${String(new Date(s).getMinutes()).padStart(2,'0')}` : ''
@@ -1197,7 +1283,92 @@ tfoot td{
   font-size:12px;
 }
 
+/* ===== PHÂN TRANG ===== */
 
+.pagination {
+  gap: 8px;
+}
+
+.pagination .page-item .page-link {
+  min-width: 42px;
+  height: 42px;
+
+  border-radius: 10px;
+
+  border: 1px solid #e5e7eb;
+
+  color: #374151;
+
+  background: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 600;
+
+  transition: all .25s ease;
+}
+
+/* Hover */
+
+.pagination .page-link:hover {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 18px rgba(37,99,235,.25);
+}
+
+/* Trang hiện tại */
+
+.pagination .page-item.active .page-link {
+
+  background: linear-gradient(135deg,#2563eb,#3b82f6);
+
+  border-color: #2563eb;
+
+  color: white;
+
+  box-shadow: 0 10px 22px rgba(37,99,235,.35);
+
+}
+
+/* Disable */
+
+.pagination .page-item.disabled .page-link{
+
+  background:#f3f4f6;
+
+  color:#9ca3af;
+
+  border-color:#e5e7eb;
+
+  cursor:not-allowed;
+
+}
+
+/* Tổng hóa đơn */
+
+.pagination-info{
+
+  font-size:16px;
+
+  font-weight:600;
+
+  color:#374151;
+
+}
+
+.pagination-info strong{
+
+  color:#2563eb;
+
+  font-size:18px;
+
+}
 
 
 .btn-export-lg {

@@ -129,16 +129,22 @@ export const getHoaDonOnline = (
   keyword = "",
   trangThai = "",
   tuNgay = "",
-  denNgay = ""
+  denNgay = "",
+  page = 0,
+  size = 10
 ) => {
 
-  return axios.get("http://localhost:8080/api/hoa-don/search", {
+  return axios.get(`${API_URL}/online`, {
 
     params: {
+
       keyword,
       trangThai,
       tuNgay,
-      denNgay
+      denNgay,
+      page,
+      size
+
     }
 
   });
