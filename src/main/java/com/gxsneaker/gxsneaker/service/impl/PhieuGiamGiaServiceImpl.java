@@ -130,6 +130,8 @@ public class PhieuGiamGiaServiceImpl implements PhieuGiamGiaService {
             p.setNgayBatDau(entityDetails.getNgayBatDau());
             p.setNgayKetThuc(entityDetails.getNgayKetThuc());
             p.setTrangThai(entityDetails.getTrangThai());
+            p.setKieuPhieu(entityDetails.getKieuPhieu());
+            p.setDieuKienHangThanhVien(entityDetails.getDieuKienHangThanhVien());
             PhieuGiamGia saved = phieuGiamGiaRepository.save(p);
             return PhieuGiamGiaMapper.toDTO(saved);
         }).orElseThrow(() -> new RuntimeException("PhieuGiamGia not found with id " + id));
