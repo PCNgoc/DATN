@@ -92,7 +92,7 @@ const menuItems = computed(() => [
     roles: ['ADMIN'],
   },
   {
-    label: 'Thanh toán',
+    label: 'Bán tại quầy',
     icon: '💳',
     path: '/admin/ban-hang',
     roles: ['ADMIN', 'STAFF'],

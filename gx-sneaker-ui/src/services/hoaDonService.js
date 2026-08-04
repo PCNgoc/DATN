@@ -3,7 +3,8 @@ import axios from 'axios'
 const API_URL = 'http://localhost:8080/api/hoa-don'
 
 const getAuthHeader = () => {
-  const token = localStorage.getItem('token')
+  const isAdminPath = window.location.pathname.startsWith('/admin')
+  const token = isAdminPath ? localStorage.getItem('adminToken') : localStorage.getItem('token')
 
   return {
     headers: token

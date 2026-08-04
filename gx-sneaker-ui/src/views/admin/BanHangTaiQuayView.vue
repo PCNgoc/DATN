@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 
 // import {
 //   taoHoaDonCho,
@@ -59,6 +59,7 @@ const taoHoaDon = async () => {
 
 const maVoucherInput = ref("");
 
+
 const applyVoucher = async () => {
   if (!selectedHoaDon.value) return;
   if (!maVoucherInput.value.trim()) {
@@ -70,7 +71,6 @@ const applyVoucher = async () => {
     await apDungVoucherTaiQuay(selectedHoaDon.value.id, maVoucherInput.value.trim());
     alert("Áp dụng mã giảm giá thành công!");
     await reloadHoaDonDangChon(); // Reload để lấy lại tổng tiền và thông tin voucher
-    maVoucherInput.value = "";
   } catch (e) {
     const errorMsg = e.response?.data?.message || "Lỗi khi áp dụng mã giảm giá";
     alert(errorMsg);
@@ -78,10 +78,11 @@ const applyVoucher = async () => {
 };
 
 const removeVoucher = async () => {
-  if (!selectedHoaDon.value || !selectedHoaDon.value.maPhieuGiamGia) return;
+  if (!selectedHoaDon.value || !selectedHoaDon.value.idPhieuGiamGia) return;
   try {
     await xoaVoucherTaiQuay(selectedHoaDon.value.id);
     alert("Đã gỡ mã giảm giá!");
+    maVoucherInput.value = "";
     await reloadHoaDonDangChon();
   } catch (e) {
     const errorMsg = e.response?.data?.message || "Lỗi khi gỡ mã giảm giá";
@@ -212,6 +213,69 @@ const reloadHoaDonDangChon = async () => {
 
 const khachHangs = ref([]);
 const danhSachVoucher = ref([]);
+const searchVoucherText = ref("");
+const isVoucherDropdownOpen = ref(false);
+const voucherSearchInput = ref(null);
+
+const formatKieuPhieu = (kieuPhieu, dieuKienHang) => {
+  if (!kieuPhieu) return 'Công khai';
+  switch (kieuPhieu) {
+    case 'PUBLIC': return 'Công khai';
+    case 'HOLIDAY': return 'Ngày lễ';
+    case 'MEMBER_ONLY': return `Hội viên${dieuKienHang ? ' (' + dieuKienHang + ')' : ''}`;
+    case 'PERSONAL': return 'Cá nhân';
+    case 'NEW_CUSTOMER': return 'Khách mới';
+    default: return kieuPhieu;
+  }
+};
+
+const filteredVouchers = computed(() => {
+  if (!searchVoucherText.value) return danhSachVoucher.value;
+  const query = searchVoucherText.value.toLowerCase().trim();
+  return danhSachVoucher.value.filter(v => 
+    (v.maPhieu && v.maPhieu.toLowerCase().includes(query)) ||
+    (v.tenPhieu && v.tenPhieu.toLowerCase().includes(query))
+  );
+});
+
+const currentAppliedVoucher = computed(() => {
+  if (!selectedHoaDon.value || !selectedHoaDon.value.idPhieuGiamGia) return null;
+  return danhSachVoucher.value.find(v => v.id === selectedHoaDon.value.idPhieuGiamGia);
+});
+
+watch(() => selectedHoaDon.value?.idPhieuGiamGia, (newId) => {
+  if (newId) {
+    const found = danhSachVoucher.value.find(v => v.id === newId);
+    if (found) {
+      maVoucherInput.value = found.maPhieu;
+    }
+  } else {
+    maVoucherInput.value = "";
+  }
+}, { immediate: true });
+
+const toggleVoucherDropdown = async () => {
+  isVoucherDropdownOpen.value = !isVoucherDropdownOpen.value;
+  if (isVoucherDropdownOpen.value) {
+    searchVoucherText.value = "";
+    await nextTick();
+    if (voucherSearchInput.value) {
+      voucherSearchInput.value.focus();
+    }
+  }
+};
+
+const selectVoucher = (v) => {
+  maVoucherInput.value = v.maPhieu;
+  isVoucherDropdownOpen.value = false;
+};
+
+const closeVoucherDropdownOnClickOutside = (e) => {
+  const dropdownEl = document.getElementById('voucher-combobox');
+  if (dropdownEl && !dropdownEl.contains(e.target)) {
+    isVoucherDropdownOpen.value = false;
+  }
+};
 
 const loadDanhSachVoucher = async () => {
   try {
@@ -349,11 +413,15 @@ const hoanTatThanhToanVnpay = async () => {
 //=====================
 
 onMounted(async () => {
+  document.addEventListener('click', closeVoucherDropdownOnClickOutside)
   await loadHoaDonCho()
-
   await loadSanPham()
   await loadKhachHang()
   await loadDanhSachVoucher()
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeVoucherDropdownOnClickOutside)
 })
 </script>
 
@@ -521,33 +589,81 @@ onMounted(async () => {
 
         <!-- table hiện tại -->
 
-        <!-- Mã giảm giá -->
-        <div class="voucher-section mt-3 mb-3 p-3 border rounded bg-light" v-if="selectedHoaDon">
-          <label class="form-label fw-bold">Phiếu giảm giá:</label>
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="Nhập mã giảm giá..." v-model="maVoucherInput">
-            <button class="btn btn-primary" type="button" @click="applyVoucher">Áp dụng</button>
-          </div>
-          
-          <div class="mt-2" v-if="danhSachVoucher && danhSachVoucher.length > 0">
-            <div class="text-muted" style="font-size: 0.85rem; margin-bottom: 8px;">Gợi ý mã giảm giá:</div>
-            <div class="d-flex flex-wrap gap-2">
-              <button v-for="v in danhSachVoucher" :key="'voucher-'+v.id" 
-                    type="button"
-                    class="btn btn-sm btn-outline-primary" 
-                    title="Nhấn để chọn mã này"
-                    @click="maVoucherInput = v.maPhieu">
-                {{ v.maPhieu }} (-{{ v.loaiGiamGia ? v.giaTriGiam + '%' : formatMoney(v.giaTriGiam) }})
-              </button>
+        <!-- Mã giảm giá (Custom Combobox) -->
+        <div class="voucher-section mt-3 mb-3 p-3 border rounded bg-white shadow-sm" v-if="selectedHoaDon">
+          <label class="form-label fw-bold mb-2 text-secondary" style="font-size: 0.9rem;">Phiếu giảm giá:</label>
+          <div class="d-flex gap-2 position-relative" id="voucher-combobox">
+            <div class="flex-grow-1 position-relative">
+              <div 
+                class="form-control d-flex justify-content-between align-items-center bg-white"
+                style="cursor: pointer; user-select: none;"
+                @click="toggleVoucherDropdown"
+              >
+                <span :class="{'text-muted': !maVoucherInput, 'fw-medium': !!maVoucherInput}">
+                  {{ maVoucherInput || 'Chọn mã giảm giá...' }}
+                </span>
+                <span class="ms-2 text-muted" style="font-size: 0.8rem;">▼</span>
+              </div>
+
+              <!-- Menu xổ xuống -->
+              <div 
+                v-if="isVoucherDropdownOpen" 
+                class="position-absolute start-0 end-0 bg-white border rounded shadow-lg p-2 mt-1" 
+                style="z-index: 1050; max-height: 300px; overflow: hidden; display: flex; flex-direction: column;"
+              >
+                <div class="p-1 mb-2 border-bottom">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0">
+                      <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input 
+                      type="text" 
+                      class="form-control border-start-0 ps-1" 
+                      placeholder="Tìm mã code..." 
+                      v-model="searchVoucherText" 
+                      ref="voucherSearchInput"
+                    >
+                  </div>
+                </div>
+                <div class="list-group list-group-flush flex-grow-1" style="max-height: 220px; overflow-y: auto; overflow-x: hidden;">
+                  <button 
+                    v-for="v in filteredVouchers" 
+                    :key="'dropdown-voucher-'+v.id"
+                    type="button" 
+                    class="list-group-item list-group-item-action text-start py-2 px-2 border-0 rounded mb-1"
+                    :class="{'active': maVoucherInput === v.maPhieu}"
+                    @click="selectVoucher(v)"
+                  >
+                    <div class="fw-bold" style="font-size: 0.85rem;">
+                      <span>{{ v.maPhieu }}</span>
+                      <span class="ms-1" :class="maVoucherInput === v.maPhieu ? 'text-warning' : 'text-danger'">
+                        (-{{ v.loaiGiamGia ? v.giaTriGiam + '%' : formatMoney(v.giaTriGiam) }})
+                      </span>
+                    </div>
+                    <div class="small" :class="maVoucherInput === v.maPhieu ? 'text-white-50' : 'text-muted'" style="font-size: 0.75rem;">
+                      {{ v.tenPhieu || 'Mã giảm giá' }} • {{ formatKieuPhieu(v.kieuPhieu, v.dieuKienHangThanhVien) }}
+                    </div>
+                  </button>
+
+                  <div v-if="filteredVouchers.length === 0" class="text-center text-muted py-3 small">
+                    Không tìm thấy phiếu giảm giá nào
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <button class="btn btn-primary px-3 fw-medium" type="button" @click="applyVoucher">
+              Áp dụng
+            </button>
           </div>
 
-          <div class="mt-2 d-flex justify-content-between align-items-center" v-if="selectedHoaDon.maPhieuGiamGia">
-            <span class="text-success">
-              Đang áp dụng: <strong>{{ selectedHoaDon.tenPhieuGiamGia }}</strong> 
-              (Mã: {{ selectedHoaDon.maPhieuGiamGia }})
+          <div class="mt-2 p-2 bg-success-subtle border border-success-subtle rounded d-flex justify-content-between align-items-center" v-if="selectedHoaDon.idPhieuGiamGia">
+            <span class="text-success small">
+              ✓ Đang áp dụng: <strong>{{ currentAppliedVoucher?.tenPhieu || currentAppliedVoucher?.maPhieu || 'Phiếu giảm giá' }}</strong> 
+              (Mã: <strong>{{ currentAppliedVoucher?.maPhieu || maVoucherInput }}</strong> 
+              <span v-if="selectedHoaDon.soTienGiam" class="text-danger fw-bold ms-1">- Giảm {{ formatMoney(selectedHoaDon.soTienGiam) }}</span>)
             </span>
-            <button class="btn btn-sm btn-outline-danger" @click="removeVoucher" title="Gỡ mã giảm giá">X</button>
+            <button class="btn btn-sm btn-outline-danger border-0 py-0 px-2 fw-bold" @click="removeVoucher" title="Gỡ mã">✕</button>
           </div>
         </div>
 
