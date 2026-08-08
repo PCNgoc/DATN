@@ -73,6 +73,28 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
     @Override
+    public List<DoanhThuTheoNgayResponse> getDoanhThuTheoNgayTrongKhoang(
+            Date tuNgay,
+            Date denNgay
+    ) {
+
+        List<Object[]> data =
+                hoaDonRepository.getDoanhThuTheoNgayTrongKhoang(
+                        tuNgay,
+                        denNgay
+                );
+
+        return data.stream()
+                .map(row -> new DoanhThuTheoNgayResponse(
+                        (Date) row[0],
+                        row[1] != null
+                                ? new BigDecimal(row[1].toString())
+                                : BigDecimal.ZERO
+                ))
+                .toList();
+    }
+
+    @Override
     public List<TrangThaiDonHangDTO> getThongKeTrangThaiDonHang(int year) {
         List<Object[]> data = hoaDonRepository.getThongKeTrangThaiDonHang(year);
         return data.stream()

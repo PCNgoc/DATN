@@ -13,8 +13,8 @@ import com.gxsneaker.gxsneaker.service.HoaDonService;
 import com.gxsneaker.gxsneaker.service.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.Calendar;
-import java.util.Map;
+import java.util.*;
+
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,9 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Sort;
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+
 import com.gxsneaker.gxsneaker.dto.ThanhToanRequest;
 
 
@@ -165,9 +163,11 @@ public class HoaDonController {
 
     @GetMapping("/thong-ke/tong-doanh-thu")
     public ResponseEntity<BigDecimal> getTongDoanhThu() {
-        return ResponseEntity.ok(repository.getTongDoanhThu());
-    }
 
+        return ResponseEntity.ok(
+                repository.getTongDoanhThu(null, null)
+        );
+    }
     @GetMapping("/thong-ke/doanh-thu-thang")
     public ResponseEntity<BigDecimal> getDoanhThuTheoThang(
             @RequestParam int month,
@@ -200,8 +200,9 @@ public class HoaDonController {
 
     @GetMapping("/thong-ke/tong-so-don")
     public ResponseEntity<Long> getTongSoDon() {
+
         return ResponseEntity.ok(
-                repository.getTongSoDon()
+                repository.getTongSoDon(null, null)
         );
     }
 
@@ -209,44 +210,204 @@ public class HoaDonController {
     public ResponseEntity<Long> getSoDonTheoTrangThai(
             @RequestParam String trangThai
     ) {
+
         return ResponseEntity.ok(
-                repository.getSoDonTheoTrangThai(trangThai)
+                repository.getSoDonTheoTrangThai(
+                        trangThai,
+                        null,
+                        null
+                )
         );
     }
 
+    private Date endOfDayExclusive(Date date) {
+
+        if (date == null) {
+            return null;
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+
+        calendar.add(Calendar.DATE, 1);
+
+        return calendar.getTime();
+    }
+
     @GetMapping("/thong-ke/dashboard")
-    public ResponseEntity<ThongKeDashboardResponse> getDashboard() {
+    public ResponseEntity<ThongKeDashboardResponse> getDashboard(
+
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date tuNgay,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date denNgay
+
+    ) {
+
+        Date denNgayExclusive = endOfDayExclusive(denNgay);
+
         ThongKeDashboardResponse response = new ThongKeDashboardResponse();
 
         response.setTongSoDon(
-                repository.getTongSoDon()
+                repository.getTongSoDon(
+                        tuNgay,
+                        denNgayExclusive
+                )
         );
 
         response.setTongDoanhThu(
-                repository.getTongDoanhThu()
+                repository.getTongDoanhThu(
+                        tuNgay,
+                        denNgayExclusive
+                )
         );
 
         response.setSoDonChoXacNhan(
-                repository.getSoDonTheoTrangThai("CHO_XAC_NHAN")
+                repository.getSoDonTheoTrangThai(
+                        "CHO_XAC_NHAN",
+                        tuNgay,
+                        denNgayExclusive
+                )
         );
 
         response.setSoDonDaXacNhan(
-                repository.getSoDonTheoTrangThai("DA_XAC_NHAN")
+                repository.getSoDonTheoTrangThai(
+                        "DA_XAC_NHAN",
+                        tuNgay,
+                        denNgayExclusive
+                )
         );
 
         response.setSoDonDangGiao(
-                repository.getSoDonTheoTrangThai("DANG_GIAO")
+                repository.getSoDonTheoTrangThai(
+                        "DANG_GIAO",
+                        tuNgay,
+                        denNgayExclusive
+                )
         );
 
         response.setSoDonHoanThanh(
-                repository.getSoDonTheoTrangThai("HOAN_THANH")
+                repository.getSoDonTheoTrangThai(
+                        "HOAN_THANH",
+                        tuNgay,
+                        denNgayExclusive
+                )
         );
 
         response.setSoDonDaHuy(
-                repository.getSoDonTheoTrangThai("DA_HUY")
+                repository.getSoDonTheoTrangThai(
+                        "DA_HUY",
+                        tuNgay,
+                        denNgayExclusive
+                )
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/thong-ke/bieu-do-doanh-thu-khoang-ngay")
+    public ResponseEntity<?> getBieuDoDoanhThuKhoangNgay(
+
+            @RequestParam
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date tuNgay,
+
+            @RequestParam
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date denNgay
+
+    ) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(denNgay);
+        calendar.add(Calendar.DATE, 1);
+
+        Date denNgayExclusive = calendar.getTime();
+
+        return ResponseEntity.ok(
+                hoaDonService.getDoanhThuTheoNgayTrongKhoang(
+                        tuNgay,
+                        denNgayExclusive
+                )
+        );
+    }
+
+    @GetMapping("/thong-ke/trang-thai-don-hang-khoang-ngay")
+    public ResponseEntity<?> getThongKeTrangThaiDonHangTheoKhoangNgay(
+            @RequestParam
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date tuNgay,
+
+            @RequestParam
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date denNgay
+    ) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(denNgay);
+        calendar.add(Calendar.DATE, 1);
+
+        Date denNgayExclusive = calendar.getTime();
+
+        List<Object[]> data =
+                repository.getThongKeTrangThaiDonHangTheoKhoangNgay(
+                        tuNgay,
+                        denNgayExclusive
+                );
+
+        return ResponseEntity.ok(
+                data.stream().map(item -> {
+
+                    Map<String, Object> result = new HashMap<>();
+
+                    result.put("trangThai", item[0]);
+                    result.put("soLuong", item[1]);
+
+                    return result;
+
+                }).toList()
+        );
+    }
+
+
+    @GetMapping("/thong-ke/top-5-san-pham-ban-chay-khoang-ngay")
+    public ResponseEntity<?> getTop5SanPhamBanChayTheoKhoangNgay(
+            @RequestParam
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date tuNgay,
+
+            @RequestParam
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            Date denNgay
+    ) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(denNgay);
+        calendar.add(Calendar.DATE, 1);
+
+        Date denNgayExclusive = calendar.getTime();
+
+        List<Object[]> data =
+                repository.getTop5SanPhamBanChayTheoKhoangNgay(
+                        tuNgay,
+                        denNgayExclusive
+                );
+
+        return ResponseEntity.ok(
+                data.stream().map(item -> {
+
+                    Map<String, Object> result = new HashMap<>();
+
+                    result.put("tenSanPham", item[0]);
+                    result.put("tongSoLuongBan", item[1]);
+
+                    return result;
+
+                }).toList()
+        );
     }
 
     @GetMapping("/thong-ke/doanh-thu-khoang-thoi-gian")

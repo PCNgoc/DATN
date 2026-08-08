@@ -81,11 +81,16 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Long> {
 // THỐNG KÊ TỔNG DOANH THU
 // =========================================
     @Query(value = """
-SELECT ISNULL(SUM(tong_tien_thanh_toan),0)
+SELECT ISNULL(SUM(tong_tien_thanh_toan), 0)
 FROM HOA_DON
 WHERE trang_thai = 'HOAN_THANH'
+AND (:tuNgay IS NULL OR ngay_hoan_thanh >= :tuNgay)
+AND (:denNgay IS NULL OR ngay_hoan_thanh < :denNgay)
 """, nativeQuery = true)
-    BigDecimal getTongDoanhThu();
+    BigDecimal getTongDoanhThu(
+            @Param("tuNgay") Date tuNgay,
+            @Param("denNgay") Date denNgay
+    );
 
     // =========================================
 // THỐNG KÊ DOANH THU THEO NGÀY
@@ -146,38 +151,34 @@ BETWEEN :tuNgay AND :denNgay
 // THỐNG KÊ TỔNG SỐ ĐƠN HÀNG
 // =========================================
     @Query("""
-    SELECT COUNT(h)
-    FROM HoaDon h
-    """)
-    Long getTongSoDon();
+SELECT COUNT(h)
+FROM HoaDon h
+WHERE (:tuNgay IS NULL OR h.ngayTao >= :tuNgay)
+AND (:denNgay IS NULL OR h.ngayTao < :denNgay)
+""")
+    Long getTongSoDon(
+            @Param("tuNgay") Date tuNgay,
+            @Param("denNgay") Date denNgay
+    );
 
 
     // =========================================
 // THỐNG KÊ SỐ ĐƠN THEO TRẠNG THÁI
 // =========================================
     @Query("""
-    SELECT COUNT(h)
-    FROM HoaDon h
-    WHERE h.trangThai = :trangThai
-    """)
+SELECT COUNT(h)
+FROM HoaDon h
+WHERE h.trangThai = :trangThai
+AND (:tuNgay IS NULL OR h.ngayTao >= :tuNgay)
+AND (:denNgay IS NULL OR h.ngayTao < :denNgay)
+""")
     Long getSoDonTheoTrangThai(
-            @Param("trangThai") String trangThai
+            @Param("trangThai") String trangThai,
+            @Param("tuNgay") Date tuNgay,
+            @Param("denNgay") Date denNgay
     );
 
-    // =========================================
-// BIỂU ĐỒ THỐNG KÊ THEO THÁNG
-// =========================================
-//    @Query(value = """
-//    SELECT
-//        MONTH(ngay_tao) AS thang,
-//        ISNULL(SUM(tong_tien_thanh_toan),0) AS doanhThu
-//    FROM HOA_DON
-//    WHERE trang_thai = 'HOAN_THANH'
-//      AND YEAR(ngay_tao) = YEAR(GETDATE())
-//    GROUP BY MONTH(ngay_tao)
-//    ORDER BY MONTH(ngay_tao)
-//    """, nativeQuery = true)
-//    List<Object[]> getDoanhThuTheoThang();
+
 
     @Query(value = """
 WITH THANG AS (
@@ -206,6 +207,67 @@ GROUP BY T.thang
 ORDER BY T.thang
 """, nativeQuery = true)
     List<Object[]> getDoanhThuTheoThang(@Param("year") Integer year);
+
+    @Query(value = """
+SELECT
+    CONVERT(date, HD.ngay_hoan_thanh) AS ngay,
+    ISNULL(SUM(HD.tong_tien_thanh_toan), 0) AS doanhThu
+FROM HOA_DON HD
+WHERE HD.trang_thai = 'HOAN_THANH'
+AND HD.ngay_hoan_thanh >= :tuNgay
+AND HD.ngay_hoan_thanh < :denNgay
+GROUP BY CONVERT(date, HD.ngay_hoan_thanh)
+ORDER BY CONVERT(date, HD.ngay_hoan_thanh)
+""", nativeQuery = true)
+    List<Object[]> getDoanhThuTheoNgayTrongKhoang(
+            @Param("tuNgay") Date tuNgay,
+            @Param("denNgay") Date denNgay
+    );
+
+    @Query(value = """
+SELECT
+    trang_thai,
+    COUNT(*) AS soLuong
+FROM HOA_DON
+WHERE trang_thai IS NOT NULL
+  AND ngay_dat_hang >= :tuNgay
+  AND ngay_dat_hang < :denNgay
+GROUP BY trang_thai
+ORDER BY trang_thai
+""", nativeQuery = true)
+    List<Object[]> getThongKeTrangThaiDonHangTheoKhoangNgay(
+            @Param("tuNgay") Date tuNgay,
+            @Param("denNgay") Date denNgay
+    );
+
+
+    @Query(value = """
+SELECT TOP 5
+    sp.ten_san_pham AS tenSanPham,
+    SUM(hdct.so_luong) AS tongSoLuongBan
+FROM HOA_DON_CHI_TIET hdct
+
+JOIN HOA_DON hd
+    ON hd.id = hdct.id_hoa_don
+
+JOIN CHI_TIET_SAN_PHAM ctsp
+    ON ctsp.id = hdct.id_chi_tiet_san_pham
+
+JOIN SAN_PHAM sp
+    ON sp.id = ctsp.id_san_pham
+
+WHERE hd.trang_thai = 'HOAN_THANH'
+  AND hd.ngay_hoan_thanh >= :tuNgay
+  AND hd.ngay_hoan_thanh < :denNgay
+
+GROUP BY sp.ten_san_pham
+
+ORDER BY SUM(hdct.so_luong) DESC
+""", nativeQuery = true)
+    List<Object[]> getTop5SanPhamBanChayTheoKhoangNgay(
+            @Param("tuNgay") Date tuNgay,
+            @Param("denNgay") Date denNgay
+    );
 
 
     @Query(value = """

@@ -613,7 +613,11 @@
 <script setup>
 import axios from 'axios'
 import { ref, onMounted } from 'vue'
-import { getHoaDonOnline } from "@/services/hoaDonService";
+// import { getHoaDonOnline } from "@/services/hoaDonService";
+import {
+  getHoaDonOnline,
+  capNhatTrangThaiHoaDon
+} from "@/services/hoaDonService";
 
 const hoaDons = ref([])
 const keyword = ref("")
@@ -698,30 +702,39 @@ const updateStatus = async (id, trangThaiMoi) => {
       }
     }
 
-    await axios.put(
-      `http://localhost:8080/api/hoa-don/${id}/status`,
-      {
-        trangThaiMoi,
-        nguoiThucHien: "Admin",
-        ghiChu
-      }
-    );
+    // await axios.put(
+    //   `http://localhost:8080/api/hoa-don/${id}/status`,
+    //   {
+    //     trangThaiMoi,
+    //     nguoiThucHien: "Admin",
+    //     ghiChu
+    //   }
+    // );
+
+    await capNhatTrangThaiHoaDon(id, {
+      trangThaiMoi,
+      nguoiThucHien: "Admin",
+      ghiChu
+    });
 
     await loadHoaDon();
 
     alert("Cập nhật trạng thái thành công!");
 
-  } catch (error) {
+  }  catch (error) {
 
-    console.error(error);
+  console.error("Lỗi cập nhật trạng thái:", error);
 
-    alert(
-      error.response?.data ||
-      error.response?.data?.message ||
-      "Cập nhật trạng thái thất bại!"
-    );
+  const data = error.response?.data;
 
-  }
+  const message =
+    data?.message ||
+    data?.error ||
+    (typeof data === "string" ? data : null) ||
+    "Cập nhật trạng thái thất bại!";
+
+  alert(message);
+}
 
 }
 

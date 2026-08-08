@@ -3,17 +3,39 @@ package com.gxsneaker.gxsneaker.service;
 import com.gxsneaker.gxsneaker.dto.*;
 import com.gxsneaker.gxsneaker.entity.HoaDon;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Data;
 import org.springframework.http.ResponseEntity;
 import com.gxsneaker.gxsneaker.dto.ThemSanPhamRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 public interface HoaDonService {
 
         List<DoanhThuTheoThangDTO> getDoanhThuTheoThang(int year);
+    List<DoanhThuTheoNgayResponse> getDoanhThuTheoNgayTrongKhoang(
+            Date tuNgay,
+            Date denNgay
+    );
+    @Data
+    public class DoanhThuTheoNgayResponse {
+
+        private Date ngay;
+        private BigDecimal doanhThu;
+
+        public DoanhThuTheoNgayResponse(
+                Date ngay,
+                BigDecimal doanhThu
+        ) {
+            this.ngay = ngay;
+            this.doanhThu = doanhThu;
+        }
+    }
 
         List<TrangThaiDonHangDTO> getThongKeTrangThaiDonHang(int year);
 

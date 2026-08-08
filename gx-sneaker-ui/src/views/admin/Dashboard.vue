@@ -76,41 +76,209 @@ const years = Array.from(
 
 const selectedYear = ref(currentYear)
 
+const tuNgay = ref('')
+const denNgay = ref('')
+
 const loadDashboard = async () => {
   try {
-    const response = await axios.get('http://localhost:8080/api/hoa-don/thong-ke/dashboard')
+    const response = await axios.get(
+      'http://localhost:8080/api/hoa-don/thong-ke/dashboard',
+      {
+        params: {
+          tuNgay: tuNgay.value || null,
+          denNgay: denNgay.value || null
+        }
+      }
+    )
 
     dashboard.value = response.data
+
   } catch (error) {
     console.error('Lỗi tải dashboard:', error)
   }
 }
+const handleDateFilter = async () => {
+  if (tuNgay.value && denNgay.value) {
+    if (tuNgay.value > denNgay.value) {
+      alert('Từ ngày không được lớn hơn đến ngày')
+      return
+    }
+  }
+
+  await Promise.all([
+    loadDashboard(),
+    loadRevenueChart(),
+    loadStatusChart(),
+    loadTopSanPham()
+  ])
+}
+
+const handleDateFilter1 = async () => {
+  if (tuNgay.value && denNgay.value) {
+    if (tuNgay.value > denNgay.value) {
+      alert('Từ ngày không được lớn hơn đến ngày')
+      return
+    }
+  }
+
+  await Promise.all([
+    loadDashboard(),
+
+  ])
+}
+
+const resetDateFilter = async () => {
+  tuNgay.value = ''
+  denNgay.value = ''
+
+  await Promise.all([
+    loadRevenueChart(),
+    loadStatusChart(),
+    loadTopSanPham(),
+    loadDashboard()
+  ])
+}
+
+
 
 
 const loadRevenueChart = async () => {
   try {
+
+    // =========================================
+    // CÓ LỌC THEO KHOẢNG NGÀY
+    // =========================================
+    if (tuNgay.value || denNgay.value) {
+
+      const params = {}
+
+      // Trường hợp chỉ chọn TỪ NGÀY
+      // => Từ ngày đó đến hôm nay
+      if (tuNgay.value && !denNgay.value) {
+
+        params.tuNgay = tuNgay.value
+
+        params.denNgay = new Date()
+          .toISOString()
+          .slice(0, 10)
+      }
+
+        // Trường hợp chỉ chọn ĐẾN NGÀY
+      // => Từ đầu năm đến ngày đó
+      else if (!tuNgay.value && denNgay.value) {
+
+        params.tuNgay = `${selectedYear.value}-01-01`
+
+        params.denNgay = denNgay.value
+      }
+
+      // Trường hợp chọn CẢ HAI
+      else {
+
+        params.tuNgay = tuNgay.value
+        params.denNgay = denNgay.value
+      }
+
+      // Kiểm tra khoảng ngày
+      if (
+        params.tuNgay &&
+        params.denNgay &&
+        params.tuNgay > params.denNgay
+      ) {
+
+        alert('Từ ngày không được lớn hơn đến ngày')
+
+        return
+      }
+
+      const response = await axios.get(
+        'http://localhost:8080/api/hoa-don/thong-ke/bieu-do-doanh-thu-khoang-ngay',
+        {
+          params
+        }
+      )
+
+      revenueChartData.value = {
+
+        labels: response.data.map(item => {
+
+          const date = new Date(item.ngay)
+
+          return date.toLocaleDateString('vi-VN')
+        }),
+
+        datasets: [
+          {
+            label: `Doanh thu từ ${params.tuNgay} đến ${params.denNgay}`,
+
+            data: response.data.map(
+              item => item.doanhThu
+            ),
+
+            borderColor: '#0d6efd',
+
+            backgroundColor: 'rgba(13, 110, 253, 0.15)',
+
+            tension: 0.4,
+
+            fill: true,
+
+            pointRadius: 4,
+
+            pointHoverRadius: 6,
+          },
+        ],
+      }
+
+      return
+    }
+
+
+    // =========================================
+    // KHÔNG LỌC NGÀY
+    // => GIỮ BIỂU ĐỒ 12 THÁNG
+    // =========================================
+
     const response = await axios.get(
       `http://localhost:8080/api/hoa-don/thong-ke/bieu-do-doanh-thu-thang?year=${selectedYear.value}`,
     )
 
     revenueChartData.value = {
-      labels: response.data.map((item) => `Tháng ${item.thang}`),
+
+      labels: response.data.map(
+        item => `Tháng ${item.thang}`
+      ),
 
       datasets: [
         {
           label: `Doanh thu năm ${selectedYear.value}`,
-          data: response.data.map((item) => item.doanhThu),
+
+          data: response.data.map(
+            item => item.doanhThu
+          ),
 
           borderColor: '#0d6efd',
-          backgroundColor: '#0d6efd',
+
+          backgroundColor: 'rgba(13, 110, 253, 0.15)',
 
           tension: 0.4,
-          fill: false,
+
+          fill: true,
+
+          pointRadius: 4,
+
+          pointHoverRadius: 6,
         },
       ],
     }
+
   } catch (error) {
-    console.error('Lỗi tải biểu đồ doanh thu:', error)
+
+    console.error(
+      'Lỗi tải biểu đồ doanh thu:',
+      error
+    )
+
   }
 }
 
@@ -122,6 +290,8 @@ const statusChartData = ref({
   labels: [],
   datasets: [],
 })
+
+const statusChartKey = ref(0)
 
 const pieOptions = {
   responsive: true,
@@ -136,23 +306,122 @@ const handleYearChange = () => {
 
 const loadStatusChart = async () => {
   try {
-    const response = await axios.get(
-      `http://localhost:8080/api/hoa-don/thong-ke/trang-thai-don-hang?year=${selectedYear.value}`,
-    )
+
+    let response
+
+    // ==========================================
+    // CÓ LỌC THEO NGÀY
+    // ==========================================
+
+    if (tuNgay.value || denNgay.value) {
+
+      const params = {}
+
+      // ------------------------------------------
+      // Chỉ chọn TỪ NGÀY
+      // => Từ ngày đó đến hôm nay
+      // ------------------------------------------
+
+      if (tuNgay.value && !denNgay.value) {
+
+        params.tuNgay = tuNgay.value
+
+        params.denNgay = new Date()
+          .toISOString()
+          .slice(0, 10)
+      }
+
+        // ------------------------------------------
+        // Chỉ chọn ĐẾN NGÀY
+        // => Từ đầu năm đến ngày đó
+      // ------------------------------------------
+
+      else if (!tuNgay.value && denNgay.value) {
+
+        params.tuNgay = `${selectedYear.value}-01-01`
+
+        params.denNgay = denNgay.value
+      }
+
+        // ------------------------------------------
+        // Chọn CẢ HAI
+        // => Từ ngày đến ngày
+      // ------------------------------------------
+
+      else {
+
+        params.tuNgay = tuNgay.value
+
+        params.denNgay = denNgay.value
+      }
+
+      console.log('STATUS FILTER:', params)
+
+      response = await axios.get(
+        'http://localhost:8080/api/hoa-don/thong-ke/trang-thai-don-hang-khoang-ngay',
+        {
+          params
+        }
+      )
+
+    }
+
+      // ==========================================
+      // KHÔNG LỌC NGÀY
+      // => DÙNG NĂM
+    // ==========================================
+
+    else {
+
+      response = await axios.get(
+        `http://localhost:8080/api/hoa-don/thong-ke/trang-thai-don-hang?year=${selectedYear.value}`
+      )
+
+    }
+
+    // ==========================================
+    // CẬP NHẬT DỮ LIỆU BIỂU ĐỒ
+    // ==========================================
+
+    console.log('STATUS RESPONSE:', response.data)
 
     statusChartData.value = {
-      labels: response.data.map((item) => item.trangThai),
+
+      labels: response.data.map(
+        item => item.trangThai
+      ),
 
       datasets: [
         {
-          data: response.data.map((item) => item.soLuong),
+          data: response.data.map(
+            item => item.soLuong
+          ),
 
-          backgroundColor: ['#198754', '#0d6efd', '#ffc107', '#dc3545', '#6c757d'],
-        },
-      ],
+          backgroundColor: [
+            '#198754',
+            '#0d6efd',
+            '#ffc107',
+            '#dc3545',
+            '#6c757d'
+          ]
+        }
+      ]
+
     }
+
+    // ==========================================
+    // ÉP PIE CHART RENDER LẠI
+    // ==========================================
+
+    statusChartKey.value++
+
   } catch (error) {
-    console.error(error)
+
+    console.error(
+      'Lỗi tải thống kê trạng thái:',
+      error
+    )
+
   }
 }
 
@@ -164,13 +433,71 @@ const topSanPhamData = ref([])
 
 const loadTopSanPham = async () => {
   try {
+
+    // ==========================================
+    // CÓ LỌC THEO NGÀY
+    // ==========================================
+    if (tuNgay.value || denNgay.value) {
+
+      const params = {}
+
+      // Chỉ chọn TỪ NGÀY
+      // => Từ ngày đó đến hôm nay
+      if (tuNgay.value && !denNgay.value) {
+
+        params.tuNgay = tuNgay.value
+
+        params.denNgay = new Date()
+          .toISOString()
+          .slice(0, 10)
+      }
+
+        // Chỉ chọn ĐẾN NGÀY
+      // => Đầu năm đến ngày đó
+      else if (!tuNgay.value && denNgay.value) {
+
+        params.tuNgay = `${selectedYear.value}-01-01`
+
+        params.denNgay = denNgay.value
+      }
+
+      // Chọn CẢ HAI
+      else {
+
+        params.tuNgay = tuNgay.value
+        params.denNgay = denNgay.value
+      }
+
+      const res = await axios.get(
+        'http://localhost:8080/api/hoa-don/thong-ke/top-5-san-pham-ban-chay-khoang-ngay',
+        {
+          params
+        }
+      )
+
+      topSanPhamData.value = res.data
+
+      return
+    }
+
+    // ==========================================
+    // KHÔNG LỌC NGÀY
+    // => DÙNG NĂM
+    // ==========================================
+
     const res = await axios.get(
-      `http://localhost:8080/api/hoa-don/thong-ke/top-5-san-pham-ban-chay?year=${selectedYear.value}`,
+      `http://localhost:8080/api/hoa-don/thong-ke/top-5-san-pham-ban-chay?year=${selectedYear.value}`
     )
 
     topSanPhamData.value = res.data
+
   } catch (error) {
-    console.error('Lỗi tải top sản phẩm:', error)
+
+    console.error(
+      'Lỗi tải top sản phẩm:',
+      error
+    )
+
   }
 }
 const topSanPhamChartData = computed(() => ({
@@ -332,6 +659,57 @@ onMounted(() => {
   <div class="dashboard-container">
     <h1 class="dashboard-title">Dashboard Thống Kê GX Sneaker</h1>
 
+    <div class="date-filter-card">
+      <div class="date-filter-title">
+        <i class="bi bi-calendar3"></i>
+        <span> Bộ lọc thời gian</span>
+      </div>
+
+      <div class="date-filter-form">
+
+        <div class="date-filter-item">
+          <label>Từ ngày</label>
+
+          <input
+            v-model="tuNgay"
+            type="date"
+            class="form-control"
+          />
+        </div>
+
+        <div class="date-filter-item">
+          <label>Đến ngày</label>
+
+          <input
+            v-model="denNgay"
+            type="date"
+            class="form-control"
+          />
+        </div>
+
+        <button
+          class="btn btn-primary date-filter-btn"
+          @click="handleDateFilter1"
+        >
+          <i class="bi bi-funnel-fill me-2"></i>
+          Lọc
+        </button>
+
+        <button
+          class="btn btn-outline-secondary date-reset-btn"
+          @click="resetDateFilter"
+        >
+          <i class="bi bi-arrow-counterclockwise me-2"></i>
+          Đặt lại
+        </button>
+
+      </div>
+
+      <small class="date-filter-hint">
+        Nếu chỉ chọn ngày bắt đầu, hệ thống sẽ lấy dữ liệu từ ngày đó đến hôm nay.
+      </small>
+    </div>
+
     <div class="dashboard-grid">
       <div class="card" @click="xemTatCaDonHang">
         <h3>Tổng đơn hàng</h3>
@@ -387,6 +765,56 @@ onMounted(() => {
       </select>
     </div>
 
+    <div class="date-filter mt-3 mb-4">
+
+      <div class="date-filter-item">
+        <label class="form-label">
+          Từ ngày
+        </label>
+
+        <input
+          type="date"
+          v-model="tuNgay"
+          class="form-control"
+        />
+      </div>
+
+      <div class="date-filter-item">
+        <label class="form-label">
+          Đến ngày
+        </label>
+
+        <input
+          type="date"
+          v-model="denNgay"
+          class="form-control"
+        />
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        @click="handleDateFilter"
+      >
+        <i class="bi bi-funnel-fill me-2"></i>
+        Lọc doanh thu
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        @click="
+      tuNgay = '';
+      denNgay = '';
+      loadRevenueChart();
+    "
+      >
+        <i class="bi bi-arrow-counterclockwise me-2"></i>
+        Xóa lọc
+      </button>
+
+    </div>
+
     <div class="chart-grid">
       <!-- Biểu đồ doanh thu -->
       <div class="chart-card">
@@ -404,7 +832,12 @@ onMounted(() => {
             Không có dữ liệu đơn hàng trong năm {{ selectedYear }}
           </div>
 
-          <Pie v-else :data="statusChartData" :options="pieOptions" />
+          <Pie
+            v-else
+            :key="statusChartKey"
+            :data="statusChartData"
+            :options="pieOptions"
+          />
         </div>
       </div>
     </div>
@@ -625,6 +1058,247 @@ onMounted(() => {
 .empty-chart p{
   margin:0;
   font-size:15px;
+}
+
+.date-filter {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.date-filter-item {
+  min-width: 220px;
+}
+
+.date-filter-item .form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.date-filter-item input {
+  height: 42px;
+  border-radius: 10px;
+}
+
+.date-filter .btn {
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+
+
+
+/* =========================================
+   BỘ LỌC DOANH THU THEO KHOẢNG NGÀY
+========================================= */
+
+.date-filter-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+
+  width: 100%;
+
+  padding: 20px 24px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+
+  margin-top: 16px;
+}
+
+
+/* =========================================
+   Ô NGÀY
+========================================= */
+
+.date-filter-item {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  min-width: 210px;
+}
+
+.date-filter-item label {
+  font-size: 14px;
+
+  font-weight: 600;
+
+  color: #374151;
+
+  margin: 0;
+}
+
+
+/* Input date */
+
+.date-filter-item .form-control {
+  height: 42px;
+
+  padding: 8px 12px;
+
+  border: 1px solid #d1d5db;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #374151;
+
+  font-size: 14px;
+
+  transition: all 0.2s ease;
+}
+
+
+/* Hover */
+
+.date-filter-item .form-control:hover {
+  border-color: #9ca3af;
+}
+
+
+/* Focus */
+
+.date-filter-item .form-control:focus {
+  border-color: #0d6efd;
+
+  box-shadow:
+    0 0 0 3px rgba(13, 110, 253, 0.12);
+
+  outline: none;
+}
+
+
+/* =========================================
+   NÚT LỌC
+========================================= */
+
+.date-filter-btn {
+  height: 42px;
+
+  padding: 0 20px;
+
+  border-radius: 10px;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  transition: all 0.2s ease;
+}
+
+.date-filter-btn:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 5px 12px rgba(13, 110, 253, 0.25);
+}
+
+
+/* =========================================
+   NÚT ĐẶT LẠI
+========================================= */
+
+.date-reset-btn {
+  height: 42px;
+
+  padding: 0 18px;
+
+  border-radius: 10px;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  transition: all 0.2s ease;
+}
+
+.date-reset-btn:hover {
+  transform: translateY(-1px);
+}
+
+
+/* =========================================
+   GỢI Ý
+========================================= */
+
+.date-filter-hint {
+  display: block;
+
+  margin-top: 8px;
+  margin-left: 4px;
+
+  color: #6b7280;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 900px) {
+
+  .date-filter-form {
+    flex-wrap: wrap;
+
+    align-items: stretch;
+  }
+
+  .date-filter-item {
+    flex: 1;
+
+    min-width: 200px;
+  }
+
+  .date-filter-btn,
+  .date-reset-btn {
+    flex: 1;
+  }
+}
+
+
+@media (max-width: 576px) {
+
+  .date-filter-form {
+    flex-direction: column;
+
+    align-items: stretch;
+
+    padding: 16px;
+  }
+
+  .date-filter-item {
+    width: 100%;
+
+    min-width: 0;
+  }
+
+  .date-filter-btn,
+  .date-reset-btn {
+    width: 100%;
+  }
 }
 
 </style>

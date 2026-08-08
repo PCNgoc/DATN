@@ -22,6 +22,13 @@ export const exportPdf = (id) => {
     }
   );
 }
+export const capNhatTrangThaiHoaDon = (id, data) => {
+  return axios.put(
+    `${API_URL}/${id}/status`,
+    data,
+    getAuthHeader()
+  );
+};
 
 export const datHang = (data) => {
   return axios.post(`${API_URL}/dat-hang`, data, getAuthHeader())
